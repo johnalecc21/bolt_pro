@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, User } from "lucide-react";
+import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 
 const etapas = [
   { label: "Creado", fecha: "2024-07-20", done: true },
@@ -17,7 +21,7 @@ const etapas = [
   { label: "Cerrado", fecha: null, done: false },
 ];
 
-const actividades = [
+const actividadesIniciales = [
   { tipo: "system", texto: "CloudSphere envió su oferta", tiempo: "Hace 15 min" },
   { tipo: "comment", texto: "Carlos: Revisar plazos de entrega", tiempo: "Hace 2 h" },
   { tipo: "system", texto: "NovaTech Consulting completó el Q&A", tiempo: "Hace 5 h" },
@@ -27,6 +31,19 @@ const actividades = [
 
 export function DetalleRequerimiento() {
   const { id } = useParams();
+  const { currentUser } = useAuth();
+  const [actividades, setActividades] = useState(actividadesIniciales);
+  const [comentario, setComentario] = useState("");
+
+  function enviarComentario() {
+    if (!comentario.trim()) return;
+    setActividades((prev) => [{ tipo: "comment", texto: `${currentUser?.nombre}: ${comentario.trim()}`, tiempo: "Ahora" }, ...prev]);
+    setComentario("");
+  }
+
+  function descargar(doc: string) {
+    toast.success("Descarga iniciada", { description: doc });
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -99,8 +116,14 @@ export function DetalleRequerimiento() {
                 ))}
               </div>
               <div className="mt-4 flex gap-2">
-                <input className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm" placeholder="Escribe un comentario..." />
-                <Button size="sm">Enviar</Button>
+                <input
+                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  placeholder="Escribe un comentario..."
+                  value={comentario}
+                  onChange={(e) => setComentario(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && enviarComentario()}
+                />
+                <Button size="sm" onClick={enviarComentario} disabled={!comentario.trim()}>Enviar</Button>
               </div>
             </div>
           </Card>
@@ -136,7 +159,7 @@ export function DetalleRequerimiento() {
                 <p className="text-xs text-muted-foreground">Sourcing Expert</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" className="mt-3 w-full">
+            <Button variant="outline" size="sm" className="mt-3 w-full" onClick={() => toast.info("Solicitud de contacto enviada a Ana Consultora")}>
               <MessageSquare className="mr-2 h-3.5 w-3.5" /> Contactar
             </Button>
           </Card>
@@ -145,15 +168,17 @@ export function DetalleRequerimiento() {
             <h3 className="mb-3 font-semibold text-sm">Documentos</h3>
             <div className="space-y-2">
               {["RFP-0032.pdf", "Specs_tecnicas.docx", "Matriz_criterios.xlsx"].map((doc) => (
-                <div key={doc} className="flex items-center gap-2 rounded-lg border border-border p-2 text-sm hover:bg-muted/30 cursor-pointer">
+                <button key={doc} onClick={() => descargar(doc)} className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm hover:bg-muted/30 cursor-pointer">
                   <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="flex-1 truncate">{doc}</span>
-                </div>
+                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                </button>
               ))}
             </div>
           </Card>
         </div>
       </div>
+      <CopilotoPanel context="detalle-requerimiento" />
     </div>
   );
 }

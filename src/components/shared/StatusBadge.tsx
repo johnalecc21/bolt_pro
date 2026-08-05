@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils";
-import type { EstadoReq } from "@/lib/mockData";
 
 const config: Record<string, { label: string; className: string }> = {
   borrador: { label: "Borrador", className: "bg-muted text-muted-foreground border-border" },
@@ -18,6 +17,10 @@ const config: Record<string, { label: string; className: string }> = {
   Abierta: { label: "Abierta", className: "bg-destructive/15 text-destructive border-destructive/30" },
   "En mediación": { label: "En mediación", className: "bg-warning/15 text-warning-foreground border-warning/30" },
   Resuelta: { label: "Resuelta", className: "bg-success/15 text-success border-success/30" },
+  Pendiente: { label: "Pendiente", className: "bg-warning/15 text-warning-foreground border-warning/30" },
+  aprobado: { label: "Aprobado", className: "bg-success/15 text-success border-success/30" },
+  rechazado: { label: "Rechazado", className: "bg-destructive/15 text-destructive border-destructive/30" },
+  zona_gris: { label: "Zona gris", className: "bg-warning/15 text-warning-foreground border-warning/30" },
 };
 
 export function StatusBadge({ estado, className }: { estado: string; className?: string }) {

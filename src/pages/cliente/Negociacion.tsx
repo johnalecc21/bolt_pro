@@ -1,9 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Gavel, Eye, Handshake, Crown, Clock, Check, TrendingUp } from "lucide-react";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Gavel, Eye, Handshake, Crown, Check, TrendingUp, FileQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuction, getRanking, startAuction, closeAuction, resetAuction, type Puja } from "@/lib/mock/subasta";
+import { getProceso } from "@/lib/mock/procesos";
+import { logAudit } from "@/lib/mock/auditLog";
+import { useAuth } from "@/lib/auth/AuthContext";
 
 const formatos = [
   { id: "subasta", title: "Subasta Inversa", icon: Gavel, desc: "Los proveedores ven su posición relativa en tiempo real y mejoran su oferta.", pros: "Mejor precio", cons: "Guerra de precios" },
@@ -11,26 +18,67 @@ const formatos = [
   { id: "bilateral", title: "Negociación Bilateral", icon: Handshake, desc: "El consultor negocia 1 a 1 con los finalistas.", pros: "Relación a largo plazo", cons: "Más lento" },
 ];
 
-const leaderboard = [
-  { pos: 1, proveedor: "NovaTech", monto: 162000, cambio: -6000 },
-  { pos: 2, proveedor: "CloudSphere", monto: 168000, cambio: -4000 },
-  { pos: 3, proveedor: "AuditTrust", monto: 185000, cambio: -10000 },
-];
+function formatCountdown(deadlineMs: number) {
+  const remaining = Math.max(0, deadlineMs - Date.now());
+  const min = Math.floor(remaining / 60000);
+  const sec = Math.floor((remaining % 60000) / 1000);
+  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
+}
 
 export function Negociacion() {
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const requerimientoId = id ?? "RFP-2024-0032";
+  const proceso = getProceso(requerimientoId);
+  const { currentUser } = useAuth();
   const [formato, setFormato] = useState("subasta");
-  const [activa, setActiva] = useState(false);
+  const auction = useAuction();
+  const activa = auction.status === "activa" && auction.requerimientoId === requerimientoId;
+  const [, forceTick] = useState(0);
+
+  useEffect(() => {
+    if (!activa) return;
+    const timer = setInterval(() => forceTick((n) => n + 1), 1000);
+    return () => clearInterval(timer);
+  }, [activa]);
+
+  useEffect(() => () => { if (auction.status !== "activa") resetAuction(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const ranking = getRanking(auction.pujas);
+
+  if (!proceso) {
+    return (
+      <div className="p-6">
+        <EmptyState icon={FileQuestion} title="Este requerimiento no tiene ofertas para negociar" description="La negociación solo aplica a procesos que ya recibieron ofertas en licitación." />
+      </div>
+    );
+  }
+
+  function iniciarRonda() {
+    const pujasIniciales: Puja[] = proceso!.ofertas
+      .slice()
+      .sort((a, b) => a.precio - b.precio)
+      .slice(0, 3)
+      .map((o) => ({ proveedorId: o.proveedorId, proveedor: o.proveedor, montoInicial: o.precio, monto: o.precio }));
+    startAuction(15 * 60 * 1000, requerimientoId, pujasIniciales);
+  }
+
+  function handleCerrarRonda() {
+    closeAuction();
+    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Ronda de negociación cerrada", detalle: `${requerimientoId} · Ganador provisional: ${ranking[0]?.proveedor}` });
+    toast.success("Ronda cerrada", { description: "Acta digital generada. Puedes proceder a adjudicación." });
+    navigate(`/cliente/adjudicacion/${requerimientoId}`);
+  }
 
   return (
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Ronda de Negociación</h1>
-        <p className="text-sm text-muted-foreground">RFP-2024-0032 · Segunda ronda</p>
+        <p className="text-sm text-muted-foreground">{requerimientoId} — {proceso.titulo} · Segunda ronda</p>
       </div>
 
       {!activa ? (
         <>
-          {/* Format selector */}
           <div>
             <h2 className="mb-3 text-sm font-medium">Selecciona el formato de negociación</h2>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -59,7 +107,6 @@ export function Negociacion() {
             </div>
           </div>
 
-          {/* Config */}
           <Card className="p-5">
             <h2 className="mb-4 font-semibold">Configuración</h2>
             <div className="grid grid-cols-2 gap-4">
@@ -82,19 +129,18 @@ export function Negociacion() {
             </div>
           </Card>
 
-          <Button onClick={() => setActiva(true)} className="gradient-brand text-white">
+          <Button onClick={iniciarRonda} className="gradient-brand text-white">
             <Gavel className="mr-2 h-4 w-4" /> Iniciar ronda de negociación
           </Button>
         </>
       ) : (
         <>
-          {/* Live view */}
           <Card className="overflow-hidden">
             <div className="gradient-hero p-6 text-white">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-white/70">Tiempo restante</p>
-                  <p className="text-3xl font-bold">14:32</p>
+                  <p className="text-3xl font-bold">{formatCountdown(auction.deadlineMs)}</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="relative flex h-3 w-3">
@@ -107,50 +153,57 @@ export function Negociacion() {
             </div>
           </Card>
 
-          {/* Leaderboard */}
           <div>
             <h2 className="mb-3 font-semibold">Leaderboard en vivo</h2>
             <div className="space-y-3">
-              {leaderboard.map((item) => (
-                <Card key={item.proveedor} className={cn("p-4 transition-all", item.pos === 1 && "ring-2 ring-warning")}>
-                  <div className="flex items-center gap-4">
-                    <div className={cn(
-                      "flex h-12 w-12 items-center justify-center rounded-full font-bold text-lg",
-                      item.pos === 1 ? "bg-warning/20 text-warning-foreground" :
-                      item.pos === 2 ? "bg-muted text-muted-foreground" :
-                      "bg-orange-900/20 text-orange-700"
-                    )}>
-                      {item.pos === 1 ? <Crown className="h-6 w-6" /> : `${item.pos}°`}
+              {ranking.map((item, i) => {
+                const pos = i + 1;
+                const cambio = item.montoInicial - item.monto;
+                return (
+                  <Card key={item.proveedorId} className={cn("p-4 transition-all", pos === 1 && "ring-2 ring-warning")}>
+                    <div className="flex items-center gap-4">
+                      <div className={cn(
+                        "flex h-12 w-12 items-center justify-center rounded-full font-bold text-lg",
+                        pos === 1 ? "bg-warning/20 text-warning-foreground" :
+                        pos === 2 ? "bg-muted text-muted-foreground" :
+                        "bg-orange-900/20 text-orange-700"
+                      )}>
+                        {pos === 1 ? <Crown className="h-6 w-6" /> : `${pos}°`}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">{item.proveedor}</p>
+                        <p className="text-sm text-muted-foreground">Oferta actual: ${item.monto.toLocaleString()}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className={cn("flex items-center gap-1 text-sm font-semibold", cambio > 0 ? "text-success" : "text-muted-foreground")}>
+                          {cambio > 0 && <TrendingUp className="h-3.5 w-3.5 rotate-180" />}
+                          {cambio > 0 ? `-$${cambio.toLocaleString()}` : "Sin cambios"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">vs. ronda 1</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="font-semibold">{item.proveedor}</p>
-                      <p className="text-sm text-muted-foreground">Oferta actual: ${item.monto.toLocaleString()}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="flex items-center gap-1 text-sm font-semibold text-success">
-                        <TrendingUp className="h-3.5 w-3.5 rotate-180" /> -${Math.abs(item.cambio).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">vs. ronda 1</p>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                );
+              })}
             </div>
           </div>
 
-          {/* Consultant */}
           <Card className="border-warning/30 bg-warning/5 p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">AC</div>
               <div className="flex-1">
                 <p className="text-sm font-medium">Recomendación de la consultora</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  NovaTech ya mejoró $6K. El margen de mejora restante es marginal (1-2%). Sugiero cerrar la ronda ahora para no dañar la relación con el proveedor.
+                  {ranking[0]?.proveedor} lidera con una mejora de ${(ranking[0]?.montoInicial - ranking[0]?.monto).toLocaleString()}. El margen de mejora restante suele ser marginal después de la primera hora — evalúa cerrar pronto para no dañar la relación con el proveedor.
                 </p>
               </div>
-              <Button onClick={() => setActiva(false)} className="gradient-success text-white">
-                <Check className="mr-2 h-4 w-4" /> Cerrar ronda
-              </Button>
+              <ConfirmDialog
+                trigger={<Button className="gradient-success text-white"><Check className="mr-2 h-4 w-4" /> Cerrar ronda</Button>}
+                title="Cerrar ronda de negociación"
+                description="Se congelará el resultado y se generará un acta digital con timestamp para auditoría."
+                confirmLabel="Cerrar ronda"
+                onConfirm={handleCerrarRonda}
+              />
             </div>
           </Card>
         </>

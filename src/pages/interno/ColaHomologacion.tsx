@@ -1,0 +1,120 @@
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle } from "lucide-react";
+import { useHomologacionRegistros, resolverHomologacion } from "@/lib/mock/homologacion";
+import { logAudit } from "@/lib/mock/auditLog";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useMockLoading } from "@/hooks/useMockLoading";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+
+const estadoDocMap: Record<string, string> = { validado: "Activo", subido: "pendiente_aprobacion", pendiente: "pendiente_aprobacion", vencido: "Vencido" };
+
+export function ColaHomologacion() {
+  const { currentUser } = useAuth();
+  const loading = useMockLoading();
+  const registros = useHomologacionRegistros();
+  const cola = registros.filter((r) => r.estado === "zona_gris" || r.estado === "en_revision");
+
+  function aprobar(proveedorId: string, proveedor: string) {
+    resolverHomologacion(proveedorId, "aprobado", 85);
+    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Homologación aprobada", detalle: proveedor });
+    toast.success("Proveedor homologado", { description: proveedor });
+  }
+
+  function rechazar(proveedorId: string, proveedor: string, motivo?: string) {
+    resolverHomologacion(proveedorId, "rechazado", 0, motivo);
+    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Homologación rechazada", detalle: proveedor, motivo });
+    toast.info("Homologación rechazada", { description: proveedor });
+  }
+
+  function pedirInfo(proveedor: string, motivo?: string) {
+    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Información adicional solicitada", detalle: proveedor, motivo });
+    toast.info("Solicitud enviada al proveedor", { description: proveedor });
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Cola de Homologación</h1>
+        <p className="text-sm text-muted-foreground">Revisión manual de proveedores en zona gris de scoring automático</p>
+      </div>
+
+      {loading ? <TableSkeleton /> : cola.length === 0 ? (
+        <EmptyState icon={ClipboardCheck} title="Sin casos pendientes de revisión" />
+      ) : (
+        <div className="space-y-4">
+          {cola.map((r) => (
+            <Card key={r.proveedorId} className="p-5">
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="font-semibold">{r.proveedor}</h2>
+                  <p className="text-xs text-muted-foreground">Solicitado {r.fechaSolicitud} · Score preliminar: {r.score || "—"}</p>
+                </div>
+                <StatusBadge estado={r.estado === "zona_gris" ? "en_revision" : r.estado} />
+              </div>
+
+              {r.alertas.length > 0 && (
+                <div className="mb-4 flex items-start gap-2 rounded-lg bg-warning/10 p-3 text-sm text-warning-foreground">
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <ul>{r.alertas.map((a, i) => <li key={i}>• {a}</li>)}</ul>
+                </div>
+              )}
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Documentos del proveedor</p>
+                  <div className="space-y-1.5">
+                    {r.documentos.map((d) => (
+                      <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-2 text-sm">
+                        <span>{d.nombre}</span>
+                        <StatusBadge estado={estadoDocMap[d.estado]} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Resultado de validación automática</p>
+                  <div className="space-y-1.5 text-sm text-muted-foreground">
+                    <p>✓ RUT/NIT válido ante registro público</p>
+                    <p>✓ Sin coincidencias en listas OFAC/PEP</p>
+                    <p>{r.score >= 70 ? "✓" : "⚠"} Score automático: {r.score || "pendiente"}/100</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                <ConfirmDialog
+                  trigger={<Button size="sm" className="gap-1.5 gradient-success text-white"><Check className="h-4 w-4" /> Aprobar</Button>}
+                  title="Aprobar homologación"
+                  description={`${r.proveedor} quedará disponible para ser invitado a licitaciones.`}
+                  confirmLabel="Aprobar"
+                  onConfirm={() => aprobar(r.proveedorId, r.proveedor)}
+                />
+                <ConfirmDialog
+                  trigger={<Button size="sm" variant="outline" className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"><X className="h-4 w-4" /> Rechazar</Button>}
+                  title="Rechazar homologación"
+                  requireReason
+                  confirmLabel="Rechazar"
+                  destructive
+                  onConfirm={(motivo) => rechazar(r.proveedorId, r.proveedor, motivo)}
+                />
+                <ConfirmDialog
+                  trigger={<Button size="sm" variant="ghost" className="gap-1.5"><HelpCircle className="h-4 w-4" /> Pedir más información</Button>}
+                  title="Solicitar información adicional"
+                  requireReason
+                  reasonLabel="¿Qué información falta?"
+                  confirmLabel="Enviar solicitud"
+                  onConfirm={(motivo) => pedirInfo(r.proveedor, motivo)}
+                />
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

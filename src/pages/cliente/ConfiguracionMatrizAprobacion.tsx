@@ -1,0 +1,143 @@
+import { useState } from "react";
+import { toast } from "sonner";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator } from "lucide-react";
+import { logAudit } from "@/lib/mock/auditLog";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { cn } from "@/lib/utils";
+
+interface Regla {
+  id: string;
+  min: number;
+  max: number | null;
+  aprobadores: string;
+  tipo: "Única" | "Secuencial";
+}
+
+const reglasIniciales: Regla[] = [
+  { id: "R1", min: 0, max: 10000, aprobadores: "Comprador", tipo: "Única" },
+  { id: "R2", min: 10001, max: 50000, aprobadores: "Gerente de Compras", tipo: "Única" },
+  { id: "R3", min: 50001, max: 200000, aprobadores: "CFO", tipo: "Secuencial" },
+  { id: "R4", min: 200001, max: null, aprobadores: "CEO + CFO", tipo: "Secuencial" },
+];
+
+function validar(reglas: Regla[]): string | null {
+  const sorted = [...reglas].sort((a, b) => a.min - b.min);
+  if (sorted[0].min !== 0) return "El primer rango debe empezar en $0.";
+  if (sorted[sorted.length - 1].max !== null) return "Debe existir una regla que cubra 'cualquier monto' (rango sin máximo).";
+  for (let i = 0; i < sorted.length - 1; i++) {
+    const cur = sorted[i];
+    const next = sorted[i + 1];
+    if (cur.max === null) return `La regla ${cur.id} no puede tener máximo abierto si no es la última.`;
+    if (cur.max + 1 < next.min) return `Hay un hueco entre $${cur.max.toLocaleString()} y $${next.min.toLocaleString()}.`;
+    if (cur.max >= next.min) return `Los rangos ${cur.id} y ${next.id} se solapan.`;
+  }
+  return null;
+}
+
+export function ConfiguracionMatrizAprobacion() {
+  const { currentUser } = useAuth();
+  const [reglas, setReglas] = useState(reglasIniciales);
+  const [ejemplo, setEjemplo] = useState(75000);
+  const error = validar(reglas);
+
+  function actualizar(id: string, patch: Partial<Regla>) {
+    setReglas((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
+  }
+
+  function agregarRegla() {
+    const id = `R${reglas.length + 1}`;
+    setReglas((prev) => [...prev, { id, min: 0, max: 0, aprobadores: "", tipo: "Única" }]);
+  }
+
+  function eliminarRegla(id: string) {
+    setReglas((prev) => prev.filter((r) => r.id !== id));
+  }
+
+  function guardar() {
+    if (error) {
+      toast.error("No se puede guardar", { description: error });
+      return;
+    }
+    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Matriz de aprobación actualizada", detalle: `${reglas.length} reglas configuradas` });
+    toast.success("Matriz de aprobación guardada");
+  }
+
+  const reglaEjemplo = [...reglas].sort((a, b) => a.min - b.min).find((r) => ejemplo >= r.min && (r.max === null || ejemplo <= r.max));
+
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Matriz de Aprobación</h1>
+        <p className="text-sm text-muted-foreground">Define quién aprueba qué monto — reemplaza el flujo de firmas en papel/email</p>
+      </div>
+
+      <Card className="overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-border bg-muted/50 text-left text-sm text-muted-foreground">
+                <th className="p-3 font-medium">Monto mín.</th>
+                <th className="p-3 font-medium">Monto máx.</th>
+                <th className="p-3 font-medium">Aprobador(es)</th>
+                <th className="p-3 font-medium">Tipo</th>
+                <th className="p-3 font-medium"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {reglas.map((r) => (
+                <tr key={r.id} className="border-b border-border last:border-0">
+                  <td className="p-3"><Input type="number" className="w-28" value={r.min} onChange={(e) => actualizar(r.id, { min: Number(e.target.value) })} /></td>
+                  <td className="p-3">
+                    <Input
+                      type="number"
+                      className="w-28"
+                      placeholder="Ilimitado"
+                      value={r.max ?? ""}
+                      onChange={(e) => actualizar(r.id, { max: e.target.value === "" ? null : Number(e.target.value) })}
+                    />
+                  </td>
+                  <td className="p-3"><Input className="min-w-[160px]" value={r.aprobadores} onChange={(e) => actualizar(r.id, { aprobadores: e.target.value })} /></td>
+                  <td className="p-3">
+                    <select className="rounded-md border border-input bg-background px-2 py-1.5 text-sm" value={r.tipo} onChange={(e) => actualizar(r.id, { tipo: e.target.value as Regla["tipo"] })}>
+                      <option>Única</option>
+                      <option>Secuencial</option>
+                    </select>
+                  </td>
+                  <td className="p-3 text-right">
+                    <Button variant="ghost" size="icon" onClick={() => eliminarRegla(r.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="border-t p-3">
+          <Button variant="outline" size="sm" onClick={agregarRegla}><Plus className="mr-2 h-4 w-4" /> Agregar rango</Button>
+        </div>
+      </Card>
+
+      <div className={cn("flex items-center gap-2 rounded-lg p-3 text-sm", error ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success")}>
+        {error ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+        {error ?? "Los rangos son válidos: sin huecos, sin solapamientos, y cubren cualquier monto."}
+      </div>
+
+      <Card className="p-5">
+        <h2 className="mb-3 flex items-center gap-2 font-semibold"><Calculator className="h-4 w-4" /> Previsualización</h2>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">Monto de ejemplo</span>
+          <Input type="number" className="w-40" value={ejemplo} onChange={(e) => setEjemplo(Number(e.target.value))} />
+        </div>
+        <p className="mt-3 rounded-lg bg-info/10 p-3 text-sm text-info">
+          Una compra de <strong>${ejemplo.toLocaleString()}</strong> requeriría aprobación de: <strong>{reglaEjemplo?.aprobadores ?? "sin regla aplicable"}</strong> {reglaEjemplo && `(${reglaEjemplo.tipo.toLowerCase()})`}.
+        </p>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button className="gradient-brand text-white" onClick={guardar} disabled={!!error}>Guardar matriz</Button>
+      </div>
+    </div>
+  );
+}

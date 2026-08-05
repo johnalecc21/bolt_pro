@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card } from "@/components/ui/card";
-import { Building2, Package, UploadCloud, Users, ShieldCheck, Check, ArrowRight, ArrowLeft } from "lucide-react";
+import { Building2, Package, UploadCloud, Users, ShieldCheck, Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { simulateProcess } from "@/lib/mock/simulate";
 
 const steps = [
   { id: 1, label: "Empresa", icon: Building2 },
@@ -25,13 +26,60 @@ const categorias = [
   { id: "rh", label: "RR.HH.", icon: "👥" },
 ];
 
+const usuariosIniciales = [
+  { name: "Carlos Méndez", email: "carlos@acme.com", role: "Comprador" },
+  { name: "Laura Torres", email: "laura@acme.com", role: "Aprobador" },
+  { name: "Ana Ruiz", email: "ana@acme.com", role: "Admin" },
+];
+
 export function OnboardingWizard() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedCats, setSelectedCats] = useState<string[]>(["ti", "log"]);
+  const [usuarios, setUsuarios] = useState(usuariosIniciales);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState("Comprador");
+  const [erpConnecting, setErpConnecting] = useState<string | null>(null);
+  const [erpConnected, setErpConnected] = useState<string | null>(null);
+  const [erpError, setErpError] = useState<string | null>(null);
+  const [erpAttempts, setErpAttempts] = useState<Record<string, number>>({});
 
   const next = () => setStep((s) => Math.min(5, s + 1));
   const prev = () => setStep((s) => Math.max(1, s - 1));
+
+  function invitarUsuario() {
+    if (!inviteEmail.trim() || !inviteEmail.includes("@")) return;
+    setUsuarios((prev) => [...prev, { name: inviteEmail.split("@")[0], email: inviteEmail.trim(), role: inviteRole }]);
+    toast.success("Invitación enviada", { description: inviteEmail });
+    setInviteEmail("");
+  }
+
+  async function conectarERP(erp: string) {
+    setErpConnecting(erp);
+    setErpError(null);
+    await simulateProcess([{ label: "Autenticando...", duration: 700 }]);
+    const intentoPrevio = erpAttempts[erp] ?? 0;
+    // Oracle deterministically fails on the first attempt so the error path is easy to demo.
+    if (erp === "Oracle" && intentoPrevio === 0) {
+      setErpAttempts((prev) => ({ ...prev, [erp]: intentoPrevio + 1 }));
+      setErpConnecting(null);
+      setErpError(erp);
+      return;
+    }
+    await simulateProcess([{ label: "Sincronizando datos...", duration: 700 }]);
+    setErpConnecting(null);
+    setErpConnected(erp);
+    toast.success(`${erp} conectado`, { description: "Historial de compras sincronizado." });
+  }
+
+  function finalizar() {
+    if (selectedCats.length === 0) {
+      toast.error("Selecciona al menos una categoría antes de finalizar");
+      setStep(2);
+      return;
+    }
+    navigate("/cliente/dashboard");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
@@ -132,11 +180,35 @@ export function OnboardingWizard() {
                 <Label className="text-sm">O conecta tu ERP</Label>
                 <div className="grid grid-cols-4 gap-3">
                   {["SAP", "Oracle", "Odoo", "QuickBooks"].map((erp) => (
-                    <button key={erp} className="rounded-lg border border-border p-3 text-sm font-medium hover:border-primary hover:bg-primary/5 transition-colors">
+                    <button
+                      key={erp}
+                      onClick={() => conectarERP(erp)}
+                      disabled={!!erpConnecting || erpConnected === erp}
+                      className={cn(
+                        "flex items-center justify-center gap-1.5 rounded-lg border p-3 text-sm font-medium transition-colors",
+                        erpConnected === erp ? "border-success bg-success/10 text-success" :
+                        erpError === erp ? "border-destructive bg-destructive/5 text-destructive" :
+                        "border-border hover:border-primary hover:bg-primary/5"
+                      )}
+                    >
+                      {erpConnecting === erp && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                      {erpConnected === erp && <Check className="h-3.5 w-3.5" />}
                       {erp}
                     </button>
                   ))}
                 </div>
+                {erpError && (
+                  <div className="flex items-start gap-2 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
+                    <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+                    <div className="flex-1">
+                      <p className="font-medium">No pudimos conectar con {erpError}.</p>
+                      <p className="text-destructive/80">Verifica las credenciales o inténtalo de nuevo en unos minutos.</p>
+                    </div>
+                    <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => conectarERP(erpError)}>
+                      Reintentar
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -145,21 +217,17 @@ export function OnboardingWizard() {
             <div className="space-y-4">
               <h2 className="text-xl font-semibold">Invita a tu equipo</h2>
               <div className="flex gap-2">
-                <Input placeholder="email@empresa.com" />
-                <select className="rounded-md border border-input bg-background px-3 text-sm">
+                <Input placeholder="email@empresa.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && invitarUsuario()} />
+                <select className="rounded-md border border-input bg-background px-3 text-sm" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
                   <option>Comprador</option>
                   <option>Aprobador</option>
                   <option>Admin</option>
                   <option>Viewer</option>
                 </select>
-                <Button>Invitar</Button>
+                <Button onClick={invitarUsuario} disabled={!inviteEmail.trim()}>Invitar</Button>
               </div>
               <div className="space-y-2">
-                {[
-                  { name: "Carlos Méndez", email: "carlos@acme.com", role: "Comprador" },
-                  { name: "Laura Torres", email: "laura@acme.com", role: "Aprobador" },
-                  { name: "Ana Ruiz", email: "ana@acme.com", role: "Admin" },
-                ].map((u) => (
+                {usuarios.map((u) => (
                   <div key={u.email} className="flex items-center justify-between rounded-lg border border-border p-3">
                     <div>
                       <p className="text-sm font-medium">{u.name}</p>
@@ -225,7 +293,7 @@ export function OnboardingWizard() {
                   Siguiente <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button onClick={() => navigate("/cliente/dashboard")} className="gradient-success text-white">
+                <Button onClick={finalizar} className="gradient-success text-white">
                   <Check className="mr-2 h-4 w-4" /> Finalizar
                 </Button>
               )}

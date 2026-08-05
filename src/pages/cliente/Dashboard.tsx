@@ -4,10 +4,13 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { KPICard } from "@/components/shared/KPICard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, Bell } from "lucide-react";
-import { requerimientos, actividadReciente, ahorroMensual, proveedores } from "@/lib/mockData";
+import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle } from "lucide-react";
+import { requerimientos, actividadReciente, ahorroMensual, proveedores, aprobaciones } from "@/lib/mockData";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { useMockLoading } from "@/hooks/useMockLoading";
+import { KpiRowSkeleton, TableSkeleton } from "@/components/shared/TableSkeleton";
 
 const chartConfig = {
   auditado: { label: "Auditado", color: "var(--chart-1)" },
@@ -15,28 +18,60 @@ const chartConfig = {
 } satisfies ChartConfig;
 
 export function Dashboard() {
+  const { currentUser, activeCompany } = useAuth();
+  const loading = useMockLoading();
+  const esAprobador = currentUser?.role === "aprobador_cfo";
+  const deLaEmpresa = requerimientos.filter((r) => (r.companyId ?? "acme") === (activeCompany?.id ?? "acme"));
+  const misRequerimientos = currentUser?.role === "comprador"
+    ? deLaEmpresa.filter((r) => r.solicitante === currentUser.nombre)
+    : deLaEmpresa;
+
   return (
     <div className="space-y-6 p-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Buenos días, Carlos</h1>
-          <p className="text-sm text-muted-foreground">Lunes, 5 de agosto de 2024</p>
+          <h1 className="text-2xl font-bold">Buenos días, {currentUser?.nombre?.split(" ")[0]}</h1>
+          <p className="text-sm text-muted-foreground">{activeCompany?.nombre} · Lunes, 5 de agosto de 2024</p>
         </div>
-        <Link to="/cliente/requerimientos/nuevo">
-          <Button className="gradient-brand text-white">
-            <Plus className="mr-2 h-4 w-4" /> Nuevo Requerimiento
-          </Button>
-        </Link>
+        {currentUser?.role !== "aprobador_cfo" && (
+          <Link to="/cliente/requerimientos/nuevo">
+            <Button className="gradient-brand text-white">
+              <Plus className="mr-2 h-4 w-4" /> Nuevo Requerimiento
+            </Button>
+          </Link>
+        )}
       </div>
 
+      {esAprobador && aprobaciones.length > 0 && (
+        <Card className="border-warning/30 bg-warning/5 p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4 text-warning-foreground" /> Requiere tu aprobación</h2>
+            <Link to="/cliente/aprobaciones" className="text-sm text-primary hover:underline">Ver bandeja completa</Link>
+          </div>
+          <div className="space-y-2">
+            {aprobaciones.slice(0, 3).map((a) => (
+              <div key={a.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3 text-sm">
+                <div>
+                  <p className="font-medium">{a.descripcion}</p>
+                  <p className="text-xs text-muted-foreground">{a.tipo} · Solicitado por {a.solicitante}</p>
+                </div>
+                <span className="font-semibold">${a.monto.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {/* KPIs */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Ahorro acumulado del mes" value="$127,500" icon={DollarSign} trend="+18%" trendUp accent="success" />
-        <KPICard label="Procesos activos" value="8" icon={FileText} accent="brand" subtitle="3 en licitación" />
-        <KPICard label="Aprobaciones pendientes" value="3" icon={ShieldCheck} accent="warning" subtitle="2 urgentes" />
-        <KPICard label="Proveedores activos" value="47" icon={Building2} trend="+5" trendUp accent="info" />
-      </div>
+      {loading ? <KpiRowSkeleton /> : (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <KPICard label="Ahorro acumulado del mes" value="$127,500" icon={DollarSign} trend="+18%" trendUp accent="success" />
+          <KPICard label="Procesos activos" value="8" icon={FileText} accent="brand" subtitle="3 en licitación" />
+          <KPICard label="Aprobaciones pendientes" value="3" icon={ShieldCheck} accent="warning" subtitle="2 urgentes" />
+          <KPICard label="Proveedores activos" value="47" icon={Building2} trend="+5" trendUp accent="info" />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Requerimientos */}
@@ -46,8 +81,8 @@ export function Dashboard() {
               <h2 className="font-semibold">Mis requerimientos</h2>
               <Link to="/cliente/requerimientos" className="text-sm text-primary hover:underline">Ver todos</Link>
             </div>
-            <div className="space-y-2">
-              {requerimientos.slice(0, 6).map((req) => (
+            {loading ? <TableSkeleton rows={4} /> : <div className="space-y-2">
+              {misRequerimientos.slice(0, 6).map((req) => (
                 <Link
                   key={req.id}
                   to={`/cliente/requerimientos/${req.id}`}
@@ -76,7 +111,7 @@ export function Dashboard() {
                   <ArrowRight className="ml-3 h-4 w-4 text-muted-foreground" />
                 </Link>
               ))}
-            </div>
+            </div>}
           </Card>
         </div>
 

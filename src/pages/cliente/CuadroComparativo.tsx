@@ -1,34 +1,152 @@
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, AlertTriangle, Download, Settings, MessageSquare, ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
-import { ofertasComparativo } from "@/lib/mockData";
+import { Slider } from "@/components/ui/slider";
+import { Trophy, AlertTriangle, Download, Settings, ArrowRight, SlidersHorizontal, FileQuestion } from "lucide-react";
+import { Link, useParams } from "react-router-dom";
+import { getProceso } from "@/lib/mock/procesos";
+import { logAudit } from "@/lib/mock/auditLog";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { usePermissionMode } from "@/components/auth/RequireRole";
+import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
+import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 
 const criterios = [
-  { key: "precio", label: "Precio total", prefix: "$", suffix: "" },
-  { key: "plazo", label: "Plazo de entrega", prefix: "", suffix: " días" },
-  { key: "calidad", label: "Calidad / Score", prefix: "", suffix: "" },
-  { key: "pago", label: "Condiciones de pago", prefix: "", suffix: " días" },
-];
+  { key: "precio", label: "Precio total", prefix: "$", suffix: "", lowerIsBetter: true },
+  { key: "plazo", label: "Plazo de entrega", prefix: "", suffix: " días", lowerIsBetter: true },
+  { key: "calidad", label: "Calidad / Score", prefix: "", suffix: "", lowerIsBetter: false },
+  { key: "pago", label: "Condiciones de pago", prefix: "", suffix: " días", lowerIsBetter: false },
+] as const;
+
+const defaultWeights = { precio: 40, plazo: 20, calidad: 25, pago: 15 };
+
+function normalize(values: number[], lowerIsBetter: boolean) {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  if (max === min) return values.map(() => 100);
+  return values.map((v) => {
+    const ratio = (v - min) / (max - min);
+    return lowerIsBetter ? 100 - ratio * 100 : ratio * 100;
+  });
+}
+
+function computeScores<T extends { precio: number; plazo: number; calidad: number; pago: number }>(ofertasBase: T[], weights: typeof defaultWeights) {
+  const normalized: Record<string, number[]> = {};
+  criterios.forEach((c) => {
+    const values = ofertasBase.map((o) => o[c.key]);
+    normalized[c.key] = normalize(values, c.lowerIsBetter);
+  });
+  const totalWeight = Object.values(weights).reduce((a, b) => a + b, 0) || 1;
+  return ofertasBase.map((o, i) => {
+    const score = criterios.reduce((sum, c) => sum + (normalized[c.key][i] * weights[c.key]) / totalWeight, 0);
+    return { ...o, score: Math.round(score) };
+  });
+}
 
 export function CuadroComparativo() {
-  const sorted = [...ofertasComparativo].sort((a, b) => b.score - a.score);
-  const winner = sorted[0];
-  const minPrecio = Math.min(...ofertasComparativo.map((o) => o.precio));
+  const { id } = useParams();
+  const requerimientoId = id ?? "RFP-2024-0032";
+  const proceso = getProceso(requerimientoId);
+  const { currentUser } = useAuth();
+  const mode = usePermissionMode();
+  const [weights, setWeights] = useState(defaultWeights);
+  const [appliedWeights, setAppliedWeights] = useState(defaultWeights);
+  const [showWeights, setShowWeights] = useState(false);
+
+  const ofertasBase = proceso?.ofertas ?? [];
+  const ofertas = useMemo(() => computeScores(ofertasBase, appliedWeights), [ofertasBase, appliedWeights]);
+  const sorted = [...ofertas].sort((a, b) => b.score - a.score);
+  // Once a proceso is already adjudicado y firmado, the actual signed winner
+  // takes precedence over whatever the live weight sliders currently compute.
+  const winner = proceso?.adjudicacion?.yaFirmado
+    ? ofertas.find((o) => o.proveedorId === proceso.adjudicacion!.proveedorId) ?? sorted[0]
+    : sorted[0];
+  const minPrecio = ofertasBase.length ? Math.min(...ofertasBase.map((o) => o.precio)) : 0;
+  const weightSum = weights.precio + weights.plazo + weights.calidad + weights.pago;
+
+  if (!proceso) {
+    return (
+      <div className="p-6">
+        <EmptyState
+          icon={FileQuestion}
+          title="Aún no hay comparativo para este requerimiento"
+          description="El cuadro comparativo se genera automáticamente cuando la licitación recibe ofertas. Este proceso todavía no llegó a esa etapa."
+        />
+      </div>
+    );
+  }
+
+  function aplicarPesos() {
+    setAppliedWeights(weights);
+    logAudit({
+      usuario: currentUser?.nombre ?? "—",
+      accion: "Ajuste de pesos en comparativo",
+      detalle: `${requerimientoId} → Precio ${weights.precio}% · Plazo ${weights.plazo}% · Calidad ${weights.calidad}% · Pago ${weights.pago}%`,
+    });
+    toast.warning("Pesos actualizados", { description: "Este ajuste queda registrado en el log de auditoría." });
+  }
+
+  function exportarCSV() {
+    const header = ["Proveedor", "Precio", "Plazo (días)", "Calidad", "Condiciones de pago (días)", "Score"];
+    const rows = ofertas.map((o) => [o.proveedor, o.precio, o.plazo, o.calidad, o.pago, o.score]);
+    const csv = [header, ...rows].map((r) => r.join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `comparativo-${requerimientoId}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Reporte exportado", { description: `comparativo-${requerimientoId}.csv` });
+  }
+
+  const brechaBenchmark = Math.round(((proceso.benchmark - winner.precio) / proceso.benchmark) * 100);
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cuadro Comparativo de Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · RFP-2024-0032</p>
+          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimientoId} — {proceso.titulo}</p>
         </div>
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" /> Exportar
-        </Button>
+        <div className="flex gap-2">
+          {mode === "full" && (
+            <Button variant="outline" className="gap-2" onClick={() => setShowWeights((v) => !v)}>
+              <SlidersHorizontal className="h-4 w-4" /> Ajustar pesos
+            </Button>
+          )}
+          <Button variant="outline" className="gap-2" onClick={exportarCSV}>
+            <Download className="h-4 w-4" /> Exportar
+          </Button>
+        </div>
       </div>
+
+      {showWeights && mode === "full" && (
+        <Card className="space-y-4 p-5">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold text-sm">Pesos de criterios de evaluación</h3>
+            <span className={cn("text-xs font-medium", weightSum === 100 ? "text-success" : "text-destructive")}>
+              Suma: {weightSum}%{weightSum !== 100 && " (debe sumar 100%)"}
+            </span>
+          </div>
+          {criterios.map((c) => (
+            <div key={c.key} className="space-y-1.5">
+              <div className="flex justify-between text-sm"><span>{c.label}</span><span className="font-medium">{weights[c.key]}%</span></div>
+              <Slider
+                value={[weights[c.key]]}
+                max={100}
+                step={5}
+                onValueChange={([v]) => setWeights((prev) => ({ ...prev, [c.key]: v }))}
+              />
+            </div>
+          ))}
+          <p className="text-xs text-muted-foreground">Ajustar los pesos recalcula el score de cada proveedor y queda registrado en el log de auditoría.</p>
+          <Button size="sm" disabled={weightSum !== 100} onClick={aplicarPesos}>Aplicar y recalcular</Button>
+        </Card>
+      )}
 
       {/* Ranking */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -73,7 +191,7 @@ export function CuadroComparativo() {
             <thead>
               <tr className="border-b border-border bg-muted/50">
                 <th className="p-4 text-left text-sm font-medium text-muted-foreground">Criterio</th>
-                {ofertasComparativo.map((o) => (
+                {ofertas.map((o) => (
                   <th key={o.proveedor} className="p-4 text-left text-sm font-medium">
                     {o.proveedor}
                     {o.proveedor === winner.proveedor && <Badge className="ml-2 bg-primary/10 text-primary text-[10px]">Ganador</Badge>}
@@ -83,13 +201,13 @@ export function CuadroComparativo() {
             </thead>
             <tbody>
               {criterios.map((c) => {
-                const values = ofertasComparativo.map((o) => o[c.key as keyof typeof o] as number);
-                const best = c.key === "precio" || c.key === "plazo" || c.key === "pago" ? Math.min(...values) : Math.max(...values);
+                const values = ofertas.map((o) => o[c.key]);
+                const best = c.lowerIsBetter ? Math.min(...values) : Math.max(...values);
                 return (
                   <tr key={c.key} className="border-b border-border">
                     <td className="p-4 text-sm font-medium">{c.label}</td>
-                    {ofertasComparativo.map((o) => {
-                      const val = o[c.key as keyof typeof o] as number;
+                    {ofertas.map((o) => {
+                      const val = o[c.key];
                       const isBest = val === best;
                       const isAnomaly = c.key === "precio" && val > minPrecio * 1.2;
                       return (
@@ -110,7 +228,7 @@ export function CuadroComparativo() {
               })}
               <tr className="border-b border-border bg-muted/30">
                 <td className="p-4 text-sm font-bold">Score Total</td>
-                {ofertasComparativo.map((o) => (
+                {ofertas.map((o) => (
                   <td key={o.proveedor} className={cn("p-4 text-lg font-bold", o.proveedor === winner.proveedor && "text-primary")}>
                     {o.score}
                   </td>
@@ -123,7 +241,7 @@ export function CuadroComparativo() {
 
       {/* Benchmark */}
       <div className="rounded-lg bg-info/10 p-4 text-sm text-info">
-        <strong>Benchmark de mercado:</strong> El precio de referencia para esta categoría en los últimos 6 meses es <strong>$172,000</strong> (promedio LATAM). La oferta de {winner.proveedor} está <strong className="text-success">2% por debajo</strong> del benchmark.
+        <strong>Benchmark de mercado:</strong> El precio de referencia para esta categoría en los últimos 6 meses es <strong>${proceso.benchmark.toLocaleString()}</strong> (promedio LATAM). La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del benchmark.
       </div>
 
       {/* Consultant Note */}
@@ -136,26 +254,27 @@ export function CuadroComparativo() {
               <Badge variant="secondary" className="text-[10px]">Consultora de sourcing</Badge>
               <span className="text-xs text-muted-foreground">Hace 1 h</span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {winner.proveedor} ofrece el mejor balance precio-calidad. Su score de homologación (94) y 97% de entregas a tiempo refuerzan la recomendación. Sugiero proceder a adjudicación directa sin ronda de negociación — el margen de mejora es marginal.
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{proceso.notaConsultor}</p>
           </div>
         </div>
       </Card>
 
       {/* Actions */}
-      <div className="flex gap-3">
-        <Link to="/cliente/negociacion">
-          <Button variant="outline" className="gap-2">
-            <Settings className="h-4 w-4" /> Iniciar negociación
-          </Button>
-        </Link>
-        <Link to="/cliente/adjudicacion">
-          <Button className="gradient-brand text-white gap-2">
-            <ArrowRight className="h-4 w-4" /> Adjudicar directamente
-          </Button>
-        </Link>
-      </div>
+      {mode === "full" && (
+        <div className="flex gap-3">
+          <Link to={`/cliente/negociacion/${requerimientoId}`}>
+            <Button variant="outline" className="gap-2">
+              <Settings className="h-4 w-4" /> Iniciar negociación
+            </Button>
+          </Link>
+          <Link to={`/cliente/adjudicacion/${requerimientoId}`}>
+            <Button className="gradient-brand text-white gap-2">
+              <ArrowRight className="h-4 w-4" /> Adjudicar directamente
+            </Button>
+          </Link>
+        </div>
+      )}
+      <CopilotoPanel context="comparativo" />
     </div>
   );
 }

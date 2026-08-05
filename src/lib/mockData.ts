@@ -18,6 +18,8 @@ export interface Requerimiento {
   proveedoresInvitados: number;
   ofertasRecibidas: number;
   solicitante: string;
+  /** Defaults to "acme" when omitted — most seed data predates multi-tenant support. */
+  companyId?: string;
 }
 
 export const requerimientos: Requerimiento[] = [
@@ -29,6 +31,9 @@ export const requerimientos: Requerimiento[] = [
   { id: "RFP-2024-0027", titulo: "Plataforma de capacitación RR.HH.", categoria: "RR.HH.", estado: "borrador", montoEstimado: 45000, fechaLimite: "2024-08-25", progreso: 5, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "Carlos Méndez" },
   { id: "RFP-2024-0026", titulo: "Auditoría externa anual", categoria: "Servicios Generales", estado: "cerrado", montoEstimado: 58000, fechaLimite: "2024-06-30", progreso: 100, proveedoresInvitados: 4, ofertasRecibidas: 4, solicitante: "Ana Ruiz" },
   { id: "RFP-2024-0025", titulo: "Licencias software de diseño", categoria: "TI", estado: "cerrado", montoEstimado: 38000, fechaLimite: "2024-06-15", progreso: 100, proveedoresInvitados: 5, ofertasRecibidas: 5, solicitante: "Carlos Méndez" },
+  { id: "RFP-2024-0044", titulo: "Renovación de licencias Microsoft 365", categoria: "TI", estado: "en_licitacion", montoEstimado: 96000, fechaLimite: "2024-08-28", progreso: 30, proveedoresInvitados: 4, ofertasRecibidas: 2, solicitante: "María Gómez", companyId: "techcorp" },
+  { id: "RFP-2024-0043", titulo: "Servicios de seguridad perimetral", categoria: "Servicios Generales", estado: "pendiente_aprobacion", montoEstimado: 54000, fechaLimite: "2024-09-05", progreso: 10, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "María Gómez", companyId: "techcorp" },
+  { id: "RFP-2024-0045", titulo: "Consultoría de transformación digital", categoria: "TI", estado: "adjudicado", montoEstimado: 210000, fechaLimite: "2024-06-20", progreso: 100, proveedoresInvitados: 6, ofertasRecibidas: 5, solicitante: "María Gómez", companyId: "techcorp" },
 ];
 
 export interface Proveedor {
@@ -69,6 +74,8 @@ export interface Contrato {
   vigenciaInicio: string;
   vigenciaFin: string;
   estado: "Activo" | "Por vencer" | "Vencido" | "En renovación";
+  /** Defaults to "acme" when omitted — most seed data predates multi-tenant support. */
+  companyId?: string;
 }
 
 export const contratos: Contrato[] = [
@@ -80,6 +87,8 @@ export const contratos: Contrato[] = [
   { id: "CTO-2024-0037", tipo: "Addendum", proveedor: "EcoPack Industrial", categoria: "Materia Prima", monto: 28000, vigenciaInicio: "2024-04-10", vigenciaFin: "2024-10-10", estado: "Por vencer" },
   { id: "CTO-2024-0036", tipo: "PO", proveedor: "GlobalChem Supplies", categoria: "Materia Prima", monto: 92000, vigenciaInicio: "2024-05-01", vigenciaFin: "2024-11-01", estado: "Activo" },
   { id: "CTO-2024-0035", tipo: "Contrato", proveedor: "NovaTech Consulting", categoria: "TI", monto: 145000, vigenciaInicio: "2023-12-01", vigenciaFin: "2024-07-31", estado: "Vencido" },
+  { id: "CTO-2024-0046", tipo: "Contrato", proveedor: "NovaTech Consulting", categoria: "TI", monto: 210000, vigenciaInicio: "2024-06-25", vigenciaFin: "2025-06-24", estado: "Activo", companyId: "techcorp" },
+  { id: "CTO-2024-0047", tipo: "Contrato", proveedor: "SoftDesign Studio", categoria: "TI", monto: 96000, vigenciaInicio: "2023-09-01", vigenciaFin: "2024-08-31", estado: "Por vencer", companyId: "techcorp" },
 ];
 
 export interface Aprobacion {
