@@ -2,11 +2,11 @@ import type { Company, MockUser, Portal } from "@/lib/mock/users";
 
 export type LoginStep = "credentials" | "2fa" | "select-company" | "done";
 
-export type LoginResultStatus = "invalid" | "locked" | "2fa_required" | "select_company" | "success";
+export type LoginResultStatus = "invalid" | "2fa_required" | "select_company" | "success";
 
 export interface LoginResult {
   status: LoginResultStatus;
-  attemptsLeft?: number;
+  message?: string;
 }
 
 export interface Session {
@@ -25,9 +25,11 @@ export interface AuthContextValue {
   activeCompany: Company | null;
   loginStep: LoginStep;
   pendingUser: PendingUser | null;
+  /** True while the initial Supabase session is being resolved on page load. */
+  sessionLoading: boolean;
   login: (email: string, password: string, portal: Portal) => Promise<LoginResult>;
-  verify2FA: (code: string) => Promise<{ status: "invalid" | "select_company" | "success" }>;
+  verify2FA: (code: string) => Promise<{ status: "invalid" | "success" }>;
   selectCompany: (companyId: string) => Promise<void>;
   switchCompany: (companyId: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }

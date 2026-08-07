@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { io, type Socket } from "socket.io-client";
 import { toast } from "sonner";
-import { TOKEN_KEY } from "@/lib/api/http";
+import { supabase } from "@/lib/supabase/client";
 
 export interface Puja {
   proveedorId: string;
@@ -59,17 +59,24 @@ export function useSubasta(requerimientoId: string | undefined) {
 
   useEffect(() => {
     if (!requerimientoId) return;
-    const token = localStorage.getItem(TOKEN_KEY);
-    const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
-    const socket = io(`${baseUrl}/subasta`, { auth: { token }, transports: ["websocket"] });
-    socketRef.current = socket;
+    let cancelled = false;
+    let socket: Socket | null = null;
 
-    socket.on("connect", () => socket.emit("join", { requerimientoId }));
-    socket.on("state", (raw: ApiAuctionState) => setState(toAuctionState(raw, requerimientoId)));
-    socket.on("error", (err: { message: string }) => toast.error(err.message));
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      const token = data.session?.access_token;
+      const baseUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
+      socket = io(`${baseUrl}/subasta`, { auth: { token }, transports: ["websocket"] });
+      socketRef.current = socket;
+
+      socket.on("connect", () => socket!.emit("join", { requerimientoId }));
+      socket.on("state", (raw: ApiAuctionState) => setState(toAuctionState(raw, requerimientoId)));
+      socket.on("error", (err: { message: string }) => toast.error(err.message));
+    });
 
     return () => {
-      socket.disconnect();
+      cancelled = true;
+      socket?.disconnect();
       socketRef.current = null;
     };
   }, [requerimientoId]);

@@ -7,13 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Mail, Lock, Loader2 } from "lucide-react";
+import { Mail, Lock, Loader2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { DEMO_2FA_CODE, type Portal } from "@/lib/mock/users";
+import type { Portal } from "@/lib/mock/users";
 import { sleep } from "@/lib/mock/simulate";
 import { apiErrorMessage } from "@/lib/api/http";
-
-type Step = "credentials" | "2fa" | "company";
+import { supabase } from "@/lib/supabase/client";
 
 export function PortalLoginForm({ portal, demoHint, footer }: {
   portal: Portal;
@@ -22,15 +21,16 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, verify2FA, selectCompany, pendingUser } = useAuth();
+  const { login, verify2FA, selectCompany, pendingUser, loginStep } = useAuth();
 
-  const [step, setStep] = useState<Step>("credentials");
+  const step = loginStep === "2fa" ? "2fa" : loginStep === "select-company" ? "company" : "credentials";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotSent, setForgotSent] = useState(false);
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
 
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
@@ -46,17 +46,12 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     try {
       const result = await login(email, password, portal);
       if (result.status === "invalid") {
-        setError(`Correo o contraseña incorrectos. Intentos restantes: ${result.attemptsLeft ?? 0}.`);
-      } else if (result.status === "locked") {
-        setError("Cuenta bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.");
-      } else if (result.status === "2fa_required") {
-        setStep("2fa");
-      } else if (result.status === "select_company") {
-        setStep("company");
+        setError(result.message ?? "Correo o contraseña incorrectos.");
       } else if (result.status === "success") {
         toast.success("Sesión iniciada correctamente");
         goToDashboard();
       }
+      // "2fa_required" / "select_company" just advance `loginStep`, re-rendering below.
     } catch (err) {
       setError(apiErrorMessage(err, "No pudimos conectar con el servidor. Intenta de nuevo."));
     } finally {
@@ -70,15 +65,14 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     const result = await verify2FA(otp);
     setLoading(false);
     if (result.status === "invalid") {
-      setError("Código incorrecto. Usa el código de demo mostrado abajo.");
+      setError("Código incorrecto. Verifica tu app autenticadora.");
       return;
     }
-    if (result.status === "select_company") {
-      setStep("company");
-    } else {
+    if (loginStep === "done") {
       toast.success("Verificación en dos pasos completada");
       goToDashboard();
     }
+    // else loginStep is now "select-company" — the form below re-renders to that step.
   }
 
   async function handleSelectCompany(companyId: string) {
@@ -98,12 +92,22 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     toast.info(`Autenticación con ${provider} no disponible en este entorno de demostración.`);
   }
 
+  async function handleForgotPassword() {
+    if (!email.trim()) return;
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim());
+    if (resetError) {
+      toast.error(apiErrorMessage(resetError, "No pudimos enviar el enlace de recuperación."));
+      return;
+    }
+    setForgotSent(true);
+  }
+
   if (step === "2fa" && pendingUser) {
     return (
       <div className="mx-auto w-full max-w-sm space-y-5">
         <div>
           <h2 className="text-2xl font-bold">Verificación en dos pasos</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Ingresa el código de 6 dígitos para confirmar que eres {pendingUser.nombre}.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Ingresa el código de tu app autenticadora para confirmar que eres {pendingUser.nombre}.</p>
         </div>
         <div className="flex flex-col items-center gap-3">
           <InputOTP maxLength={6} value={otp} onChange={setOtp}>
@@ -116,8 +120,8 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         <Button className="w-full gradient-brand text-white" disabled={otp.length < 6 || loading} onClick={handleVerify2FA}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
         </Button>
-        <div className="rounded-lg bg-muted p-3 text-center text-xs text-muted-foreground">
-          <span className="font-medium text-foreground">Código de demo:</span> {DEMO_2FA_CODE}
+        <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
+          <ShieldCheck className="h-3.5 w-3.5 shrink-0" /> Código de 6 dígitos de tu app autenticadora (Google Authenticator, Authy, etc.)
         </div>
       </div>
     );
@@ -158,7 +162,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Contraseña</Label>
-            <button type="button" onClick={() => setForgotOpen(true)} className="text-xs text-primary hover:underline">¿Olvidaste tu contraseña?</button>
+            <button type="button" onClick={() => { setForgotOpen(true); setForgotSent(false); }} className="text-xs text-primary hover:underline">¿Olvidaste tu contraseña?</button>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -197,10 +201,17 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           <DialogHeader>
             <DialogTitle>Recuperar contraseña</DialogTitle>
             <DialogDescription>
-              Si el correo existe en nuestra red, te enviamos un enlace para restablecer tu contraseña.
+              Te enviamos un enlace real para restablecer tu contraseña si el correo existe en nuestra red.
             </DialogDescription>
           </DialogHeader>
-          <p className="text-sm text-muted-foreground">Enlace enviado a <span className="font-medium text-foreground">{email || "tu correo"}</span> (simulado).</p>
+          {forgotSent ? (
+            <p className="text-sm text-muted-foreground">Enlace enviado a <span className="font-medium text-foreground">{email}</span>. Revisa tu bandeja de entrada.</p>
+          ) : (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">Enviaremos el enlace a <span className="font-medium text-foreground">{email || "tu correo"}</span>.</p>
+              <Button className="w-full gradient-brand text-white" disabled={!email.trim()} onClick={handleForgotPassword}>Enviar enlace</Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

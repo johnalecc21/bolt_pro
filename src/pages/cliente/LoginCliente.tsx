@@ -51,7 +51,7 @@ export function LoginCliente() {
         </div>
         <PortalLoginForm
           portal="cliente"
-          demoHint="carlos@acme.com / demo123 (o admin@acme.com para 2FA)"
+          demoHint="carlos@acme.com / demo123 (admin@acme.com tiene 2 empresas)"
           footer={
             <p className="text-center text-sm text-muted-foreground">
               ¿Eres proveedor?{" "}

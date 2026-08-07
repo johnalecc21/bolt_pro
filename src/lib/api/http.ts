@@ -1,15 +1,25 @@
 import axios, { AxiosError } from "axios";
-
-export const TOKEN_KEY = "procureos_token";
+import { supabase } from "@/lib/supabase/client";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3001",
 });
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(TOKEN_KEY);
+let activeCompanyId: string | null = null;
+
+/** Called by AuthContext whenever the user's active company changes. */
+export function setActiveCompanyId(companyId: string | null) {
+  activeCompanyId = companyId;
+}
+
+api.interceptors.request.use(async (config) => {
+  const { data } = await supabase.auth.getSession();
+  const token = data.session?.access_token;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+  }
+  if (activeCompanyId) {
+    config.headers["x-company-id"] = activeCompanyId;
   }
   return config;
 });
@@ -35,6 +45,10 @@ export function apiErrorMessage(err: unknown, fallback = "Ocurrió un error. Int
     const data = err.response?.data as { message?: string | string[] } | undefined;
     if (Array.isArray(data?.message)) return data.message.join(" ");
     if (typeof data?.message === "string") return data.message;
+  }
+  // Covers Supabase's AuthError/PostgrestError and plain Error instances.
+  if (err && typeof err === "object" && "message" in err && typeof err.message === "string" && err.message) {
+    return err.message;
   }
   return fallback;
 }

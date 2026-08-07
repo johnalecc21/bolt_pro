@@ -9,6 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, KeyRound, Globe, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { roleLabels } from "@/lib/mock/users";
+import { TwoFactorSettingsCard } from "@/components/shared/TwoFactorSettingsCard";
+import { supabase } from "@/lib/supabase/client";
+import { apiErrorMessage } from "@/lib/api/http";
 
 export function ConfiguracionCuenta() {
   const { currentUser, activeCompany } = useAuth();
@@ -16,16 +19,32 @@ export function ConfiguracionCuenta() {
   const [idioma, setIdioma] = useState("es");
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
+  const [cambiando, setCambiando] = useState(false);
 
   function guardarPerfil() {
     toast.success("Perfil actualizado");
   }
 
-  function cambiarPassword() {
+  async function cambiarPassword() {
     if (!actual || !nueva) return;
-    toast.success("Contraseña actualizada");
-    setActual("");
-    setNueva("");
+    setCambiando(true);
+    try {
+      // Supabase's updateUser doesn't take a "current password" — re-authenticate
+      // with it first so a stolen session token alone can't change the password.
+      if (currentUser?.email) {
+        const { error: reauthError } = await supabase.auth.signInWithPassword({ email: currentUser.email, password: actual });
+        if (reauthError) throw new Error("La contraseña actual no es correcta.");
+      }
+      const { error } = await supabase.auth.updateUser({ password: nueva });
+      if (error) throw error;
+      toast.success("Contraseña actualizada");
+      setActual("");
+      setNueva("");
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo actualizar la contraseña."));
+    } finally {
+      setCambiando(false);
+    }
   }
 
   return (
@@ -82,8 +101,10 @@ export function ConfiguracionCuenta() {
             <Input type="password" value={nueva} onChange={(e) => setNueva(e.target.value)} />
           </div>
         </div>
-        <Button className="mt-4" variant="outline" onClick={cambiarPassword} disabled={!actual || !nueva}>Actualizar contraseña</Button>
+        <Button className="mt-4" variant="outline" onClick={cambiarPassword} disabled={!actual || !nueva || cambiando}>Actualizar contraseña</Button>
       </Card>
+
+      <TwoFactorSettingsCard />
 
       <Card className="flex items-center justify-between p-5">
         <div>

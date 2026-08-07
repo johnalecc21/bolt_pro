@@ -1,160 +1,163 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Company, MockUser, Portal } from "@/lib/mock/users";
-import {
-  apiLogin, apiVerify2FA, apiSelectCompany, apiSwitchCompany, apiMe,
-  toCompany, toMockUser,
-} from "@/lib/api/auth";
-import { TOKEN_KEY, setUnauthorizedHandler } from "@/lib/api/http";
+import { apiMe, toCompany, toMockUser } from "@/lib/api/auth";
+import { setActiveCompanyId, setUnauthorizedHandler } from "@/lib/api/http";
+import { supabase } from "@/lib/supabase/client";
 import type { AuthContextValue, LoginResult, LoginStep, PendingUser } from "@/lib/auth/types";
 
-const SESSION_CACHE_KEY = "procureos_session_cache";
+const ACTIVE_COMPANY_KEY = "procureos_active_company";
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-interface SessionCache {
-  user: MockUser;
-  activeCompany: Company;
-}
-
-function persistSession(token: string, user: MockUser, activeCompany: Company) {
-  localStorage.setItem(TOKEN_KEY, token);
-  localStorage.setItem(SESSION_CACHE_KEY, JSON.stringify({ user, activeCompany }));
-}
-
-function clearSession() {
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(SESSION_CACHE_KEY);
-}
-
-// Read synchronously during the initial render (not in an effect) so
-// ProtectedRoute never sees a false "logged out" flash before hydration.
-function readCachedSession(): SessionCache | null {
-  const token = localStorage.getItem(TOKEN_KEY);
-  const raw = localStorage.getItem(SESSION_CACHE_KEY);
-  if (!token || !raw) return null;
-  try {
-    return JSON.parse(raw) as SessionCache;
-  } catch {
-    clearSession();
-    return null;
-  }
+async function hasMfaEnrolled(): Promise<boolean> {
+  const { data } = await supabase.auth.mfa.listFactors();
+  return (data?.totp ?? []).some((f) => f.status === "verified");
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [cached] = useState(readCachedSession);
-  const [currentUser, setCurrentUser] = useState<MockUser | null>(cached?.user ?? null);
-  const [activeCompany, setActiveCompany] = useState<Company | null>(cached?.activeCompany ?? null);
-  const [loginStep, setLoginStep] = useState<LoginStep>(cached ? "done" : "credentials");
+  const [currentUser, setCurrentUser] = useState<MockUser | null>(null);
+  const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
+  const [loginStep, setLoginStep] = useState<LoginStep>("credentials");
   const [pendingUser, setPendingUser] = useState<PendingUser | null>(null);
-  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [sessionLoading, setSessionLoading] = useState(true);
+  const pendingMeRef = useRef<Awaited<ReturnType<typeof apiMe>> | null>(null);
 
-  function logout() {
+  async function logout() {
+    await supabase.auth.signOut();
     setCurrentUser(null);
-    setActiveCompany(null);
+    setActiveCompanyState(null);
     setPendingUser(null);
-    setPendingToken(null);
     setLoginStep("credentials");
-    clearSession();
+    localStorage.removeItem(ACTIVE_COMPANY_KEY);
+    setActiveCompanyId(null);
   }
 
-  // Register the 401 handler once; re-registering on every render would leak listeners.
   useEffect(() => {
-    setUnauthorizedHandler(logout);
+    setUnauthorizedHandler(() => void logout());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Validate the cached session against the backend in the background — logs out silently if the token expired.
+  // Resolve whatever session Supabase already has cached (survives refresh) —
+  // supabase-js persists + auto-refreshes it, we just load our app profile on top.
   useEffect(() => {
-    if (!cached) return;
-    apiMe()
-      .then((data) => {
-        const companies = data.companies.map(toCompany);
-        setCurrentUser(toMockUser(data.user, companies));
-        setActiveCompany(toCompany(data.activeCompany));
-      })
-      .catch(() => logout());
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        if (!cancelled) setSessionLoading(false);
+        return;
+      }
+      setActiveCompanyId(localStorage.getItem(ACTIVE_COMPANY_KEY));
+      try {
+        const me = await apiMe();
+        const requires2FA = await hasMfaEnrolled();
+        if (cancelled) return;
+        const companies = me.companies.map(toCompany);
+        setCurrentUser(toMockUser(me.user, companies, requires2FA));
+        setActiveCompanyState(toCompany(me.activeCompany));
+        localStorage.setItem(ACTIVE_COMPANY_KEY, me.activeCompany.id);
+        setLoginStep("done");
+      } catch {
+        await logout();
+      } finally {
+        if (!cancelled) setSessionLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function finalize(me: Awaited<ReturnType<typeof apiMe>>, requires2FA: boolean) {
+    const companies = me.companies.map(toCompany);
+    setCurrentUser(toMockUser(me.user, companies, requires2FA));
+    setActiveCompanyState(toCompany(me.activeCompany));
+    localStorage.setItem(ACTIVE_COMPANY_KEY, me.activeCompany.id);
+    setLoginStep("done");
+    setPendingUser(null);
+    pendingMeRef.current = null;
+  }
 
   async function login(email: string, password: string, portal: Portal): Promise<LoginResult> {
-    const data = await apiLogin(email, password, portal);
-    if (data.status === "invalid") {
-      return { status: "invalid", attemptsLeft: data.attemptsLeft };
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      return { status: "invalid", message: "Correo o contraseña incorrectos." };
     }
-    if (data.status === "locked") {
-      return { status: "locked" };
+
+    let me;
+    try {
+      me = await apiMe();
+    } catch {
+      await supabase.auth.signOut();
+      return { status: "invalid", message: "No se pudo cargar el perfil de la cuenta." };
     }
-    if (data.status === "2fa_required") {
-      setPendingToken(data.pendingToken);
-      setPendingUser({ nombre: data.user.nombre, companies: [] });
+
+    if (me.user.portal.toLowerCase() !== portal) {
+      await supabase.auth.signOut();
+      return { status: "invalid", message: "Esta cuenta no pertenece a este portal." };
+    }
+
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aal?.nextLevel === "aal2" && aal.currentLevel !== "aal2") {
+      pendingMeRef.current = me;
+      setPendingUser({ nombre: me.user.nombre, companies: me.companies.map(toCompany) });
       setLoginStep("2fa");
       return { status: "2fa_required" };
     }
-    if (data.status === "select_company") {
-      setPendingToken(data.pendingToken);
-      setPendingUser({ nombre: "", companies: data.companies.map(toCompany) });
+
+    if (me.companies.length > 1) {
+      pendingMeRef.current = me;
+      setPendingUser({ nombre: me.user.nombre, companies: me.companies.map(toCompany) });
       setLoginStep("select-company");
       return { status: "select_company" };
     }
-    const companies = data.companies.map(toCompany);
-    setCurrentUser(toMockUser(data.user, companies));
-    setActiveCompany(toCompany(data.activeCompany));
-    setLoginStep("done");
-    persistSession(data.accessToken, toMockUser(data.user, companies), toCompany(data.activeCompany));
+
+    await finalize(me, false);
     return { status: "success" };
   }
 
-  async function verify2FA(code: string): Promise<{ status: "invalid" | "select_company" | "success" }> {
-    if (!pendingToken) return { status: "invalid" };
-    let data;
-    try {
-      data = await apiVerify2FA(pendingToken, code);
-    } catch {
-      return { status: "invalid" };
-    }
-    if (data.status === "select_company") {
-      setPendingToken(data.pendingToken);
-      setPendingUser((prev) => ({ nombre: prev?.nombre ?? "", companies: data.companies.map(toCompany) }));
+  async function verify2FA(code: string): Promise<{ status: "invalid" | "success" }> {
+    const { data: factors } = await supabase.auth.mfa.listFactors();
+    const factor = factors?.totp[0];
+    if (!factor) return { status: "invalid" };
+
+    const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+    if (error) return { status: "invalid" };
+
+    // Re-fetch: the session is now aal2 and `/auth/me` reflects the same profile.
+    const me = pendingMeRef.current ?? (await apiMe());
+    if (me.companies.length > 1) {
+      setPendingUser({ nombre: me.user.nombre, companies: me.companies.map(toCompany) });
       setLoginStep("select-company");
-      return { status: "select_company" };
+      return { status: "success" };
     }
-    const companies = data.companies.map(toCompany);
-    setCurrentUser(toMockUser(data.user, companies));
-    setActiveCompany(toCompany(data.activeCompany));
-    setLoginStep("done");
-    persistSession(data.accessToken, toMockUser(data.user, companies), toCompany(data.activeCompany));
-    setPendingUser(null);
-    setPendingToken(null);
+    await finalize(me, true);
     return { status: "success" };
   }
 
   async function selectCompany(companyId: string): Promise<void> {
-    if (!pendingToken) return;
-    const data = await apiSelectCompany(pendingToken, companyId);
-    const companies = data.companies.map(toCompany);
-    setCurrentUser(toMockUser(data.user, companies));
-    setActiveCompany(toCompany(data.activeCompany));
-    setLoginStep("done");
-    persistSession(data.accessToken, toMockUser(data.user, companies), toCompany(data.activeCompany));
-    setPendingUser(null);
-    setPendingToken(null);
+    setActiveCompanyId(companyId);
+    localStorage.setItem(ACTIVE_COMPANY_KEY, companyId);
+    const me = await apiMe();
+    const requires2FA = await hasMfaEnrolled();
+    await finalize(me, requires2FA);
   }
 
   async function switchCompany(companyId: string): Promise<void> {
     if (!currentUser) return;
-    const data = await apiSwitchCompany(companyId);
-    const companies = data.companies.map(toCompany);
-    const user = toMockUser(data.user, companies);
-    setCurrentUser(user);
-    setActiveCompany(toCompany(data.activeCompany));
-    persistSession(data.accessToken, user, toCompany(data.activeCompany));
+    setActiveCompanyId(companyId);
+    localStorage.setItem(ACTIVE_COMPANY_KEY, companyId);
+    const me = await apiMe();
+    setCurrentUser(toMockUser(me.user, me.companies.map(toCompany), currentUser.requires2FA));
+    setActiveCompanyState(toCompany(me.activeCompany));
   }
 
   const value = useMemo<AuthContextValue>(() => ({
-    currentUser, activeCompany, loginStep, pendingUser,
+    currentUser, activeCompany, loginStep, pendingUser, sessionLoading,
     login, verify2FA, selectCompany, switchCompany, logout,
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [currentUser, activeCompany, loginStep, pendingUser, pendingToken]);
+  }), [currentUser, activeCompany, loginStep, pendingUser, sessionLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

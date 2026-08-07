@@ -4,8 +4,10 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import type { Portal } from "@/lib/mock/users";
 
 export function ProtectedRoute({ portal, children }: { portal: Portal; children: ReactNode }) {
-  const { currentUser, loginStep } = useAuth();
+  const { currentUser, loginStep, sessionLoading } = useAuth();
   const location = useLocation();
+
+  if (sessionLoading) return null;
 
   if (!currentUser || currentUser.portal !== portal || loginStep !== "done") {
     return <Navigate to={`/${portal}/login`} replace state={{ from: location }} />;
