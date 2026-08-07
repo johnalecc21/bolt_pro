@@ -70,7 +70,7 @@ export function EstadoHomologacion() {
           {registro.documentos.map((d) => (
             <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
               <span>{d.nombre}</span>
-              <StatusBadge estado={d.estado === "validado" ? "Activo" : d.estado === "vencido" ? "Vencido" : d.estado === "subido" ? "Pendiente" : "Pendiente"} />
+              <StatusBadge estado={d.estado === "validado" ? "Activo" : d.estado === "vencido" ? "Vencido" : d.estado === "subido" ? "en_revision" : "Pendiente"} />
             </div>
           ))}
         </div>

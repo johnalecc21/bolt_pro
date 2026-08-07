@@ -75,9 +75,9 @@ export async function obtenerUrlDescarga(documentoId: string): Promise<string> {
   return data.url;
 }
 
-export async function enviarHomologacion() {
-  const { data } = await api.post("/homologacion/enviar");
-  return data;
+export async function enviarHomologacion(): Promise<RegistroHomologacion> {
+  const { data } = await api.post<ApiHomologacion>("/homologacion/enviar");
+  return toRegistro(data);
 }
 
 export interface ColaHomologacionItem extends RegistroHomologacion {

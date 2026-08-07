@@ -15,10 +15,8 @@ import { useAuth } from "@/lib/auth/AuthContext";
 
 const secciones = ["Datos legales", "Datos financieros", "Certificaciones", "Referencias comerciales"];
 const stepsValidacion = [
-  { label: "Ejecutando OCR sobre documentos..." },
-  { label: "Cruzando con registros públicos..." },
-  { label: "Verificación OFAC/PEP: sin coincidencias" },
-  { label: "Calculando score inicial..." },
+  { label: "Subiendo documentos para verificación..." },
+  { label: "Ejecutando OCR y verificación OFAC/PEP..." },
 ];
 
 export function HomologacionForm() {
@@ -76,13 +74,18 @@ export function HomologacionForm() {
 
   async function enviarHomologacion() {
     setEnviando(true);
-    for (const step of stepsValidacion) {
-      setPasoActual(step.label);
-      await simulateProcess([{ duration: 700, label: step.label }]);
-    }
+    setPasoActual(stepsValidacion[0].label);
+    await simulateProcess([{ duration: 500, label: stepsValidacion[0].label }]);
+    setPasoActual(stepsValidacion[1].label);
     try {
-      await apiEnviar();
-      toast.success("Homologación enviada", { description: "Está en revisión. Te avisaremos del resultado." });
+      const resultado = await apiEnviar();
+      if (resultado.alertas.length > 0) {
+        toast.warning("Homologación enviada con alertas", {
+          description: `${resultado.alertas.length} hallazgo(s) de la verificación OCR/OFAC requieren revisión manual.`,
+        });
+      } else {
+        toast.success("Homologación enviada", { description: "Está en revisión. Te avisaremos del resultado." });
+      }
       navigate("/proveedor/dashboard");
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo enviar la homologación."));
