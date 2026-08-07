@@ -20,6 +20,7 @@ export interface RegistroHomologacion {
   alertas: string[];
   fechaSolicitud: string;
   proximaRevalidacion: string;
+  nitDetectado: string | null;
   documentos: DocumentoHomologacion[];
 }
 
@@ -30,6 +31,7 @@ interface ApiHomologacion {
   alertas: string[];
   fechaSolicitud: string;
   proximaRevalidacion: string | null;
+  nitDetectado: string | null;
   documentos: { id: string; nombre: string; estado: "PENDIENTE" | "SUBIDO" | "VALIDADO" | "VENCIDO" }[];
   proveedor?: { nombre: string; iniciales: string };
 }
@@ -42,6 +44,7 @@ function toRegistro(h: ApiHomologacion): RegistroHomologacion {
     alertas: h.alertas,
     fechaSolicitud: h.fechaSolicitud.slice(0, 10),
     proximaRevalidacion: h.proximaRevalidacion ? h.proximaRevalidacion.slice(0, 10) : "—",
+    nitDetectado: h.nitDetectado,
     documentos: h.documentos.map((d) => ({ id: d.id, nombre: d.nombre, estado: d.estado.toLowerCase() as EstadoDocumento })),
   };
 }

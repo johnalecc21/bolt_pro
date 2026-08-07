@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle } from "lucide-react";
+import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle, Copy, ExternalLink } from "lucide-react";
 import { fetchColaHomologacion, resolverHomologacion as apiResolver, obtenerUrlDescarga } from "@/lib/api/homologacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
@@ -38,6 +38,15 @@ export function ColaHomologacion() {
 
   function pedirInfo(proveedor: string) {
     toast.info("Solicitud enviada al proveedor", { description: proveedor });
+  }
+
+  async function copiarNit(nit: string) {
+    await navigator.clipboard.writeText(nit);
+    toast.success("NIT copiado", { description: nit });
+  }
+
+  function verificarEnRues() {
+    window.open("https://rues.org.co/busqueda-avanzada", "_blank", "noopener,noreferrer");
   }
 
   async function verDocumento(docId: string) {
@@ -97,12 +106,23 @@ export function ColaHomologacion() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">Resultado de validación automática</p>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Resultado de validación automática (OCR + OFAC)</p>
                   <div className="space-y-1.5 text-sm text-muted-foreground">
-                    <p>✓ RUT/NIT válido ante registro público</p>
-                    <p>✓ Sin coincidencias en listas OFAC/PEP</p>
+                    <p>{r.alertas.some((a) => a.includes("NIT/RUT")) ? "⚠" : "✓"} {r.nitDetectado ? `NIT/RUT detectado: ${r.nitDetectado}` : "NIT/RUT no detectado en el documento"}</p>
+                    <p>{r.alertas.some((a) => a.includes("OFAC")) ? "⚠" : "✓"} {r.alertas.some((a) => a.includes("OFAC")) ? "Posible coincidencia en lista OFAC/SDN" : "Sin coincidencias en lista OFAC/SDN"}</p>
                     <p>{r.score >= 70 ? "✓" : "⚠"} Score automático: {r.score || "pendiente"}/100</p>
                   </div>
+                  {r.nitDetectado && (
+                    <div className="mt-3 flex items-center gap-2 rounded-lg border border-border p-2">
+                      <span className="font-mono text-xs">{r.nitDetectado}</span>
+                      <button onClick={() => copiarNit(r.nitDetectado!)} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <Copy className="h-3 w-3" /> Copiar
+                      </button>
+                      <button onClick={verificarEnRues} className="flex items-center gap-1 text-xs text-primary hover:underline">
+                        <ExternalLink className="h-3 w-3" /> Verificar en RUES
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
 
