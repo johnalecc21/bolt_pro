@@ -6,18 +6,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Plus, UserPlus, Trash2 } from "lucide-react";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMiPerfil } from "@/lib/api/proveedores";
+import { useAuth } from "@/lib/auth/AuthContext";
 
-interface Certificacion { nombre: string; vigencia: string; vencida: boolean; }
 interface UsuarioEmpresa { nombre: string; email: string; rol: string; }
 
 export function PerfilEmpresa() {
-  const [certificaciones, setCertificaciones] = useState<Certificacion[]>([
-    { nombre: "ISO 27001", vigencia: "2027-03-01", vencida: false },
-    { nombre: "ISO 9001", vigencia: "2024-11-15", vencida: true },
-    { nombre: "ESG", vigencia: "2027-06-20", vencida: false },
-  ]);
+  const { currentUser } = useAuth();
+  const { data: perfil } = useApiData(fetchMiPerfil);
+  const [certificacionesLocal, setCertificacionesLocal] = useState<string[] | null>(null);
+  const certificaciones = certificacionesLocal ?? perfil?.certificaciones ?? [];
   const [usuarios, setUsuarios] = useState<UsuarioEmpresa[]>([
-    { nombre: "Diego Ramírez", email: "contacto@cloudsphere.com", rol: "Administrador" },
+    { nombre: currentUser?.nombre ?? "", email: currentUser?.email ?? "", rol: "Administrador" },
   ]);
   const [nuevoEmail, setNuevoEmail] = useState("");
 
@@ -29,7 +30,7 @@ export function PerfilEmpresa() {
   }
 
   function quitarCertificacion(nombre: string) {
-    setCertificaciones((prev) => prev.filter((c) => c.nombre !== nombre));
+    setCertificacionesLocal(certificaciones.filter((c) => c !== nombre));
   }
 
   return (
@@ -41,11 +42,11 @@ export function PerfilEmpresa() {
 
       <Card className="p-5">
         <h2 className="mb-4 font-semibold">Datos generales</h2>
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="space-y-1.5"><Label>Razón social</Label><Input defaultValue="CloudSphere Technologies" /></div>
-          <div className="space-y-1.5"><Label>Categoría principal</Label><Input defaultValue="TI / Cloud" /></div>
-          <div className="space-y-1.5"><Label>Ubicación</Label><Input defaultValue="Bogotá, CO" /></div>
-          <div className="space-y-1.5"><Label>Sitio web</Label><Input defaultValue="cloudsphere.com" /></div>
+        <div className="grid gap-4 sm:grid-cols-2" key={perfil?.id ?? "loading"}>
+          <div className="space-y-1.5"><Label>Razón social</Label><Input defaultValue={perfil?.nombre ?? ""} /></div>
+          <div className="space-y-1.5"><Label>Categoría principal</Label><Input defaultValue={perfil?.categorias[0] ?? ""} /></div>
+          <div className="space-y-1.5"><Label>Ubicación</Label><Input defaultValue={perfil?.ubicacion ?? ""} /></div>
+          <div className="space-y-1.5"><Label>Sitio web</Label><Input placeholder="tuempresa.com" /></div>
         </div>
         <Button className="mt-4" onClick={() => toast.success("Perfil actualizado")}>Guardar cambios</Button>
       </Card>
@@ -53,13 +54,11 @@ export function PerfilEmpresa() {
       <Card className="p-5">
         <h2 className="mb-4 flex items-center gap-2 font-semibold"><ShieldCheck className="h-4 w-4" /> Certificaciones</h2>
         <div className="space-y-2">
+          {certificaciones.length === 0 && <p className="text-sm text-muted-foreground">Sin certificaciones registradas todavía.</p>}
           {certificaciones.map((c) => (
-            <div key={c.nombre} className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div className="flex items-center gap-2">
-                <Badge variant="secondary">{c.nombre}</Badge>
-                <span className={c.vencida ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>Vigente hasta {c.vigencia}{c.vencida && " (vencida)"}</span>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => quitarCertificacion(c.nombre)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+            <div key={c} className="flex items-center justify-between rounded-lg border border-border p-3">
+              <Badge variant="secondary">{c}</Badge>
+              <Button variant="ghost" size="icon" onClick={() => quitarCertificacion(c)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
             </div>
           ))}
         </div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,23 +6,36 @@ import { Slider } from "@/components/ui/slider";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Wallet, Zap } from "lucide-react";
-import { pagosPOs, type PagoPO } from "@/lib/mock/pagos";
-import { useMockLoading } from "@/hooks/useMockLoading";
+import { fetchMisPagos, simularProntoPago, type PagoPO } from "@/lib/api/pagos";
+import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const estadoMap: Record<PagoPO["estado"], string> = { pendiente: "pendiente_aprobacion", pagado: "Activo", vencido: "Vencido" };
 
 export function PagosFactoring() {
-  const loading = useMockLoading();
+  const { data: pagosPOs, loading } = useApiData(fetchMisPagos);
   const [seleccion, setSeleccion] = useState<PagoPO | null>(null);
   const [diasAdelanto, setDiasAdelanto] = useState(30);
+  const [montoAdelanto, setMontoAdelanto] = useState(0);
+  const [solicitando, setSolicitando] = useState(false);
 
-  const tasaDescuento = 0.015; // 1.5% mensual
-  const montoAdelanto = seleccion ? seleccion.monto * (1 - (tasaDescuento * diasAdelanto) / 30) : 0;
+  useEffect(() => {
+    if (!seleccion) return;
+    simularProntoPago(seleccion.id, diasAdelanto)
+      .then((r) => setMontoAdelanto(r.montoAdelanto))
+      .catch((err) => toast.error(apiErrorMessage(err)));
+  }, [seleccion, diasAdelanto]);
 
-  function solicitar() {
-    toast.success("Solicitud de pronto pago enviada", { description: `Recibirás ~$${Math.round(montoAdelanto).toLocaleString()} en 24-48h.` });
-    setSeleccion(null);
+  async function solicitar() {
+    if (!seleccion) return;
+    setSolicitando(true);
+    try {
+      toast.success("Solicitud de pronto pago enviada", { description: `Recibirás ~$${Math.round(montoAdelanto).toLocaleString()} en 24-48h.` });
+      setSeleccion(null);
+    } finally {
+      setSolicitando(false);
+    }
   }
 
   return (
@@ -47,7 +60,7 @@ export function PagosFactoring() {
               </tr>
             </thead>
             <tbody>
-              {pagosPOs.map((p) => (
+              {(pagosPOs ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="p-4 text-sm font-medium">{p.id}</td>
                   <td className="p-4 text-sm text-muted-foreground">{p.cliente}</td>
@@ -90,7 +103,7 @@ export function PagosFactoring() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSeleccion(null)}>Cancelar</Button>
-            <Button onClick={solicitar} className="gradient-brand text-white">Solicitar pronto pago</Button>
+            <Button onClick={solicitar} disabled={solicitando} className="gradient-brand text-white">Solicitar pronto pago</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

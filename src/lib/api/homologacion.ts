@@ -1,0 +1,79 @@
+import { api } from "@/lib/api/http";
+
+export type EstadoHomologacion = "en_revision" | "aprobado" | "rechazado" | "zona_gris";
+export type EstadoDocumento = "pendiente" | "subido" | "validado" | "vencido";
+
+export interface DocumentoHomologacion {
+  id: string;
+  nombre: string;
+  estado: EstadoDocumento;
+}
+
+export interface RegistroHomologacion {
+  id: string;
+  estado: EstadoHomologacion;
+  score: number;
+  alertas: string[];
+  fechaSolicitud: string;
+  proximaRevalidacion: string;
+  documentos: DocumentoHomologacion[];
+}
+
+interface ApiHomologacion {
+  id: string;
+  estado: "EN_REVISION" | "APROBADO" | "RECHAZADO" | "ZONA_GRIS";
+  score: number;
+  alertas: string[];
+  fechaSolicitud: string;
+  proximaRevalidacion: string | null;
+  documentos: { id: string; nombre: string; estado: "PENDIENTE" | "SUBIDO" | "VALIDADO" | "VENCIDO" }[];
+  proveedor?: { nombre: string; iniciales: string };
+}
+
+function toRegistro(h: ApiHomologacion): RegistroHomologacion {
+  return {
+    id: h.id,
+    estado: h.estado.toLowerCase() as EstadoHomologacion,
+    score: h.score,
+    alertas: h.alertas,
+    fechaSolicitud: h.fechaSolicitud.slice(0, 10),
+    proximaRevalidacion: h.proximaRevalidacion ? h.proximaRevalidacion.slice(0, 10) : "—",
+    documentos: h.documentos.map((d) => ({ id: d.id, nombre: d.nombre, estado: d.estado.toLowerCase() as EstadoDocumento })),
+  };
+}
+
+export async function fetchMiHomologacion(): Promise<RegistroHomologacion> {
+  const { data } = await api.get<ApiHomologacion>("/homologacion/mine");
+  return toRegistro(data);
+}
+
+export async function subirDocumento(documentoId: string) {
+  const { data } = await api.post(`/homologacion/documentos/${documentoId}/subir`);
+  return data;
+}
+
+export async function enviarHomologacion() {
+  const { data } = await api.post("/homologacion/enviar");
+  return data;
+}
+
+export interface ColaHomologacionItem extends RegistroHomologacion {
+  proveedorId: string;
+  proveedorNombre: string;
+  proveedorIniciales: string;
+}
+
+export async function fetchColaHomologacion(): Promise<ColaHomologacionItem[]> {
+  const { data } = await api.get<(ApiHomologacion & { proveedorId: string })[]>("/homologacion/cola");
+  return data.map((h) => ({
+    ...toRegistro(h),
+    proveedorId: h.proveedorId,
+    proveedorNombre: h.proveedor?.nombre ?? "",
+    proveedorIniciales: h.proveedor?.iniciales ?? "",
+  }));
+}
+
+export async function resolverHomologacion(proveedorId: string, estado: "APROBADO" | "RECHAZADO", score: number, motivo?: string) {
+  const { data } = await api.post(`/homologacion/${proveedorId}/resolver`, { estado, score, motivo });
+  return data;
+}

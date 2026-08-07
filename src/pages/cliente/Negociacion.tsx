@@ -7,10 +7,10 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Gavel, Eye, Handshake, Crown, Check, TrendingUp, FileQuestion } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuction, getRanking, startAuction, closeAuction, resetAuction, type Puja } from "@/lib/mock/subasta";
-import { getProceso } from "@/lib/mock/procesos";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { useSubasta, getRanking } from "@/lib/api/subasta";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimiento } from "@/lib/api/requerimientos";
+import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 
 const formatos = [
   { id: "subasta", title: "Subasta Inversa", icon: Gavel, desc: "Los proveedores ven su posición relativa en tiempo real y mejoran su oferta.", pros: "Mejor precio", cons: "Guerra de precios" },
@@ -28,12 +28,12 @@ function formatCountdown(deadlineMs: number) {
 export function Negociacion() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const requerimientoId = id ?? "RFP-2024-0032";
-  const proceso = getProceso(requerimientoId);
-  const { currentUser } = useAuth();
+  const requerimientoId = id ?? "";
+  const { data: requerimiento } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: ofertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
   const [formato, setFormato] = useState("subasta");
-  const auction = useAuction();
-  const activa = auction.status === "activa" && auction.requerimientoId === requerimientoId;
+  const { state: auction, iniciar, cerrar } = useSubasta(requerimientoId);
+  const activa = auction.status === "activa";
   const [, forceTick] = useState(0);
 
   useEffect(() => {
@@ -42,11 +42,9 @@ export function Negociacion() {
     return () => clearInterval(timer);
   }, [activa]);
 
-  useEffect(() => () => { if (auction.status !== "activa") resetAuction(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
   const ranking = getRanking(auction.pujas);
 
-  if (!proceso) {
+  if (!requerimiento) {
     return (
       <div className="p-6">
         <EmptyState icon={FileQuestion} title="Este requerimiento no tiene ofertas para negociar" description="La negociación solo aplica a procesos que ya recibieron ofertas en licitación." />
@@ -55,17 +53,17 @@ export function Negociacion() {
   }
 
   function iniciarRonda() {
-    const pujasIniciales: Puja[] = proceso!.ofertas
+    const pujasIniciales = (ofertas ?? [])
+      .filter((o) => o.enviada)
       .slice()
       .sort((a, b) => a.precio - b.precio)
       .slice(0, 3)
-      .map((o) => ({ proveedorId: o.proveedorId, proveedor: o.proveedor, montoInicial: o.precio, monto: o.precio }));
-    startAuction(15 * 60 * 1000, requerimientoId, pujasIniciales);
+      .map((o) => ({ proveedorId: o.proveedorId, proveedorNombre: o.proveedor, monto: o.precio }));
+    iniciar(15 * 60 * 1000, pujasIniciales);
   }
 
   function handleCerrarRonda() {
-    closeAuction();
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Ronda de negociación cerrada", detalle: `${requerimientoId} · Ganador provisional: ${ranking[0]?.proveedor}` });
+    cerrar();
     toast.success("Ronda cerrada", { description: "Acta digital generada. Puedes proceder a adjudicación." });
     navigate(`/cliente/adjudicacion/${requerimientoId}`);
   }
@@ -74,7 +72,7 @@ export function Negociacion() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Ronda de Negociación</h1>
-        <p className="text-sm text-muted-foreground">{requerimientoId} — {proceso.titulo} · Segunda ronda</p>
+        <p className="text-sm text-muted-foreground">{requerimientoId} — {requerimiento.titulo} · Segunda ronda</p>
       </div>
 
       {!activa ? (

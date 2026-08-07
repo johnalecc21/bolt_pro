@@ -1,16 +1,18 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Trophy, XCircle, TrendingUp, Target } from "lucide-react";
-import { historialProcesos, competitividad } from "@/lib/mock/historialProveedor";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton, KpiRowSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMiHistorial } from "@/lib/api/ofertas";
 
 export function HistorialProveedor() {
-  const loading = useMockLoading();
+  const { data, loading } = useApiData(fetchMiHistorial);
+  const historialProcesos = data?.procesos ?? [];
+  const competitividad = data?.competitividad ?? { tuOfertaPromedioVsMercado: 0 };
   const ganados = historialProcesos.filter((p) => p.resultado === "ganado").length;
   const perdidos = historialProcesos.filter((p) => p.resultado === "perdido").length;
-  const tasaExito = Math.round((ganados / historialProcesos.length) * 100);
+  const tasaExito = historialProcesos.length ? Math.round((ganados / historialProcesos.length) * 100) : 0;
 
   return (
     <div className="space-y-6 p-6">
@@ -28,8 +30,7 @@ export function HistorialProveedor() {
       <Card className="border-info/30 bg-info/10 p-5">
         <h2 className="mb-2 flex items-center gap-2 font-semibold text-info"><Target className="h-4 w-4" /> Modo Copiloto Proveedor</h2>
         <p className="text-sm text-info">
-          Tu oferta promedio está <strong>{Math.abs(competitividad.tuOfertaPromedioVsMercado)}% {competitividad.tuOfertaPromedioVsMercado < 0 ? "por debajo" : "por encima"}</strong> del mercado.
-          Estás en el percentil <strong>{competitividad.percentilPrecio}</strong> en precio y <strong>{competitividad.percentilPlazo}</strong> en plazo de entrega, comparado anónimamente con otros proveedores de tu categoría.
+          Tu oferta promedio está <strong>{Math.abs(competitividad.tuOfertaPromedioVsMercado)}% {competitividad.tuOfertaPromedioVsMercado < 0 ? "por debajo" : "por encima"}</strong> del promedio de mercado en tu categoría, comparado anónimamente con otros proveedores.
         </p>
       </Card>
 

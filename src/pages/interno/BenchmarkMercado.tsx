@@ -1,21 +1,26 @@
-import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Database, Download, AlertTriangle, TrendingUp } from "lucide-react";
-import { benchmarkMercado as seedBenchmark, type BenchmarkEntry } from "@/lib/mock/benchmarkMercado";
-import { useMockLoading } from "@/hooks/useMockLoading";
+import { fetchBenchmark, marcarBenchmarkValido, type BenchmarkEntry } from "@/lib/api/interno";
+import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 export function BenchmarkMercado() {
-  const loading = useMockLoading();
-  const [datos, setDatos] = useState(seedBenchmark);
+  const { data, loading, reload } = useApiData(fetchBenchmark);
+  const datos = data ?? [];
 
-  function limpiarOutlier(entry: BenchmarkEntry) {
-    setDatos((prev) => prev.map((d) => d.categoria === entry.categoria ? { ...d, outlier: false } : d));
-    toast.success("Dato marcado como válido", { description: "Se incluirá en el índice oficial de benchmark." });
+  async function limpiarOutlier(entry: BenchmarkEntry) {
+    try {
+      await marcarBenchmarkValido(entry.id);
+      toast.success("Dato marcado como válido", { description: "Se incluirá en el índice oficial de benchmark." });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   function exportar() {
@@ -43,7 +48,7 @@ export function BenchmarkMercado() {
 
       {loading ? <TableSkeleton /> : <div className="space-y-3">
         {datos.map((d) => (
-          <Card key={d.categoria} className="p-4">
+          <Card key={d.id} className="p-4">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
                 <Database className="h-5 w-5" />

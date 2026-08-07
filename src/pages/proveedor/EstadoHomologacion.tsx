@@ -3,8 +3,9 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { CheckCircle2, Clock, XCircle, AlertTriangle, FileWarning } from "lucide-react";
-import { useHomologacionRegistro } from "@/lib/mock/homologacion";
 import { cn } from "@/lib/utils";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMiHomologacion } from "@/lib/api/homologacion";
 
 const estadoLabel: Record<string, string> = {
   en_revision: "En revisión",
@@ -14,7 +15,11 @@ const estadoLabel: Record<string, string> = {
 };
 
 export function EstadoHomologacion() {
-  const registro = useHomologacionRegistro("P-001");
+  const { data: registro, loading } = useApiData(fetchMiHomologacion);
+
+  if (loading) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+  }
 
   if (!registro) {
     return (

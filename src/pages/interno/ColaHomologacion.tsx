@@ -5,34 +5,38 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle } from "lucide-react";
-import { useHomologacionRegistros, resolverHomologacion } from "@/lib/mock/homologacion";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
-import { useMockLoading } from "@/hooks/useMockLoading";
+import { fetchColaHomologacion, resolverHomologacion as apiResolver } from "@/lib/api/homologacion";
+import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const estadoDocMap: Record<string, string> = { validado: "Activo", subido: "pendiente_aprobacion", pendiente: "pendiente_aprobacion", vencido: "Vencido" };
 
 export function ColaHomologacion() {
-  const { currentUser } = useAuth();
-  const loading = useMockLoading();
-  const registros = useHomologacionRegistros();
-  const cola = registros.filter((r) => r.estado === "zona_gris" || r.estado === "en_revision");
+  const { data, loading, reload } = useApiData(fetchColaHomologacion);
+  const cola = (data ?? []).filter((r) => r.estado === "zona_gris" || r.estado === "en_revision");
 
-  function aprobar(proveedorId: string, proveedor: string) {
-    resolverHomologacion(proveedorId, "aprobado", 85);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Homologación aprobada", detalle: proveedor });
-    toast.success("Proveedor homologado", { description: proveedor });
+  async function aprobar(proveedorId: string, proveedor: string) {
+    try {
+      await apiResolver(proveedorId, "APROBADO", 85);
+      toast.success("Proveedor homologado", { description: proveedor });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function rechazar(proveedorId: string, proveedor: string, motivo?: string) {
-    resolverHomologacion(proveedorId, "rechazado", 0, motivo);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Homologación rechazada", detalle: proveedor, motivo });
-    toast.info("Homologación rechazada", { description: proveedor });
+  async function rechazar(proveedorId: string, proveedor: string, motivo?: string) {
+    try {
+      await apiResolver(proveedorId, "RECHAZADO", 0, motivo);
+      toast.info("Homologación rechazada", { description: proveedor });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function pedirInfo(proveedor: string, motivo?: string) {
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Información adicional solicitada", detalle: proveedor, motivo });
+  function pedirInfo(proveedor: string) {
     toast.info("Solicitud enviada al proveedor", { description: proveedor });
   }
 
@@ -51,7 +55,7 @@ export function ColaHomologacion() {
             <Card key={r.proveedorId} className="p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 className="font-semibold">{r.proveedor}</h2>
+                  <h2 className="font-semibold">{r.proveedorNombre}</h2>
                   <p className="text-xs text-muted-foreground">Solicitado {r.fechaSolicitud} · Score preliminar: {r.score || "—"}</p>
                 </div>
                 <StatusBadge estado={r.estado === "zona_gris" ? "en_revision" : r.estado} />
@@ -90,9 +94,9 @@ export function ColaHomologacion() {
                 <ConfirmDialog
                   trigger={<Button size="sm" className="gap-1.5 gradient-success text-white"><Check className="h-4 w-4" /> Aprobar</Button>}
                   title="Aprobar homologación"
-                  description={`${r.proveedor} quedará disponible para ser invitado a licitaciones.`}
+                  description={`${r.proveedorNombre} quedará disponible para ser invitado a licitaciones.`}
                   confirmLabel="Aprobar"
-                  onConfirm={() => aprobar(r.proveedorId, r.proveedor)}
+                  onConfirm={() => aprobar(r.proveedorId, r.proveedorNombre)}
                 />
                 <ConfirmDialog
                   trigger={<Button size="sm" variant="outline" className="gap-1.5 border-destructive/30 text-destructive hover:bg-destructive/10"><X className="h-4 w-4" /> Rechazar</Button>}
@@ -100,7 +104,7 @@ export function ColaHomologacion() {
                   requireReason
                   confirmLabel="Rechazar"
                   destructive
-                  onConfirm={(motivo) => rechazar(r.proveedorId, r.proveedor, motivo)}
+                  onConfirm={(motivo) => rechazar(r.proveedorId, r.proveedorNombre, motivo)}
                 />
                 <ConfirmDialog
                   trigger={<Button size="sm" variant="ghost" className="gap-1.5"><HelpCircle className="h-4 w-4" /> Pedir más información</Button>}
@@ -108,7 +112,7 @@ export function ColaHomologacion() {
                   requireReason
                   reasonLabel="¿Qué información falta?"
                   confirmLabel="Enviar solicitud"
-                  onConfirm={(motivo) => pedirInfo(r.proveedor, motivo)}
+                  onConfirm={() => pedirInfo(r.proveedorNombre)}
                 />
               </div>
             </Card>

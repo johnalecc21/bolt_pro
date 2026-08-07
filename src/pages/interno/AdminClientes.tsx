@@ -5,11 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
 import { LogIn, Building2 } from "lucide-react";
-import { clientesPlanes } from "@/lib/mock/clientesPlanes";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
-import { useMockLoading } from "@/hooks/useMockLoading";
+import { fetchClientes, impersonarCliente, type ClienteAdmin } from "@/lib/api/interno";
+import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 import { cn } from "@/lib/utils";
 
 const facturacionColor: Record<string, string> = {
@@ -19,12 +18,16 @@ const facturacionColor: Record<string, string> = {
 };
 
 export function AdminClientes() {
-  const { currentUser } = useAuth();
-  const loading = useMockLoading();
+  const { data, loading } = useApiData(fetchClientes);
+  const clientesPlanes = data ?? [];
 
-  function impersonar(clienteNombre: string, motivo?: string) {
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Impersonación de cliente", detalle: `Entró como ${clienteNombre} para dar soporte`, motivo });
-    toast.success(`Sesión iniciada como ${clienteNombre}`, { description: "Esta acción quedó registrada en el log de auditoría." });
+  async function impersonar(c: ClienteAdmin, motivo?: string) {
+    try {
+      await impersonarCliente(c.id, motivo ?? "");
+      toast.success(`Sesión iniciada como ${c.nombre}`, { description: "Esta acción quedó registrada en el log de auditoría." });
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   return (
@@ -44,7 +47,6 @@ export function AdminClientes() {
                 <th className="p-4 font-medium">Plan</th>
                 <th className="p-4 font-medium">Facturación</th>
                 <th className="p-4 font-medium">Procesos activos</th>
-                <th className="p-4 font-medium">Adopción</th>
                 <th className="p-4 font-medium">Contacto</th>
                 <th className="p-4 font-medium"></th>
               </tr>
@@ -61,14 +63,6 @@ export function AdminClientes() {
                   <td className="p-4"><Badge variant="secondary">{c.plan}</Badge></td>
                   <td className="p-4"><span className={cn("text-sm font-medium", facturacionColor[c.facturacion])}>{c.facturacion}</span></td>
                   <td className="p-4 text-sm">{c.procesosActivos}</td>
-                  <td className="p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 overflow-hidden rounded-full bg-muted">
-                        <div className="h-full gradient-brand rounded-full" style={{ width: `${c.adopcion}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground">{c.adopcion}%</span>
-                    </div>
-                  </td>
                   <td className="p-4 text-sm text-muted-foreground">{c.contactoPrincipal}</td>
                   <td className="p-4 text-right">
                     <ConfirmDialog
@@ -78,7 +72,7 @@ export function AdminClientes() {
                       requireReason
                       reasonLabel="Motivo del soporte"
                       confirmLabel="Entrar"
-                      onConfirm={(motivo) => impersonar(c.nombre, motivo)}
+                      onConfirm={(motivo) => impersonar(c, motivo)}
                     />
                   </td>
                 </tr>

@@ -105,7 +105,9 @@ export default function App() {
           <Route path="homologacion" element={<HomologacionForm />} />
           <Route path="invitaciones" element={<InvitacionesProveedor />} />
           <Route path="ofertas" element={<CargaOferta />} />
+          <Route path="ofertas/:requerimientoId" element={<CargaOferta />} />
           <Route path="subasta" element={<SubastaVivo />} />
+          <Route path="subasta/:requerimientoId" element={<SubastaVivo />} />
           <Route path="historial" element={<HistorialProveedor />} />
           <Route path="pagos" element={<PagosFactoring />} />
           <Route path="perfil" element={<PerfilEmpresa />} />

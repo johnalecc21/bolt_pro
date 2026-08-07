@@ -7,12 +7,11 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Scale, Paperclip, Gavel } from "lucide-react";
-import { disputas as seedDisputas } from "@/lib/mockData";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { fetchDisputasInterno, asignarMediador, resolverDisputa } from "@/lib/api/disputas";
+import { apiErrorMessage } from "@/lib/api/http";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const plantillas = [
   "El proveedor cumple parcialmente — se acuerda extensión de plazo sin penalidad.",
@@ -21,24 +20,37 @@ const plantillas = [
 ];
 
 export function MediacionDisputas() {
-  const { currentUser } = useAuth();
-  const loading = useMockLoading();
-  const [disputas, setDisputas] = useState(seedDisputas.map((d) => ({ ...d, mediador: d.mediador === "Sin asignar" ? currentUser?.nombre ?? "Sin asignar" : d.mediador })));
-  const [selected, setSelected] = useState<string | null>(disputas[0]?.id ?? null);
+  const { data, loading, reload } = useApiData(fetchDisputasInterno);
+  const disputas = data ?? [];
+  const [selected, setSelected] = useState<string | null>(null);
   const [decision, setDecision] = useState("");
   const [impacto, setImpacto] = useState<"positivo" | "negativo">("positivo");
 
   const activa = disputas.find((d) => d.id === selected);
 
-  function resolver() {
+  async function seleccionar(id: string) {
+    setSelected(id);
+    const d = disputas.find((x) => x.id === id);
+    if (d && d.estado === "Abierta") {
+      try {
+        await asignarMediador(id);
+        reload();
+      } catch (err) {
+        toast.error(apiErrorMessage(err));
+      }
+    }
+  }
+
+  async function resolver() {
     if (!activa || !decision.trim()) return;
-    setDisputas((prev) => prev.map((d) => d.id === activa.id ? { ...d, estado: "Resuelta" } : d));
-    logAudit({
-      usuario: currentUser?.nombre ?? "—", accion: "Disputa resuelta",
-      detalle: `${activa.id} — ${activa.proveedor}`, motivo: `${decision.trim()} (impacto en score: ${impacto})`,
-    });
-    toast.success("Caso resuelto", { description: `Impacto ${impacto} aplicado al score de ${activa.proveedor}.` });
-    setDecision("");
+    try {
+      await resolverDisputa(activa.id, decision.trim(), impacto);
+      toast.success("Caso resuelto", { description: `Impacto ${impacto} aplicado al score de ${activa.proveedor}.` });
+      setDecision("");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   return (
@@ -51,12 +63,12 @@ export function MediacionDisputas() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-1">
           {loading ? <TableSkeleton rows={3} /> : disputas.length === 0 ? <EmptyState icon={Scale} title="Sin casos" /> : disputas.map((d) => (
-            <Card key={d.id} onClick={() => setSelected(d.id)} className={cn("cursor-pointer p-4 hover:border-primary/40", selected === d.id && "ring-2 ring-primary")}>
+            <Card key={d.id} onClick={() => seleccionar(d.id)} className={cn("cursor-pointer p-4 hover:border-primary/40", selected === d.id && "ring-2 ring-primary")}>
               <div className="flex items-center justify-between">
                 <span className="text-xs font-mono text-muted-foreground">{d.id}</span>
                 <StatusBadge estado={d.estado} />
               </div>
-              <p className="mt-1 text-sm font-medium">{d.proveedor}</p>
+              <p className="mt-1 text-sm font-medium">{d.proveedor} · {d.empresa}</p>
               <p className="text-xs text-muted-foreground">{d.poReferencia} · {d.severidad} · {d.diasAbierta}d</p>
             </Card>
           ))}

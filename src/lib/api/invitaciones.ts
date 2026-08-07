@@ -1,0 +1,50 @@
+import { api } from "@/lib/api/http";
+
+export type EstadoInvitacion = "nueva" | "vista" | "respondida" | "vencida" | "declinada";
+
+export interface Invitacion {
+  id: string;
+  requerimientoId: string;
+  titulo: string;
+  categoria: string;
+  cliente: string;
+  fechaLimite: string;
+  estado: EstadoInvitacion;
+}
+
+interface ApiInvitacion {
+  id: string;
+  requerimientoId: string;
+  categoria: string;
+  fechaLimite: string;
+  estado: "NUEVA" | "VISTA" | "RESPONDIDA" | "VENCIDA" | "DECLINADA";
+  company: { nombre: string };
+  requerimiento?: { titulo: string } | null;
+}
+
+function toInvitacion(i: ApiInvitacion): Invitacion {
+  return {
+    id: i.id,
+    requerimientoId: i.requerimientoId,
+    titulo: i.requerimiento?.titulo ?? "",
+    categoria: i.categoria,
+    cliente: i.company.nombre,
+    fechaLimite: i.fechaLimite.slice(0, 10),
+    estado: i.estado.toLowerCase() as EstadoInvitacion,
+  };
+}
+
+export async function fetchInvitaciones(): Promise<Invitacion[]> {
+  const { data } = await api.get<ApiInvitacion[]>("/invitaciones");
+  return data.map(toInvitacion);
+}
+
+export async function aceptarInvitacion(id: string) {
+  const { data } = await api.post(`/invitaciones/${id}/aceptar`);
+  return data;
+}
+
+export async function declinarInvitacion(id: string) {
+  const { data } = await api.post(`/invitaciones/${id}/declinar`);
+  return data;
+}

@@ -45,3 +45,8 @@ export async function createProveedorExterno(nombre: string): Promise<Proveedor>
   const { data } = await api.post<ApiProveedor>("/proveedores/externo", { nombre });
   return toProveedor(data);
 }
+
+export async function fetchMiPerfil(): Promise<Proveedor> {
+  const { data } = await api.get<ApiProveedor>("/proveedores/mine");
+  return toProveedor(data);
+}

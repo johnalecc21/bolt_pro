@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Trophy, Gavel, TrendingDown } from "lucide-react";
-import { useAuction, getRanking, submitBid } from "@/lib/mock/subasta";
-
-const MI_PROVEEDOR_ID = "P-001";
+import { useSubasta, getRanking } from "@/lib/api/subasta";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMiPerfil } from "@/lib/api/proveedores";
 
 function formatCountdown(deadlineMs: number) {
   const remaining = Math.max(0, deadlineMs - Date.now());
@@ -17,7 +18,9 @@ function formatCountdown(deadlineMs: number) {
 }
 
 export function SubastaVivo() {
-  const auction = useAuction();
+  const { requerimientoId } = useParams();
+  const { data: perfil } = useApiData(fetchMiPerfil);
+  const { state: auction, pujar } = useSubasta(requerimientoId);
   const [, forceTick] = useState(0);
   const [mejora, setMejora] = useState("");
 
@@ -27,9 +30,10 @@ export function SubastaVivo() {
     return () => clearInterval(id);
   }, [auction.status]);
 
-  const participo = auction.pujas.some((p) => p.proveedorId === MI_PROVEEDOR_ID);
+  const miProveedorId = perfil?.id;
+  const participo = !!miProveedorId && auction.pujas.some((p) => p.proveedorId === miProveedorId);
 
-  if (auction.status === "inactiva" || !participo) {
+  if (!requerimientoId || auction.status === "inactiva" || !participo) {
     return (
       <div className="p-6">
         <EmptyState icon={Gavel} title="No hay subastas activas" description="Cuando un comprador inicie una ronda de negociación en la que participes, aparecerá aquí." />
@@ -38,8 +42,8 @@ export function SubastaVivo() {
   }
 
   const ranking = getRanking(auction.pujas);
-  const miPos = ranking.findIndex((p) => p.proveedorId === MI_PROVEEDOR_ID) + 1;
-  const miPuja = auction.pujas.find((p) => p.proveedorId === MI_PROVEEDOR_ID);
+  const miPos = ranking.findIndex((p) => p.proveedorId === miProveedorId) + 1;
+  const miPuja = auction.pujas.find((p) => p.proveedorId === miProveedorId);
 
   function enviarMejora() {
     const monto = Number(mejora);
@@ -47,7 +51,7 @@ export function SubastaVivo() {
       toast.error("La mejora debe ser menor a tu oferta actual");
       return;
     }
-    submitBid(MI_PROVEEDOR_ID, monto);
+    pujar(monto);
     setMejora("");
     toast.success("Oferta mejorada enviada");
   }

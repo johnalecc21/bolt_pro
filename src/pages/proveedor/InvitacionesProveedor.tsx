@@ -1,14 +1,14 @@
-import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { invitacionesIniciales, type Invitacion } from "@/lib/mock/invitaciones";
+import { fetchInvitaciones, aceptarInvitacion, declinarInvitacion, type Invitacion } from "@/lib/api/invitaciones";
+import { apiErrorMessage } from "@/lib/api/http";
 import { Inbox, Check, X, Calendar } from "lucide-react";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const estadoMap: Record<Invitacion["estado"], string> = {
   nueva: "pendiente_aprobacion",
@@ -20,18 +20,26 @@ const estadoMap: Record<Invitacion["estado"], string> = {
 
 export function InvitacionesProveedor() {
   const navigate = useNavigate();
-  const loading = useMockLoading();
-  const [invitaciones, setInvitaciones] = useState(invitacionesIniciales);
+  const { data: invitaciones, loading, reload } = useApiData(fetchInvitaciones);
 
-  function aceptar(inv: Invitacion) {
-    setInvitaciones((prev) => prev.map((i) => i.id === inv.id ? { ...i, estado: "vista" } : i));
-    toast.success("Invitación aceptada");
-    navigate("/proveedor/ofertas");
+  async function aceptar(inv: Invitacion) {
+    try {
+      await aceptarInvitacion(inv.id);
+      toast.success("Invitación aceptada");
+      navigate(`/proveedor/ofertas/${inv.requerimientoId}`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function declinar(inv: Invitacion) {
-    setInvitaciones((prev) => prev.map((i) => i.id === inv.id ? { ...i, estado: "declinada" } : i));
-    toast.info("Invitación declinada");
+  async function declinar(inv: Invitacion) {
+    try {
+      await declinarInvitacion(inv.id);
+      toast.info("Invitación declinada");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   return (
@@ -41,11 +49,11 @@ export function InvitacionesProveedor() {
         <p className="text-sm text-muted-foreground">Gestiona tus invitaciones a procesos de cotización</p>
       </div>
 
-      {loading ? <TableSkeleton /> : invitaciones.length === 0 ? (
+      {loading ? <TableSkeleton /> : (invitaciones ?? []).length === 0 ? (
         <EmptyState icon={Inbox} title="No tienes invitaciones activas" />
       ) : (
         <div className="space-y-3">
-          {invitaciones.map((inv) => (
+          {(invitaciones ?? []).map((inv) => (
             <Card key={inv.id} className="p-4">
               <div className="flex flex-wrap items-center gap-4">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -70,7 +78,7 @@ export function InvitacionesProveedor() {
                   </div>
                 )}
                 {inv.estado === "vista" && (
-                  <Button size="sm" variant="outline" onClick={() => navigate("/proveedor/ofertas")}>Continuar oferta</Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate(`/proveedor/ofertas/${inv.requerimientoId}`)}>Continuar oferta</Button>
                 )}
               </div>
             </Card>

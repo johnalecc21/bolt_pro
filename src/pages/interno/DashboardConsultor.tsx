@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { casosConsultor } from "@/lib/mockData";
+import { fetchCasos } from "@/lib/api/interno";
 import { Clock, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton, KpiRowSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const estados = ["Todos", "Pendiente", "En progreso", "Escalado"];
 
@@ -16,7 +16,8 @@ const prioridadColor: Record<string, string> = {
 };
 
 export function DashboardConsultor() {
-  const loading = useMockLoading();
+  const { data, loading } = useApiData(fetchCasos);
+  const casosConsultor = data ?? [];
   const [filtro, setFiltro] = useState("Todos");
   const casos = casosConsultor.filter((c) => filtro === "Todos" || c.estado === filtro);
 
