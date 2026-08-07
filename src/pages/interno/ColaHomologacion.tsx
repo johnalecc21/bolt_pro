@@ -5,7 +5,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle } from "lucide-react";
-import { fetchColaHomologacion, resolverHomologacion as apiResolver } from "@/lib/api/homologacion";
+import { fetchColaHomologacion, resolverHomologacion as apiResolver, obtenerUrlDescarga } from "@/lib/api/homologacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
@@ -38,6 +38,17 @@ export function ColaHomologacion() {
 
   function pedirInfo(proveedor: string) {
     toast.info("Solicitud enviada al proveedor", { description: proveedor });
+  }
+
+  async function verDocumento(docId: string) {
+    const tab = window.open("", "_blank", "noopener,noreferrer");
+    try {
+      const url = await obtenerUrlDescarga(docId);
+      if (tab) tab.location.href = url;
+    } catch (err) {
+      tab?.close();
+      toast.error(apiErrorMessage(err, "No se pudo abrir el documento."));
+    }
   }
 
   return (
@@ -73,9 +84,14 @@ export function ColaHomologacion() {
                   <p className="mb-2 text-xs font-medium text-muted-foreground">Documentos del proveedor</p>
                   <div className="space-y-1.5">
                     {r.documentos.map((d) => (
-                      <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-2 text-sm">
+                      <div key={d.id} className="flex items-center justify-between rounded-lg border border-border p-2 text-sm">
                         <span>{d.nombre}</span>
-                        <StatusBadge estado={estadoDocMap[d.estado]} />
+                        <div className="flex items-center gap-2">
+                          {d.estado !== "pendiente" && (
+                            <button onClick={() => verDocumento(d.id)} className="text-xs text-primary hover:underline">Ver</button>
+                          )}
+                          <StatusBadge estado={estadoDocMap[d.estado]} />
+                        </div>
                       </div>
                     ))}
                   </div>

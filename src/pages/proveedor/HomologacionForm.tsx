@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,7 @@ import { Loader2, Upload, FileCheck, CheckCircle2, AlertTriangle } from "lucide-
 import { cn } from "@/lib/utils";
 import { simulateProcess } from "@/lib/mock/simulate";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMiHomologacion, subirDocumento, enviarHomologacion as apiEnviar } from "@/lib/api/homologacion";
+import { fetchMiHomologacion, subirDocumento, obtenerUrlDescarga, enviarHomologacion as apiEnviar } from "@/lib/api/homologacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { useAuth } from "@/lib/auth/AuthContext";
 
@@ -27,26 +27,50 @@ export function HomologacionForm() {
   const { data: registro, reload } = useApiData(fetchMiHomologacion);
   const [seccion, setSeccion] = useState(0);
   const [archivoError, setArchivoError] = useState<Record<string, string>>({});
+  const [subiendo, setSubiendo] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [pasoActual, setPasoActual] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingDocRef = useRef<{ id: string; nombre: string } | null>(null);
 
   const documentos = registro?.documentos ?? [];
   const subidos = documentos.filter((d) => d.estado !== "pendiente").length;
   const completitud = documentos.length ? Math.round((subidos / documentos.length) * 100) : 0;
 
-  async function subirArchivo(docId: string, nombre: string) {
-    // "Estados financieros" fails once so the specific-error path is easy to demo.
-    if (nombre === "Estados financieros" && !archivoError[docId]) {
-      setArchivoError((prev) => ({ ...prev, [docId]: "El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo." }));
-      return;
-    }
-    setArchivoError((prev) => { const next = { ...prev }; delete next[docId]; return next; });
+  function elegirArchivo(docId: string, nombre: string) {
+    pendingDocRef.current = { id: docId, nombre };
+    fileInputRef.current?.click();
+  }
+
+  async function verDocumento(docId: string) {
+    const tab = window.open("", "_blank", "noopener,noreferrer");
     try {
-      await subirDocumento(docId);
-      toast.success("Documento subido", { description: nombre });
+      const url = await obtenerUrlDescarga(docId);
+      if (tab) tab.location.href = url;
+    } catch (err) {
+      tab?.close();
+      toast.error(apiErrorMessage(err, "No se pudo abrir el documento."));
+    }
+  }
+
+  async function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const pending = pendingDocRef.current;
+    e.target.value = "";
+    if (!file || !pending) return;
+
+    setArchivoError((prev) => { const next = { ...prev }; delete next[pending.id]; return next; });
+    setSubiendo(pending.id);
+    try {
+      await subirDocumento(pending.id, file);
+      toast.success("Documento subido", { description: pending.nombre });
       reload();
     } catch (err) {
-      toast.error(apiErrorMessage(err));
+      const message = apiErrorMessage(err, "No se pudo subir el archivo.");
+      setArchivoError((prev) => ({ ...prev, [pending.id]: message }));
+      toast.error(message);
+    } finally {
+      setSubiendo(null);
     }
   }
 
@@ -121,8 +145,10 @@ export function HomologacionForm() {
 
         <div className="mt-6 space-y-2 border-t pt-6">
           <p className="text-sm font-medium">Documentos</p>
+          <input ref={fileInputRef} type="file" accept=".pdf,.png,.jpg,.jpeg" className="hidden" onChange={onFileSelected} />
           {documentos.map((doc) => {
             const subido = doc.estado !== "pendiente";
+            const cargando = subiendo === doc.id;
             return (
               <div key={doc.id} className={cn("rounded-lg border p-3", archivoError[doc.id] ? "border-destructive/40 bg-destructive/5" : "border-border")}>
                 <div className="flex items-center justify-between">
@@ -130,9 +156,14 @@ export function HomologacionForm() {
                     {subido ? <FileCheck className="h-4 w-4 text-success" /> : archivoError[doc.id] ? <AlertTriangle className="h-4 w-4 text-destructive" /> : <Upload className="h-4 w-4 text-muted-foreground" />}
                     <span>{doc.nombre}</span>
                   </div>
-                  <Button size="sm" variant="outline" onClick={() => subirArchivo(doc.id, doc.nombre)} disabled={subido}>
-                    {subido ? "Subido" : archivoError[doc.id] ? "Reintentar" : "Subir"}
-                  </Button>
+                  <div className="flex gap-2">
+                    {subido && (
+                      <Button size="sm" variant="ghost" onClick={() => verDocumento(doc.id)}>Ver</Button>
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => elegirArchivo(doc.id, doc.nombre)} disabled={subido || cargando}>
+                      {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : subido ? "Subido" : archivoError[doc.id] ? "Reintentar" : "Subir"}
+                    </Button>
+                  </div>
                 </div>
                 {archivoError[doc.id] && <p className="mt-2 text-xs text-destructive">{archivoError[doc.id]}</p>}
               </div>

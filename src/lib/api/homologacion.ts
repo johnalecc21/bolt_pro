@@ -1,4 +1,8 @@
 import { api } from "@/lib/api/http";
+import { supabase } from "@/lib/supabase/client";
+
+const BUCKET = "homologacion-documentos";
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export type EstadoHomologacion = "en_revision" | "aprobado" | "rechazado" | "zona_gris";
 export type EstadoDocumento = "pendiente" | "subido" | "validado" | "vencido";
@@ -47,9 +51,28 @@ export async function fetchMiHomologacion(): Promise<RegistroHomologacion> {
   return toRegistro(data);
 }
 
-export async function subirDocumento(documentoId: string) {
-  const { data } = await api.post(`/homologacion/documentos/${documentoId}/subir`);
+export async function subirDocumento(documentoId: string, file: File) {
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error("El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo.");
+  }
+
+  const { data: uploadUrlData } = await api.post<{ path: string; token: string }>(
+    `/homologacion/documentos/${documentoId}/upload-url`,
+    { filename: file.name },
+  );
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .uploadToSignedUrl(uploadUrlData.path, uploadUrlData.token, file);
+  if (uploadError) throw uploadError;
+
+  const { data } = await api.post(`/homologacion/documentos/${documentoId}/subir`, { path: uploadUrlData.path });
   return data;
+}
+
+export async function obtenerUrlDescarga(documentoId: string): Promise<string> {
+  const { data } = await api.get<{ url: string }>(`/homologacion/documentos/${documentoId}/download-url`);
+  return data.url;
 }
 
 export async function enviarHomologacion() {
