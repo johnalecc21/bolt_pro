@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { requerimientos, type EstadoReq } from "@/lib/mockData";
+import { type EstadoReq } from "@/lib/mockData";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Search, Plus, FileText, ArrowRight } from "lucide-react";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimientos } from "@/lib/api/requerimientos";
 
 const estados: { value: EstadoReq | "todos"; label: string }[] = [
   { value: "todos", label: "Todos" },
@@ -23,15 +24,14 @@ const estados: { value: EstadoReq | "todos"; label: string }[] = [
 ];
 
 export function Requerimientos() {
-  const { currentUser, activeCompany } = useAuth();
-  const loading = useMockLoading();
+  const { currentUser } = useAuth();
+  const { data: requerimientos, loading } = useApiData(fetchRequerimientos);
   const [query, setQuery] = useState("");
   const [estado, setEstado] = useState<EstadoReq | "todos">("todos");
 
-  const deLaEmpresa = requerimientos.filter((r) => (r.companyId ?? "acme") === (activeCompany?.id ?? "acme"));
   const base = currentUser?.role === "comprador"
-    ? deLaEmpresa.filter((r) => r.solicitante === currentUser.nombre)
-    : deLaEmpresa;
+    ? (requerimientos ?? []).filter((r) => r.solicitante === currentUser.nombre)
+    : (requerimientos ?? []);
 
   const filtrados = base.filter((r) => {
     const matchQuery = `${r.id} ${r.titulo}`.toLowerCase().includes(query.toLowerCase());

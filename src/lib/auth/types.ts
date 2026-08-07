@@ -14,14 +14,20 @@ export interface Session {
   activeCompany: Company;
 }
 
+/** Partial identity known during the 2FA / company-select steps, before the full user record is available. */
+export interface PendingUser {
+  nombre: string;
+  companies: Company[];
+}
+
 export interface AuthContextValue {
   currentUser: MockUser | null;
   activeCompany: Company | null;
   loginStep: LoginStep;
-  pendingUser: MockUser | null;
+  pendingUser: PendingUser | null;
   login: (email: string, password: string, portal: Portal) => Promise<LoginResult>;
-  verify2FA: (code: string) => Promise<boolean>;
-  selectCompany: (companyId: string) => void;
-  switchCompany: (companyId: string) => void;
+  verify2FA: (code: string) => Promise<{ status: "invalid" | "select_company" | "success" }>;
+  selectCompany: (companyId: string) => Promise<void>;
+  switchCompany: (companyId: string) => Promise<void>;
   logout: () => void;
 }

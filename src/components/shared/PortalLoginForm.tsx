@@ -11,6 +11,7 @@ import { Mail, Lock, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { DEMO_2FA_CODE, type Portal } from "@/lib/mock/users";
 import { sleep } from "@/lib/mock/simulate";
+import { apiErrorMessage } from "@/lib/api/http";
 
 type Step = "credentials" | "2fa" | "company";
 
@@ -42,32 +43,37 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const result = await login(email, password, portal);
-    setLoading(false);
-    if (result.status === "invalid") {
-      setError(`Correo o contraseña incorrectos. Intentos restantes: ${result.attemptsLeft ?? 0}.`);
-    } else if (result.status === "locked") {
-      setError("Cuenta bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.");
-    } else if (result.status === "2fa_required") {
-      setStep("2fa");
-    } else if (result.status === "select_company") {
-      setStep("company");
-    } else if (result.status === "success") {
-      toast.success("Sesión iniciada correctamente");
-      goToDashboard();
+    try {
+      const result = await login(email, password, portal);
+      if (result.status === "invalid") {
+        setError(`Correo o contraseña incorrectos. Intentos restantes: ${result.attemptsLeft ?? 0}.`);
+      } else if (result.status === "locked") {
+        setError("Cuenta bloqueada por demasiados intentos fallidos. Intenta de nuevo más tarde.");
+      } else if (result.status === "2fa_required") {
+        setStep("2fa");
+      } else if (result.status === "select_company") {
+        setStep("company");
+      } else if (result.status === "success") {
+        toast.success("Sesión iniciada correctamente");
+        goToDashboard();
+      }
+    } catch (err) {
+      setError(apiErrorMessage(err, "No pudimos conectar con el servidor. Intenta de nuevo."));
+    } finally {
+      setLoading(false);
     }
   }
 
   async function handleVerify2FA() {
     setError(null);
     setLoading(true);
-    const ok = await verify2FA(otp);
+    const result = await verify2FA(otp);
     setLoading(false);
-    if (!ok) {
+    if (result.status === "invalid") {
       setError("Código incorrecto. Usa el código de demo mostrado abajo.");
       return;
     }
-    if (pendingUser && pendingUser.companies.length > 1) {
+    if (result.status === "select_company") {
       setStep("company");
     } else {
       toast.success("Verificación en dos pasos completada");
@@ -75,10 +81,14 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     }
   }
 
-  function handleSelectCompany(companyId: string) {
-    selectCompany(companyId);
-    toast.success("Sesión iniciada correctamente");
-    goToDashboard();
+  async function handleSelectCompany(companyId: string) {
+    try {
+      await selectCompany(companyId);
+      toast.success("Sesión iniciada correctamente");
+      goToDashboard();
+    } catch (err) {
+      setError(apiErrorMessage(err, "No pudimos completar el inicio de sesión."));
+    }
   }
 
   async function handleSSO(provider: string) {

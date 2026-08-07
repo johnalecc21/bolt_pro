@@ -8,12 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { disputas as seedDisputas, type Disputa } from "@/lib/mockData";
-import { generateId } from "@/lib/mock/simulate";
+import { type Disputa } from "@/lib/mockData";
+import { fetchDisputas, fetchDisputa, crearDisputa, enviarMensajeDisputa } from "@/lib/api/disputas";
+import { apiErrorMessage } from "@/lib/api/http";
 import { Scale, Plus, Paperclip, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const severidadColor: Record<Disputa["severidad"], string> = {
   Baja: "bg-info/15 text-info",
@@ -21,36 +22,50 @@ const severidadColor: Record<Disputa["severidad"], string> = {
   Alta: "bg-destructive/15 text-destructive",
 };
 
+const SEVERIDAD_API: Record<Disputa["severidad"], "BAJA" | "MEDIA" | "ALTA"> = {
+  Baja: "BAJA", Media: "MEDIA", Alta: "ALTA",
+};
+
 export function Disputas() {
   const [searchParams] = useSearchParams();
-  const loading = useMockLoading();
-  const [disputas, setDisputas] = useState(seedDisputas);
+  const { data: disputas, loading, reload } = useApiData(fetchDisputas);
   const [selected, setSelected] = useState<string | null>(null);
+  const { data: activaDetalle, reload: reloadDetalle } = useApiData(
+    () => (selected ? fetchDisputa(selected) : Promise.resolve(null)),
+    [selected],
+  );
   const [showForm, setShowForm] = useState(!!searchParams.get("po"));
   const [poReferencia, setPoReferencia] = useState(searchParams.get("po") ?? "");
   const [descripcion, setDescripcion] = useState("");
   const [severidad, setSeveridad] = useState<Disputa["severidad"]>("Media");
   const [mensaje, setMensaje] = useState("");
-  const [hilo, setHilo] = useState<Record<string, { autor: string; texto: string }[]>>({});
 
-  const activa = disputas.find((d) => d.id === selected);
+  const activa = activaDetalle;
 
-  function abrirCaso() {
+  async function abrirCaso() {
     if (!poReferencia.trim() || !descripcion.trim()) return;
-    const id = generateId("DIS");
-    setDisputas((prev) => [{ id, poReferencia: poReferencia.trim(), proveedor: "Por confirmar", severidad, estado: "Abierta", diasAbierta: 0, mediador: "Sin asignar" }, ...prev]);
-    setHilo((prev) => ({ ...prev, [id]: [{ autor: "Tú", texto: descripcion.trim() }] }));
-    toast.success("Caso de disputa abierto", { description: id });
-    setShowForm(false);
-    setPoReferencia("");
-    setDescripcion("");
-    setSelected(id);
+    try {
+      const nueva = await crearDisputa({ poReferencia: poReferencia.trim(), severidad: SEVERIDAD_API[severidad], descripcion: descripcion.trim() });
+      toast.success("Caso de disputa abierto", { description: nueva.id });
+      setShowForm(false);
+      setPoReferencia("");
+      setDescripcion("");
+      setSelected(nueva.id);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function enviarMensaje() {
+  async function enviarMensaje() {
     if (!activa || !mensaje.trim()) return;
-    setHilo((prev) => ({ ...prev, [activa.id]: [...(prev[activa.id] ?? []), { autor: "Tú", texto: mensaje.trim() }] }));
-    setMensaje("");
+    try {
+      await enviarMensajeDisputa(activa.id, mensaje.trim());
+      setMensaje("");
+      reloadDetalle();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   return (
@@ -95,9 +110,9 @@ export function Disputas() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-3 lg:col-span-1">
-          {loading ? <TableSkeleton rows={3} /> : disputas.length === 0 ? (
+          {loading ? <TableSkeleton rows={3} /> : (disputas ?? []).length === 0 ? (
             <EmptyState icon={Scale} title="Sin disputas abiertas" />
-          ) : disputas.map((d) => (
+          ) : (disputas ?? []).map((d) => (
             <Card
               key={d.id}
               onClick={() => setSelected(d.id)}
@@ -130,8 +145,8 @@ export function Disputas() {
               </div>
 
               <div className="flex-1 space-y-3">
-                {(hilo[activa.id] ?? []).map((m, i) => (
-                  <div key={i} className="rounded-lg border border-border p-3 text-sm">
+                {activa.mensajes.map((m) => (
+                  <div key={m.id} className="rounded-lg border border-border p-3 text-sm">
                     <p className="font-medium">{m.autor}</p>
                     <p className="text-muted-foreground">{m.texto}</p>
                   </div>

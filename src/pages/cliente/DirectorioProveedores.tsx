@@ -6,21 +6,22 @@ import { Badge } from "@/components/ui/badge";
 import { ProviderCard } from "@/components/shared/ProviderCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { proveedores, type Proveedor } from "@/lib/mockData";
+import { type Proveedor } from "@/lib/mockData";
+import { fetchProveedores } from "@/lib/api/proveedores";
 import { Search, Building2, Star, ShieldCheck, Plus } from "lucide-react";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 export function DirectorioProveedores() {
-  const loading = useMockLoading();
+  const { data: proveedores, loading } = useApiData(() => fetchProveedores());
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [minScore, setMinScore] = useState(0);
   const [perfil, setPerfil] = useState<Proveedor | null>(null);
 
-  const categorias = ["Todas", ...Array.from(new Set(proveedores.flatMap((p) => p.categorias)))];
+  const categorias = ["Todas", ...Array.from(new Set((proveedores ?? []).flatMap((p) => p.categorias)))];
 
-  const filtrados = proveedores.filter((p) => {
+  const filtrados = (proveedores ?? []).filter((p) => {
     const matchQuery = p.nombre.toLowerCase().includes(query.toLowerCase());
     const matchCat = categoria === "Todas" || p.categorias.includes(categoria);
     const matchScore = p.score >= minScore;

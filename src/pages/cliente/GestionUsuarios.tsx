@@ -8,71 +8,53 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { UserPlus, Pencil, ShieldAlert } from "lucide-react";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { roleLabels, type Role } from "@/lib/mock/users";
-
-interface UsuarioRow {
-  id: string;
-  nombre: string;
-  email: string;
-  rol: Role;
-  activo: boolean;
-  ultimoAcceso: string;
-}
-
-const usuariosIniciales: UsuarioRow[] = [
-  { id: "U-001", nombre: "Carlos Méndez", email: "carlos@acme.com", rol: "comprador", activo: true, ultimoAcceso: "Hace 15 min" },
-  { id: "U-002", nombre: "Laura Torres", email: "laura@acme.com", rol: "comprador", activo: true, ultimoAcceso: "Hace 2 h" },
-  { id: "U-003", nombre: "Ana Ruiz", email: "ana.cfo@acme.com", rol: "aprobador_cfo", activo: true, ultimoAcceso: "Ayer" },
-  { id: "U-004", nombre: "Roberto Silva", email: "admin@acme.com", rol: "admin_cliente", activo: true, ultimoAcceso: "Hace 5 min" },
-  { id: "U-008", nombre: "Sofía Nieto", email: "sofia@acme.com", rol: "comprador", activo: false, ultimoAcceso: "Hace 3 meses" },
-];
+import { useApiData } from "@/hooks/useApiData";
+import { fetchUsuarios, invitarUsuario, actualizarRol, toggleActivo, type UsuarioRow } from "@/lib/api/usuarios";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const rolesEditables: Role[] = ["comprador", "aprobador_cfo", "admin_cliente"];
 
 export function GestionUsuarios() {
-  const { currentUser } = useAuth();
-  const loading = useMockLoading();
-  const [usuarios, setUsuarios] = useState(usuariosIniciales);
+  const { data: usuarios, loading, reload } = useApiData(fetchUsuarios);
   const [inviteOpen, setInviteOpen] = useState(false);
   const [editUser, setEditUser] = useState<UsuarioRow | null>(null);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteRole, setInviteRole] = useState<Role>("comprador");
 
-  const adminsActivos = usuarios.filter((u) => u.rol === "admin_cliente" && u.activo).length;
-
-  function invitar() {
+  async function invitar() {
     if (!inviteEmail.trim()) return;
-    const id = `U-${Math.floor(Math.random() * 900 + 100)}`;
-    setUsuarios((prev) => [...prev, { id, nombre: inviteEmail.split("@")[0], email: inviteEmail.trim(), rol: inviteRole, activo: true, ultimoAcceso: "Nunca" }]);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Usuario invitado", detalle: `${inviteEmail} → ${roleLabels[inviteRole]}` });
-    toast.success("Invitación enviada", { description: inviteEmail });
-    setInviteOpen(false);
-    setInviteEmail("");
+    try {
+      await invitarUsuario(inviteEmail.trim(), inviteRole);
+      toast.success("Invitación enviada", { description: inviteEmail });
+      setInviteOpen(false);
+      setInviteEmail("");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function cambiarRol(nuevoRol: Role) {
+  async function cambiarRol(nuevoRol: Role) {
     if (!editUser) return;
-    if (editUser.rol === "admin_cliente" && nuevoRol !== "admin_cliente" && adminsActivos <= 1) {
-      toast.error("No puedes quitar el rol Admin al último administrador activo");
-      return;
+    try {
+      await actualizarRol(editUser.id, nuevoRol);
+      toast.success("Rol actualizado");
+      setEditUser(null);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo cambiar el rol."));
     }
-    setUsuarios((prev) => prev.map((u) => u.id === editUser.id ? { ...u, rol: nuevoRol } : u));
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Cambio de rol", detalle: `${editUser.nombre}: ${roleLabels[editUser.rol]} → ${roleLabels[nuevoRol]}` });
-    toast.success("Rol actualizado");
-    setEditUser(null);
   }
 
-  function desactivar(u: UsuarioRow) {
-    if (u.rol === "admin_cliente" && adminsActivos <= 1) {
-      toast.error("No puedes desactivar al último administrador activo");
-      return;
+  async function desactivar(u: UsuarioRow) {
+    try {
+      await toggleActivo(u.id);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo actualizar el estado del usuario."));
     }
-    setUsuarios((prev) => prev.map((x) => x.id === u.id ? { ...x, activo: !x.activo } : x));
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: u.activo ? "Usuario desactivado" : "Usuario reactivado", detalle: u.email });
   }
 
   return (
@@ -102,7 +84,7 @@ export function GestionUsuarios() {
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((u) => (
+              {(usuarios ?? []).map((u) => (
                 <tr key={u.id} className="border-b border-border last:border-0">
                   <td className="p-4 text-sm font-medium">{u.nombre}</td>
                   <td className="p-4 text-sm text-muted-foreground">{u.email}</td>

@@ -3,7 +3,7 @@ import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { useNotifications, markAsRead, markAllAsRead, type Notificacion } from "@/lib/mock/notifications";
+import { useNotifications, type Notificacion } from "@/lib/api/notificaciones";
 import { cn } from "@/lib/utils";
 
 const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
@@ -16,7 +16,7 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
 };
 
 export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedor" | "interno" }) {
-  const notifications = useNotifications();
+  const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const unread = notifications.filter((n) => !n.leida).length;
 
   return (

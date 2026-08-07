@@ -7,9 +7,11 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Plus, Calendar, Eye, FileQuestion } from "lucide-react";
-import { proveedores, requerimientos } from "@/lib/mockData";
-import { getProceso } from "@/lib/mock/procesos";
 import { usePermissionMode } from "@/components/auth/RequireRole";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimiento } from "@/lib/api/requerimientos";
+import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
+import { fetchProveedores } from "@/lib/api/proveedores";
 
 const qaItems = [
   { q: "¿El servicio incluye migración de bases de datos?", a: "Sí, incluye migración completa de hasta 5 bases de datos relacionales.", autor: "Proveedor anónimo" },
@@ -19,9 +21,10 @@ const qaItems = [
 export function LicitacionEnCurso() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const requerimientoId = id ?? "RFP-2024-0032";
-  const requerimiento = requerimientos.find((r) => r.id === requerimientoId);
-  const proceso = getProceso(requerimientoId);
+  const requerimientoId = id ?? "";
+  const { data: requerimiento } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: ofertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: proveedores } = useApiData(() => fetchProveedores());
   const mode = usePermissionMode();
   const [tiempo, setTiempo] = useState({ dias: 3, horas: 14, min: 22 });
   const [cerrada, setCerrada] = useState(false);
@@ -36,16 +39,17 @@ export function LicitacionEnCurso() {
     );
   }
 
-  // Providers that already submitted a structured offer for this process (from procesos.ts),
+  // Providers that already submitted a structured offer for this process,
   // padded with a few more from the same category shown as "invitado"/"sin respuesta" for realism.
-  const respondieron = proceso?.ofertas.map((o) => ({ proveedorId: o.proveedorId, estado: "Oferta enviada" })) ?? [];
+  const todosProveedores = proveedores ?? [];
+  const respondieron = (ofertas ?? []).filter((o) => o.enviada).map((o) => ({ proveedorId: o.proveedorId, estado: "Oferta enviada" }));
   const idsRespondieron = new Set(respondieron.map((r) => r.proveedorId));
-  const otrosInvitados = proveedores
+  const otrosInvitados = todosProveedores
     .filter((p) => p.categorias.includes(requerimiento.categoria) && !idsRespondieron.has(p.id))
     .slice(0, Math.max(0, requerimiento.proveedoresInvitados - respondieron.length))
     .map((p, i) => ({ proveedorId: p.id, estado: i === 0 ? "Visto" : "Sin respuesta" }));
   const listaProveedores = [...respondieron, ...otrosInvitados]
-    .map((r) => ({ ...r, proveedor: proveedores.find((p) => p.id === r.proveedorId) }))
+    .map((r) => ({ ...r, proveedor: todosProveedores.find((p) => p.id === r.proveedorId) }))
     .filter((r): r is typeof r & { proveedor: NonNullable<typeof r.proveedor> } => !!r.proveedor);
 
   const pctRespuesta = requerimiento.proveedoresInvitados > 0

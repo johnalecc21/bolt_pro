@@ -7,25 +7,22 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
-import { contratos, type Contrato } from "@/lib/mockData";
+import { type Contrato } from "@/lib/mockData";
+import { fetchContratos } from "@/lib/api/contratos";
 import { Search, Download, FileCheck, Calendar } from "lucide-react";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
-import { useAuth } from "@/lib/auth/AuthContext";
-
-const categorias = ["Todas", ...Array.from(new Set(contratos.map((c) => c.categoria)))];
+import { useApiData } from "@/hooks/useApiData";
 
 export function Contratos() {
-  const loading = useMockLoading();
-  const { activeCompany } = useAuth();
+  const { data: contratos, loading } = useApiData(() => fetchContratos());
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("Todas");
+  const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
 
-  const filtrados = contratos.filter((c: Contrato) => {
-    const matchCompany = (c.companyId ?? "acme") === (activeCompany?.id ?? "acme");
+  const filtrados = (contratos ?? []).filter((c: Contrato) => {
     const matchQuery = `${c.id} ${c.proveedor}`.toLowerCase().includes(query.toLowerCase());
     const matchCat = categoria === "Todas" || c.categoria === categoria;
-    return matchCompany && matchQuery && matchCat;
+    return matchQuery && matchCat;
   });
 
   function descargar(c: Contrato) {

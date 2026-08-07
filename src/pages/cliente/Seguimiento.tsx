@@ -7,34 +7,10 @@ import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { CheckCircle2, Circle, Clock, AlertTriangle, Truck, MessageSquareWarning } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
-
-interface Hito {
-  label: string;
-  comprometido: string;
-  real: string | null;
-  estado: "completado" | "en_riesgo" | "atrasado" | "pendiente";
-}
-
-const seguimientoInicial: { poId: string; proveedor: string; categoria: string; hitos: Hito[] }[] = [
-  {
-    poId: "PO-2024-0033", proveedor: "NovaTech Consulting", categoria: "TI",
-    hitos: [
-      { label: "Kickoff del proyecto", comprometido: "2024-08-16", real: "2024-08-16", estado: "completado" },
-      { label: "Migración fase 1 (5 servidores)", comprometido: "2024-08-30", real: "2024-08-29", estado: "completado" },
-      { label: "Migración fase 2 (10 servidores)", comprometido: "2024-09-15", real: null, estado: "en_riesgo" },
-      { label: "Entrega final y cierre", comprometido: "2024-09-23", real: null, estado: "pendiente" },
-    ],
-  },
-  {
-    poId: "PO-2024-0036", proveedor: "GlobalChem Supplies", categoria: "Materia Prima",
-    hitos: [
-      { label: "Primer despacho", comprometido: "2024-05-10", real: "2024-05-14", estado: "completado" },
-      { label: "Segundo despacho", comprometido: "2024-07-01", real: null, estado: "atrasado" },
-    ],
-  },
-];
+import { useApiData } from "@/hooks/useApiData";
+import { fetchSeguimiento, confirmarRecepcion as apiConfirmarRecepcion } from "@/lib/api/seguimiento";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const semaforoConfig = {
   completado: { label: "A tiempo", color: "text-success", bg: "bg-success/15" },
@@ -45,15 +21,16 @@ const semaforoConfig = {
 
 export function Seguimiento() {
   const navigate = useNavigate();
-  const loading = useMockLoading();
-  const [seguimiento, setSeguimiento] = useState(seguimientoInicial);
+  const { data: seguimiento, loading, reload } = useApiData(fetchSeguimiento);
 
-  function confirmarRecepcion(poId: string, hitoIdx: number) {
-    setSeguimiento((prev) => prev.map((s) => s.poId !== poId ? s : {
-      ...s,
-      hitos: s.hitos.map((h, i) => i === hitoIdx ? { ...h, estado: "completado", real: new Date().toISOString().slice(0, 10) } : h),
-    }));
-    toast.success("Recepción confirmada", { description: "Esto alimenta el score de desempeño del proveedor." });
+  async function confirmarRecepcion(hitoId: string) {
+    try {
+      await apiConfirmarRecepcion(hitoId);
+      toast.success("Recepción confirmada", { description: "Esto alimenta el score de desempeño del proveedor." });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   return (
@@ -64,7 +41,7 @@ export function Seguimiento() {
       </div>
 
       {loading ? <CardGridSkeleton count={2} /> : <div className="space-y-6">
-        {seguimiento.map((s) => {
+        {(seguimiento ?? []).map((s) => {
           const peorEstado = s.hitos.some((h) => h.estado === "atrasado") ? "atrasado" : s.hitos.some((h) => h.estado === "en_riesgo") ? "en_riesgo" : "completado";
           return (
             <Card key={s.poId} className="p-5">
@@ -82,8 +59,8 @@ export function Seguimiento() {
               </div>
 
               <div className="space-y-4">
-                {s.hitos.map((h, i) => (
-                  <div key={i} className="flex items-start gap-3">
+                {s.hitos.map((h) => (
+                  <div key={h.id} className="flex items-start gap-3">
                     <div className={cn("mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full", semaforoConfig[h.estado].bg, semaforoConfig[h.estado].color)}>
                       {h.estado === "completado" ? <CheckCircle2 className="h-4 w-4" /> : h.estado === "atrasado" ? <AlertTriangle className="h-4 w-4" /> : h.estado === "en_riesgo" ? <Clock className="h-4 w-4" /> : <Circle className="h-3 w-3" />}
                     </div>
@@ -93,7 +70,7 @@ export function Seguimiento() {
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">Comprometido {h.comprometido}{h.real && ` · Real ${h.real}`}</span>
                           {h.estado !== "completado" && h.estado !== "pendiente" && (
-                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => confirmarRecepcion(s.poId, i)}>
+                            <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => confirmarRecepcion(h.id)}>
                               Confirmar recepción
                             </Button>
                           )}

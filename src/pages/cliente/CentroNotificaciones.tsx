@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2, Scale, Mail, MessageCircle } from "lucide-react";
-import { useNotifications, markAsRead, markAllAsRead, type Notificacion } from "@/lib/mock/notifications";
+import { useNotifications, type Notificacion } from "@/lib/api/notificaciones";
 import { notificationTypes } from "@/lib/mock/notificationPrefs";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
-import { TableSkeleton } from "@/components/shared/TableSkeleton";
 
 const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
   aprobacion: ShieldCheck,
@@ -21,8 +19,7 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
 };
 
 export function CentroNotificaciones() {
-  const loading = useMockLoading();
-  const notificaciones = useNotifications();
+  const { notifications: notificaciones, markAsRead, markAllAsRead } = useNotifications();
   const unread = notificaciones.filter((n) => !n.leida).length;
   const [prefs, setPrefs] = useState<Record<string, { email: boolean; whatsapp: boolean }>>(
     Object.fromEntries(notificationTypes.map((t) => [t.key, { email: true, whatsapp: t.key === "aprobacion" }]))
@@ -49,7 +46,6 @@ export function CentroNotificaciones() {
         )}
       </div>
 
-      {loading ? <TableSkeleton /> :
       <Card className="overflow-hidden">
         {notificaciones.length === 0 ? (
           <EmptyState icon={Bell} title="No tienes notificaciones" />
@@ -77,7 +73,7 @@ export function CentroNotificaciones() {
             })}
           </div>
         )}
-      </Card>}
+      </Card>
 
       <Card className="p-5">
         <h2 className="mb-1 font-semibold">Preferencias de notificación</h2>

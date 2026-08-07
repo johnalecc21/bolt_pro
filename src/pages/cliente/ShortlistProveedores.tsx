@@ -5,40 +5,54 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { ProviderCard } from "@/components/shared/ProviderCard";
-import { proveedores as seedProveedores, type Proveedor } from "@/lib/mockData";
-import { generateId } from "@/lib/mock/simulate";
 import { ArrowLeft, UserPlus, Check, AlertCircle } from "lucide-react";
-
-const PALETTE = ["oklch(0.60 0.22 280)", "oklch(0.60 0.18 155)", "oklch(0.70 0.18 68)", "oklch(0.65 0.20 200)"];
+import { useApiData } from "@/hooks/useApiData";
+import { fetchProveedores, createProveedorExterno } from "@/lib/api/proveedores";
+import { fetchRequerimiento, invitarProveedores } from "@/lib/api/requerimientos";
+import { apiErrorMessage } from "@/lib/api/http";
 
 export function ShortlistProveedores() {
   const navigate = useNavigate();
   const { id } = useParams();
-  const [proveedores, setProveedores] = useState<Proveedor[]>(seedProveedores);
-  const [selected, setSelected] = useState<string[]>(["P-001", "P-004", "P-007", "P-010", "P-008", "P-012"]);
+  const { data: proveedores, loading, reload } = useApiData(() => fetchProveedores());
+  const { data: req } = useApiData(() => fetchRequerimiento(id!), [id]);
+  const [selected, setSelected] = useState<string[]>([]);
   const [showModal, setShowModal] = useState(false);
   const [nombre, setNombre] = useState("");
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const toggle = (pid: string) => {
     setSelected((prev) => prev.includes(pid) ? prev.filter((p) => p !== pid) : [...prev, pid]);
   };
 
-  function agregarExterno() {
+  async function agregarExterno() {
     if (!nombre.trim() || !email.trim()) return;
-    const id = generateId("P");
-    const iniciales = nombre.trim().split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
-    const nuevo: Proveedor = {
-      id, nombre: nombre.trim(), iniciales, categorias: ["Pendiente de homologación"], score: 0,
-      ubicacion: "Por confirmar", certificaciones: [], procesosGanados: 0, entregasATiempo: 0, disputas: 0,
-      color: PALETTE[proveedores.length % PALETTE.length],
-    };
-    setProveedores((prev) => [nuevo, ...prev]);
-    setSelected((prev) => [...prev, id]);
-    setShowModal(false);
-    setNombre("");
-    setEmail("");
-    toast.success("Proveedor agregado a la homologación exprés", { description: `${nuevo.nombre} — se le invitará una vez validado.` });
+    try {
+      const nuevo = await createProveedorExterno(nombre.trim());
+      setSelected((prev) => [...prev, nuevo.id]);
+      setShowModal(false);
+      setNombre("");
+      setEmail("");
+      toast.success("Proveedor agregado a la homologación exprés", { description: `${nuevo.nombre} — se le invitará una vez validado.` });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
+  }
+
+  async function confirmarInvitaciones() {
+    if (!id || selected.length < 3) return;
+    setSubmitting(true);
+    try {
+      await invitarProveedores(id, selected);
+      toast.success("Invitaciones enviadas", { description: `${selected.length} proveedores invitados a licitar.` });
+      navigate(`/cliente/licitaciones/${id}`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudieron enviar las invitaciones."));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -49,7 +63,7 @@ export function ShortlistProveedores() {
         </Button>
         <div className="flex-1">
           <h1 className="text-2xl font-bold">Shortlist de Proveedores</h1>
-          <p className="text-sm text-muted-foreground">{id ?? "RFP-2024-0032"} — Servicios de nube y migración AWS</p>
+          <p className="text-sm text-muted-foreground">{id} — {req?.titulo ?? "Cargando..."}</p>
         </div>
       </div>
 
@@ -68,31 +82,30 @@ export function ShortlistProveedores() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {proveedores.map((p) => (
-          <ProviderCard
-            key={p.id}
-            proveedor={p}
-            selectable
-            selected={selected.includes(p.id)}
-            onSelect={() => toggle(p.id)}
-          />
-        ))}
-      </div>
+      {!loading && (
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {(proveedores ?? []).map((p) => (
+            <ProviderCard
+              key={p.id}
+              proveedor={p}
+              selectable
+              selected={selected.includes(p.id)}
+              onSelect={() => toggle(p.id)}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="sticky bottom-0 flex items-center justify-between rounded-xl border border-border bg-background/80 p-4 backdrop-blur-md">
         <p className="text-sm text-muted-foreground">
           {selected.length >= 3 ? "Listo para enviar invitaciones" : "Selecciona al menos 3 proveedores"}
         </p>
         <Button
-          onClick={() => {
-            toast.success("Invitaciones enviadas", { description: `${selected.length} proveedores invitados a licitar.` });
-            navigate(`/cliente/licitaciones/${id}`);
-          }}
-          disabled={selected.length < 3}
+          onClick={confirmarInvitaciones}
+          disabled={selected.length < 3 || submitting}
           className="gradient-brand text-white"
         >
-          <Check className="mr-2 h-4 w-4" /> Confirmar y enviar invitaciones
+          <Check className="mr-2 h-4 w-4" /> {submitting ? "Enviando..." : "Confirmar y enviar invitaciones"}
         </Button>
       </div>
 

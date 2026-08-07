@@ -5,12 +5,15 @@ import { Badge } from "@/components/ui/badge";
 import { KPICard } from "@/components/shared/KPICard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle } from "lucide-react";
-import { requerimientos, actividadReciente, ahorroMensual, proveedores, aprobaciones } from "@/lib/mockData";
+import { actividadReciente, ahorroMensual } from "@/lib/mockData";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { KpiRowSkeleton, TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimientos } from "@/lib/api/requerimientos";
+import { fetchAprobaciones } from "@/lib/api/aprobaciones";
+import { fetchProveedores } from "@/lib/api/proveedores";
 
 const chartConfig = {
   auditado: { label: "Auditado", color: "var(--chart-1)" },
@@ -19,12 +22,17 @@ const chartConfig = {
 
 export function Dashboard() {
   const { currentUser, activeCompany } = useAuth();
-  const loading = useMockLoading();
   const esAprobador = currentUser?.role === "aprobador_cfo";
-  const deLaEmpresa = requerimientos.filter((r) => (r.companyId ?? "acme") === (activeCompany?.id ?? "acme"));
+  const { data: requerimientos, loading: loadingReq } = useApiData(fetchRequerimientos);
+  const { data: aprobaciones } = useApiData(
+    () => (esAprobador ? fetchAprobaciones() : Promise.resolve([])),
+    [esAprobador],
+  );
+  const { data: proveedores } = useApiData(fetchProveedores);
+  const loading = loadingReq;
   const misRequerimientos = currentUser?.role === "comprador"
-    ? deLaEmpresa.filter((r) => r.solicitante === currentUser.nombre)
-    : deLaEmpresa;
+    ? (requerimientos ?? []).filter((r) => r.solicitante === currentUser.nombre)
+    : (requerimientos ?? []);
 
   return (
     <div className="space-y-6 p-6">
@@ -43,14 +51,14 @@ export function Dashboard() {
         )}
       </div>
 
-      {esAprobador && aprobaciones.length > 0 && (
+      {esAprobador && (aprobaciones ?? []).length > 0 && (
         <Card className="border-warning/30 bg-warning/5 p-5">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="flex items-center gap-2 font-semibold"><AlertTriangle className="h-4 w-4 text-warning-foreground" /> Requiere tu aprobación</h2>
             <Link to="/cliente/aprobaciones" className="text-sm text-primary hover:underline">Ver bandeja completa</Link>
           </div>
           <div className="space-y-2">
-            {aprobaciones.slice(0, 3).map((a) => (
+            {(aprobaciones ?? []).slice(0, 3).map((a) => (
               <div key={a.id} className="flex items-center justify-between rounded-lg border border-border bg-background p-3 text-sm">
                 <div>
                   <p className="font-medium">{a.descripcion}</p>
@@ -135,7 +143,7 @@ export function Dashboard() {
           <Card className="p-5">
             <h2 className="mb-4 font-semibold">Proveedores destacados</h2>
             <div className="space-y-3">
-              {proveedores.slice(0, 3).map((p) => (
+              {(proveedores ?? []).slice(0, 3).map((p) => (
                 <div key={p.id} className="flex items-center gap-3">
                   <div className="flex h-9 w-9 items-center justify-center rounded-lg text-white text-xs font-bold" style={{ background: p.color }}>
                     {p.iniciales}

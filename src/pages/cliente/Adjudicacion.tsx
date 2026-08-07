@@ -8,27 +8,32 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Trophy, FileText, PenTool, ShieldAlert, ShieldCheck, Check, Send, Loader2, FileQuestion } from "lucide-react";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { simulateProcess } from "@/lib/mock/simulate";
-import { getProceso } from "@/lib/mock/procesos";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimiento } from "@/lib/api/requerimientos";
+import {
+  fetchAdjudicacion, confirmarAdjudicacion as apiConfirmar,
+  revisionLegalAdjudicacion as apiRevisionLegal, firmarAdjudicacion as apiFirmar,
+} from "@/lib/api/adjudicacion";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const UMBRAL_LEGAL = 50000;
 
 export function Adjudicacion() {
   const { id } = useParams();
-  const requerimientoId = id ?? "RFP-2024-0032";
-  const proceso = getProceso(requerimientoId);
-  const { currentUser } = useAuth();
-  const [confirmada, setConfirmada] = useState(proceso?.adjudicacion?.yaFirmado ?? false);
-  const [revisionLegal, setRevisionLegal] = useState(proceso?.adjudicacion?.yaFirmado ?? false);
+  const requerimientoId = id ?? "";
+  const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: adjudicacion, loading: loadingAdj, reload } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
   const [notificarPerdedores, setNotificarPerdedores] = useState(true);
   const [firmando, setFirmando] = useState<string | null>(null);
-  const [firmado, setFirmado] = useState(proceso?.adjudicacion?.yaFirmado ?? false);
   const [firmaError, setFirmaError] = useState<string | null>(null);
   const [firmaIntentos, setFirmaIntentos] = useState(0);
 
-  if (!proceso?.adjudicacion) {
+  if (loadingReq || loadingAdj) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando adjudicación...</div>;
+  }
+
+  if (!requerimiento || !adjudicacion) {
     return (
       <div className="p-6">
         <EmptyState
@@ -40,22 +45,30 @@ export function Adjudicacion() {
     );
   }
 
-  const { adjudicacion, presupuestoInicial } = proceso;
+  const presupuestoInicial = requerimiento.montoEstimado;
   const ahorro = presupuestoInicial - adjudicacion.precioFinal;
   const ahorroPct = Math.round((ahorro / presupuestoInicial) * 100);
   const requiereLegal = adjudicacion.precioFinal > UMBRAL_LEGAL;
-  const puedeFirmar = confirmada && (!requiereLegal || revisionLegal);
+  const puedeFirmar = adjudicacion.confirmada && (!requiereLegal || adjudicacion.revisionLegal);
 
-  function confirmarAdjudicacion() {
-    setConfirmada(true);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Adjudicación confirmada", detalle: `${requerimientoId} → ${adjudicacion.proveedor} ($${adjudicacion.precioFinal.toLocaleString()})` });
-    toast.success("Adjudicación confirmada");
+  async function confirmarAdjudicacionClick() {
+    try {
+      await apiConfirmar(requerimientoId);
+      toast.success("Adjudicación confirmada");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function completarRevisionLegal() {
-    setRevisionLegal(true);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Revisión legal completada", detalle: `Contrato ${requerimientoId} desbloqueado para firma` });
-    toast.success("Revisión legal completada");
+  async function completarRevisionLegal() {
+    try {
+      await apiRevisionLegal(requerimientoId);
+      toast.success("Revisión legal completada");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   async function enviarAFirma() {
@@ -72,17 +85,21 @@ export function Adjudicacion() {
     await simulateProcess(
       [
         { label: "Recolectando firmas...", duration: 900 },
-        { label: "Contrato firmado", duration: 600 },
       ],
       (label) => setFirmando(label)
     );
-    setFirmando(null);
-    setFirmado(true);
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Contrato firmado electrónicamente", detalle: `${requerimientoId} → ${adjudicacion.proveedor}` });
-    if (notificarPerdedores) {
-      toast.success("Contrato firmado", { description: "Se notificó a los proveedores no ganadores con feedback estructurado." });
-    } else {
-      toast.success("Contrato firmado");
+    try {
+      await apiFirmar(requerimientoId);
+      setFirmando(null);
+      reload();
+      if (notificarPerdedores) {
+        toast.success("Contrato firmado", { description: "Se notificó a los proveedores no ganadores con feedback estructurado." });
+      } else {
+        toast.success("Contrato firmado");
+      }
+    } catch (err) {
+      setFirmando(null);
+      setFirmaError(apiErrorMessage(err, "No se pudo firmar el contrato."));
     }
   }
 
@@ -121,16 +138,16 @@ export function Adjudicacion() {
               </div>
             ))}
           </div>
-          {!confirmada && (
+          {!adjudicacion.confirmada && (
             <ConfirmDialog
               trigger={<Button className="mt-4 gradient-brand text-white"><Check className="mr-2 h-4 w-4" /> Confirmar adjudicación</Button>}
               title="Confirmar adjudicación"
               description={`${adjudicacion.proveedor} será notificado como ganador. Esta decisión queda registrada en el log de auditoría.`}
               confirmLabel="Confirmar"
-              onConfirm={confirmarAdjudicacion}
+              onConfirm={confirmarAdjudicacionClick}
             />
           )}
-          {confirmada && (
+          {adjudicacion.confirmada && (
             <p className="mt-4 flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Adjudicación confirmada</p>
           )}
         </div>
@@ -169,7 +186,7 @@ export function Adjudicacion() {
           </div>
           <div className="space-y-2">
             <div className="flex justify-between"><span>Proveedor:</span><span className="font-medium">{adjudicacion.proveedor}</span></div>
-            <div className="flex justify-between"><span>Servicio:</span><span className="font-medium">{proceso.titulo}</span></div>
+            <div className="flex justify-between"><span>Servicio:</span><span className="font-medium">{requerimiento.titulo}</span></div>
             <div className="flex justify-between"><span>Monto total:</span><span className="font-bold">${adjudicacion.precioFinal.toLocaleString()} USD</span></div>
             <div className="flex justify-between"><span>Plazo:</span><span className="font-medium">{adjudicacion.plazoDias} días</span></div>
             <div className="flex justify-between"><span>Pago:</span><span className="font-medium">{adjudicacion.condicionesPagoDias} días netos</span></div>
@@ -179,12 +196,12 @@ export function Adjudicacion() {
 
       {/* Legal review */}
       {requiereLegal && (
-        <Card className={revisionLegal ? "border-success/30 bg-success/5 p-4" : "border-warning/30 bg-warning/5 p-4"}>
+        <Card className={adjudicacion.revisionLegal ? "border-success/30 bg-success/5 p-4" : "border-warning/30 bg-warning/5 p-4"}>
           <div className="flex items-center gap-3">
-            {revisionLegal ? <ShieldCheck className="h-5 w-5 text-success" /> : <ShieldAlert className="h-5 w-5 text-warning-foreground" />}
+            {adjudicacion.revisionLegal ? <ShieldCheck className="h-5 w-5 text-success" /> : <ShieldAlert className="h-5 w-5 text-warning-foreground" />}
             <div className="flex-1">
               <p className="text-sm">
-                {revisionLegal ? (
+                {adjudicacion.revisionLegal ? (
                   <strong>Revisión legal completada</strong>
                 ) : (
                   <>
@@ -193,7 +210,7 @@ export function Adjudicacion() {
                 )}
               </p>
             </div>
-            {!revisionLegal && (
+            {!adjudicacion.revisionLegal && (
               <Button size="sm" variant="outline" onClick={completarRevisionLegal}>Marcar como revisado</Button>
             )}
           </div>
@@ -215,10 +232,10 @@ export function Adjudicacion() {
       {/* Actions */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Checkbox id="notify-losers" checked={notificarPerdedores} onCheckedChange={(v) => setNotificarPerdedores(v === true)} disabled={firmado} />
+          <Checkbox id="notify-losers" checked={notificarPerdedores} onCheckedChange={(v) => setNotificarPerdedores(v === true)} disabled={adjudicacion.yaFirmado} />
           <Label htmlFor="notify-losers" className="text-sm font-normal">Notificar proveedores no ganadores (con feedback automático)</Label>
         </div>
-        {firmado ? (
+        {adjudicacion.yaFirmado ? (
           <span className="flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Contrato firmado</span>
         ) : firmando ? (
           <Button disabled className="gradient-brand text-white">
@@ -246,9 +263,9 @@ export function Adjudicacion() {
           </Button>
         </div>
       )}
-      {!puedeFirmar && !firmado && (
+      {!puedeFirmar && !adjudicacion.yaFirmado && (
         <p className="text-right text-xs text-muted-foreground">
-          {!confirmada ? "Confirma la adjudicación antes de enviar a firma." : "Completa la revisión legal antes de enviar a firma."}
+          {!adjudicacion.confirmada ? "Confirma la adjudicación antes de enviar a firma." : "Completa la revisión legal antes de enviar a firma."}
         </p>
       )}
     </div>

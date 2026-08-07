@@ -6,44 +6,65 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimiento, addComentario } from "@/lib/api/requerimientos";
+import { apiErrorMessage } from "@/lib/api/http";
+import type { EstadoReq } from "@/lib/mockData";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { FileText } from "lucide-react";
 
-const etapas = [
-  { label: "Creado", fecha: "2024-07-20", done: true },
-  { label: "Aprobado", fecha: "2024-07-21", done: true },
-  { label: "Shortlist definida", fecha: "2024-07-23", done: true },
-  { label: "En Licitación", fecha: "2024-07-25", done: true, active: true },
-  { label: "En Negociación", fecha: null, done: false },
-  { label: "Adjudicado", fecha: null, done: false },
-  { label: "PO Emitida", fecha: null, done: false },
-  { label: "En Cumplimiento", fecha: null, done: false },
-  { label: "Cerrado", fecha: null, done: false },
+const ETAPA_ORDER: EstadoReq[] = [
+  "borrador", "pendiente_aprobacion", "en_licitacion", "en_negociacion", "adjudicado", "en_cumplimiento", "cerrado",
 ];
 
-const actividadesIniciales = [
-  { tipo: "system", texto: "CloudSphere envió su oferta", tiempo: "Hace 15 min" },
-  { tipo: "comment", texto: "Carlos: Revisar plazos de entrega", tiempo: "Hace 2 h" },
-  { tipo: "system", texto: "NovaTech Consulting completó el Q&A", tiempo: "Hace 5 h" },
-  { tipo: "system", texto: "8 proveedores invitados", tiempo: "Hace 2 días" },
-  { tipo: "comment", texto: "Ana (Consultora): Sugiero ampliar plazo 3 días", tiempo: "Hace 2 días" },
-];
+const ETAPA_LABELS: Record<EstadoReq, string> = {
+  borrador: "Borrador",
+  pendiente_aprobacion: "Pendiente de aprobación",
+  en_licitacion: "En Licitación",
+  en_negociacion: "En Negociación",
+  adjudicado: "Adjudicado",
+  en_cumplimiento: "En Cumplimiento",
+  cerrado: "Cerrado",
+};
 
 export function DetalleRequerimiento() {
   const { id } = useParams();
-  const { currentUser } = useAuth();
-  const [actividades, setActividades] = useState(actividadesIniciales);
+  const { data: req, loading, reload } = useApiData(() => fetchRequerimiento(id!), [id]);
   const [comentario, setComentario] = useState("");
+  const [sending, setSending] = useState(false);
 
-  function enviarComentario() {
-    if (!comentario.trim()) return;
-    setActividades((prev) => [{ tipo: "comment", texto: `${currentUser?.nombre}: ${comentario.trim()}`, tiempo: "Ahora" }, ...prev]);
-    setComentario("");
+  async function enviarComentario() {
+    if (!comentario.trim() || !id) return;
+    setSending(true);
+    try {
+      await addComentario(id, comentario.trim());
+      setComentario("");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    } finally {
+      setSending(false);
+    }
   }
 
   function descargar(doc: string) {
     toast.success("Descarga iniciada", { description: doc });
   }
+
+  if (loading) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando requerimiento...</div>;
+  }
+
+  if (!req) {
+    return (
+      <div className="p-6">
+        <EmptyState icon={FileText} title="Requerimiento no encontrado" description={`No existe un requerimiento con id ${id}.`} />
+      </div>
+    );
+  }
+
+  const currentIdx = ETAPA_ORDER.indexOf(req.estado);
 
   return (
     <div className="space-y-6 p-6">
@@ -53,10 +74,10 @@ export function DetalleRequerimiento() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">{id ?? "RFP-2024-0032"}</h1>
-            <StatusBadge estado="en_licitacion" />
+            <h1 className="text-xl font-bold">{req.id}</h1>
+            <StatusBadge estado={req.estado} />
           </div>
-          <p className="text-sm text-muted-foreground">Servicios de nube y migración AWS</p>
+          <p className="text-sm text-muted-foreground">{req.titulo}</p>
         </div>
         <Link to={`/cliente/requerimientos/${id}/shortlist`}>
           <Button variant="outline">Ver Shortlist</Button>
@@ -72,45 +93,48 @@ export function DetalleRequerimiento() {
           <Card className="p-6">
             <h2 className="mb-6 font-semibold">Línea de tiempo del proceso</h2>
             <div className="relative space-y-6">
-              {etapas.map((etapa, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className="relative flex flex-col items-center">
-                    <div className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all",
-                      etapa.done && !etapa.active ? "border-success bg-success text-success-foreground" :
-                      etapa.active ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20" :
-                      "border-border bg-muted text-muted-foreground"
-                    )}>
-                      {etapa.done && !etapa.active ? <Check className="h-4 w-4" /> : etapa.active ? <Clock className="h-4 w-4" /> : <Circle className="h-3 w-3" />}
+              {ETAPA_ORDER.map((estado, i) => {
+                const done = i < currentIdx || i === currentIdx;
+                const active = i === currentIdx;
+                return (
+                  <div key={estado} className="flex gap-4">
+                    <div className="relative flex flex-col items-center">
+                      <div className={cn(
+                        "flex h-8 w-8 items-center justify-center rounded-full border-2 transition-all",
+                        done && !active ? "border-success bg-success text-success-foreground" :
+                        active ? "border-primary bg-primary text-primary-foreground ring-4 ring-primary/20" :
+                        "border-border bg-muted text-muted-foreground"
+                      )}>
+                        {done && !active ? <Check className="h-4 w-4" /> : active ? <Clock className="h-4 w-4" /> : <Circle className="h-3 w-3" />}
+                      </div>
+                      {i < ETAPA_ORDER.length - 1 && (
+                        <div className={cn("mt-1 h-12 w-0.5", done ? "bg-success" : "bg-border")} />
+                      )}
                     </div>
-                    {i < etapas.length - 1 && (
-                      <div className={cn("mt-1 h-12 w-0.5", etapa.done ? "bg-success" : "bg-border")} />
-                    )}
+                    <div className="pt-1">
+                      <p className={cn("text-sm font-medium", active && "text-primary")}>{ETAPA_LABELS[estado]}</p>
+                      {active && <p className="mt-1 text-xs text-primary">En progreso — {req.ofertasRecibidas} de {req.proveedoresInvitados} ofertas recibidas</p>}
+                    </div>
                   </div>
-                  <div className="pt-1">
-                    <p className={cn("text-sm font-medium", etapa.active && "text-primary")}>{etapa.label}</p>
-                    {etapa.fecha && <p className="text-xs text-muted-foreground">{etapa.fecha}</p>}
-                    {etapa.active && <p className="mt-1 text-xs text-primary">En progreso — 5 de 8 ofertas recibidas</p>}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Activity */}
             <div className="mt-8 border-t pt-6">
               <h3 className="mb-4 font-semibold text-sm">Actividad y comentarios</h3>
               <div className="space-y-4">
-                {actividades.map((act, i) => (
-                  <div key={i} className="flex gap-3">
-                    <div className={cn(
-                      "flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
-                      act.tipo === "system" ? "bg-muted" : "bg-primary/10 text-primary"
-                    )}>
-                      {act.tipo === "system" ? <Circle className="h-3 w-3" /> : <MessageSquare className="h-3.5 w-3.5" />}
+                {req.comentarios.length === 0 && (
+                  <p className="text-sm text-muted-foreground">Sin comentarios todavía.</p>
+                )}
+                {req.comentarios.map((c) => (
+                  <div key={c.id} className="flex gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <MessageSquare className="h-3.5 w-3.5" />
                     </div>
                     <div>
-                      <p className="text-sm">{act.texto}</p>
-                      <p className="text-xs text-muted-foreground">{act.tiempo}</p>
+                      <p className="text-sm">{c.autor}: {c.texto}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(c.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -123,7 +147,7 @@ export function DetalleRequerimiento() {
                   onChange={(e) => setComentario(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && enviarComentario()}
                 />
-                <Button size="sm" onClick={enviarComentario} disabled={!comentario.trim()}>Enviar</Button>
+                <Button size="sm" onClick={enviarComentario} disabled={!comentario.trim() || sending}>Enviar</Button>
               </div>
             </div>
           </Card>
@@ -134,14 +158,14 @@ export function DetalleRequerimiento() {
           <Card className="p-5">
             <h3 className="mb-3 font-semibold text-sm">Detalles del requerimiento</h3>
             <div className="space-y-2 text-sm">
-              {[
-                ["Categoría", "Tecnología"],
-                ["Presupuesto", "$185,000"],
-                ["Fecha límite", "2024-08-12"],
-                ["Proveedores", "8 invitados"],
-                ["Ofertas recibidas", "5"],
-                ["Solicitante", "Carlos Méndez"],
-              ].map(([k, v]) => (
+              {([
+                ["Categoría", req.categoria],
+                ["Presupuesto", `$${req.montoEstimado.toLocaleString()}`],
+                ["Fecha límite", req.fechaLimite],
+                ["Proveedores", `${req.proveedoresInvitados} invitados`],
+                ["Ofertas recibidas", String(req.ofertasRecibidas)],
+                ["Solicitante", req.solicitante],
+              ] as [string, string][]).map(([k, v]) => (
                 <div key={k} className="flex justify-between">
                   <span className="text-muted-foreground">{k}</span>
                   <span className="font-medium">{v}</span>
@@ -167,10 +191,13 @@ export function DetalleRequerimiento() {
           <Card className="p-5">
             <h3 className="mb-3 font-semibold text-sm">Documentos</h3>
             <div className="space-y-2">
-              {["RFP-0032.pdf", "Specs_tecnicas.docx", "Matriz_criterios.xlsx"].map((doc) => (
-                <button key={doc} onClick={() => descargar(doc)} className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm hover:bg-muted/30 cursor-pointer">
+              {req.documentos.length === 0 && (
+                <p className="text-sm text-muted-foreground">Sin documentos adjuntos.</p>
+              )}
+              {req.documentos.map((doc) => (
+                <button key={doc.id} onClick={() => descargar(doc.nombre)} className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm hover:bg-muted/30 cursor-pointer">
                   <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span className="flex-1 truncate">{doc}</span>
+                  <span className="flex-1 truncate">{doc.nombre}</span>
                   <Download className="h-3.5 w-3.5 text-muted-foreground" />
                 </button>
               ))}

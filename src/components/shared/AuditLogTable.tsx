@@ -1,11 +1,12 @@
 import { Card } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { useAuditLog } from "@/lib/mock/auditLog";
+import { fetchAuditLog } from "@/lib/api/auditLog";
+import { useApiData } from "@/hooks/useApiData";
 import { History } from "lucide-react";
 
 export function AuditLogTable({ limit }: { limit?: number }) {
-  const entries = useAuditLog();
-  const shown = limit ? entries.slice(0, limit) : entries;
+  const { data: entries } = useApiData(() => fetchAuditLog(limit), [limit]);
+  const shown = entries ?? [];
 
   if (shown.length === 0) {
     return <EmptyState icon={History} title="Sin actividad registrada" description="Las acciones sensibles (aprobaciones, rechazos, cambios de score) aparecerán aquí." />;

@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Trophy, AlertTriangle, Download, Settings, ArrowRight, SlidersHorizontal, FileQuestion } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
-import { getProceso } from "@/lib/mock/procesos";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchRequerimiento } from "@/lib/api/requerimientos";
+import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
+import { fetchAdjudicacion, crearAdjudicacion } from "@/lib/api/adjudicacion";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const criterios = [
   { key: "precio", label: "Precio total", prefix: "$", suffix: "", lowerIsBetter: true },
@@ -48,26 +50,36 @@ function computeScores<T extends { precio: number; plazo: number; calidad: numbe
 
 export function CuadroComparativo() {
   const { id } = useParams();
-  const requerimientoId = id ?? "RFP-2024-0032";
-  const proceso = getProceso(requerimientoId);
-  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const requerimientoId = id ?? "";
+  const [adjudicando, setAdjudicando] = useState(false);
+  const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: ofertasData, loading: loadingOfertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: adjudicacion } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
   const mode = usePermissionMode();
   const [weights, setWeights] = useState(defaultWeights);
   const [appliedWeights, setAppliedWeights] = useState(defaultWeights);
   const [showWeights, setShowWeights] = useState(false);
 
-  const ofertasBase = proceso?.ofertas ?? [];
+  const ofertasBase = (ofertasData ?? []).filter((o) => o.enviada);
   const ofertas = useMemo(() => computeScores(ofertasBase, appliedWeights), [ofertasBase, appliedWeights]);
   const sorted = [...ofertas].sort((a, b) => b.score - a.score);
   // Once a proceso is already adjudicado y firmado, the actual signed winner
   // takes precedence over whatever the live weight sliders currently compute.
-  const winner = proceso?.adjudicacion?.yaFirmado
-    ? ofertas.find((o) => o.proveedorId === proceso.adjudicacion!.proveedorId) ?? sorted[0]
+  const winner = adjudicacion?.yaFirmado
+    ? ofertas.find((o) => o.proveedorId === adjudicacion.proveedorId) ?? sorted[0]
     : sorted[0];
   const minPrecio = ofertasBase.length ? Math.min(...ofertasBase.map((o) => o.precio)) : 0;
   const weightSum = weights.precio + weights.plazo + weights.calidad + weights.pago;
+  const benchmarkEstimado = ofertasBase.length
+    ? Math.round(ofertasBase.reduce((sum, o) => sum + o.precio, 0) / ofertasBase.length)
+    : 0;
 
-  if (!proceso) {
+  if (loadingReq || loadingOfertas) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando comparativo...</div>;
+  }
+
+  if (!requerimiento || ofertasBase.length === 0 || !winner) {
     return (
       <div className="p-6">
         <EmptyState
@@ -81,12 +93,28 @@ export function CuadroComparativo() {
 
   function aplicarPesos() {
     setAppliedWeights(weights);
-    logAudit({
-      usuario: currentUser?.nombre ?? "—",
-      accion: "Ajuste de pesos en comparativo",
-      detalle: `${requerimientoId} → Precio ${weights.precio}% · Plazo ${weights.plazo}% · Calidad ${weights.calidad}% · Pago ${weights.pago}%`,
-    });
-    toast.warning("Pesos actualizados", { description: "Este ajuste queda registrado en el log de auditoría." });
+    toast.warning("Pesos actualizados", { description: "El score de cada proveedor fue recalculado." });
+  }
+
+  async function adjudicarDirectamente() {
+    setAdjudicando(true);
+    try {
+      if (!adjudicacion) {
+        await crearAdjudicacion({
+          requerimientoId,
+          proveedorId: winner.proveedorId,
+          precioFinal: winner.precio,
+          plazoDias: winner.plazo,
+          condicionesPagoDias: winner.pago,
+          garantiaMeses: 12,
+        });
+      }
+      navigate(`/cliente/adjudicacion/${requerimientoId}`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo iniciar la adjudicación."));
+    } finally {
+      setAdjudicando(false);
+    }
   }
 
   function exportarCSV() {
@@ -103,14 +131,14 @@ export function CuadroComparativo() {
     toast.success("Reporte exportado", { description: `comparativo-${requerimientoId}.csv` });
   }
 
-  const brechaBenchmark = Math.round(((proceso.benchmark - winner.precio) / proceso.benchmark) * 100);
+  const brechaBenchmark = benchmarkEstimado > 0 ? Math.round(((benchmarkEstimado - winner.precio) / benchmarkEstimado) * 100) : 0;
 
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cuadro Comparativo de Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimientoId} — {proceso.titulo}</p>
+          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimientoId} — {requerimiento.titulo}</p>
         </div>
         <div className="flex gap-2">
           {mode === "full" && (
@@ -241,7 +269,7 @@ export function CuadroComparativo() {
 
       {/* Benchmark */}
       <div className="rounded-lg bg-info/10 p-4 text-sm text-info">
-        <strong>Benchmark de mercado:</strong> El precio de referencia para esta categoría en los últimos 6 meses es <strong>${proceso.benchmark.toLocaleString()}</strong> (promedio LATAM). La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del benchmark.
+        <strong>Precio promedio de las ofertas recibidas:</strong> <strong>${benchmarkEstimado.toLocaleString()}</strong>. La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del promedio.
       </div>
 
       {/* Consultant Note */}
@@ -252,9 +280,8 @@ export function CuadroComparativo() {
             <div className="flex items-center gap-2">
               <p className="text-sm font-medium">Ana Consultora</p>
               <Badge variant="secondary" className="text-[10px]">Consultora de sourcing</Badge>
-              <span className="text-xs text-muted-foreground">Hace 1 h</span>
             </div>
-            <p className="mt-2 text-sm text-muted-foreground">{proceso.notaConsultor}</p>
+            <p className="mt-2 text-sm text-muted-foreground">Revisa esta comparación con tu equipo de sourcing antes de adjudicar — {winner.proveedor} lidera con el mejor balance entre precio, plazo y calidad según los pesos configurados.</p>
           </div>
         </div>
       </Card>
@@ -267,11 +294,9 @@ export function CuadroComparativo() {
               <Settings className="h-4 w-4" /> Iniciar negociación
             </Button>
           </Link>
-          <Link to={`/cliente/adjudicacion/${requerimientoId}`}>
-            <Button className="gradient-brand text-white gap-2">
-              <ArrowRight className="h-4 w-4" /> Adjudicar directamente
-            </Button>
-          </Link>
+          <Button className="gradient-brand text-white gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
+            <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : "Adjudicar directamente"}
+          </Button>
         </div>
       )}
       <CopilotoPanel context="comparativo" />

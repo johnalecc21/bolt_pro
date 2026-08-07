@@ -9,23 +9,45 @@ import { Card } from "@/components/ui/card";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 import { Sparkles, ArrowLeft, ArrowRight, Plus, X, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { generateId } from "@/lib/mock/simulate";
+import { createRequerimiento } from "@/lib/api/requerimientos";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const categoriasCatalogo = ["Servicios Generales", "Materia Prima"];
 
 export function NuevoRequerimiento() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
+  const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [categoria, setCategoria] = useState("Tecnología");
+  const [presupuesto, setPresupuesto] = useState("");
+  const [fechaLimite, setFechaLimite] = useState("");
   const [criterios, setCriterios] = useState({ precio: 50, tiempo: 25, calidad: 15, pago: 10 });
+  const [submitting, setSubmitting] = useState(false);
   const total = criterios.precio + criterios.tiempo + criterios.calidad + criterios.pago;
   const esCatalogo = categoriasCatalogo.includes(categoria);
 
-  function handleSubmit() {
-    const id = generateId("RFP");
-    toast.success("Requerimiento enviado a aprobación", { description: id });
-    navigate(`/cliente/requerimientos/${id}`);
+  async function handleSubmit() {
+    if (!titulo.trim() || !presupuesto || !fechaLimite) {
+      toast.error("Completa título, presupuesto y fecha límite antes de enviar.");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const req = await createRequerimiento({
+        titulo: titulo.trim(),
+        categoria,
+        montoEstimado: Number(presupuesto),
+        fechaLimite,
+        criteriosPeso: criterios,
+      });
+      toast.success("Requerimiento enviado a aprobación", { description: req.id });
+      navigate(`/cliente/requerimientos/${req.id}`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo crear el requerimiento."));
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -51,6 +73,10 @@ export function NuevoRequerimiento() {
         {step === 1 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">¿Qué necesitas?</h2>
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input placeholder="Ej: Servicios de nube y migración AWS" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+            </div>
             <div className="space-y-2">
               <Label>Descripción del requerimiento</Label>
               <div className="relative">
@@ -142,11 +168,11 @@ export function NuevoRequerimiento() {
               </div>
               <div className="space-y-2">
                 <Label>Presupuesto estimado</Label>
-                <Input type="number" placeholder="$185,000" />
+                <Input type="number" placeholder="185000" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Fecha requerida</Label>
-                <Input type="date" />
+                <Input type="date" value={fechaLimite} onChange={(e) => setFechaLimite(e.target.value)} />
               </div>
             </div>
           </div>
@@ -193,12 +219,12 @@ export function NuevoRequerimiento() {
             <h2 className="text-xl font-semibold">Revisión final</h2>
             <div className="space-y-3 rounded-lg border border-border p-4">
               {[
-                ["Descripción", descripcion || "Servicios de migración a la nube AWS"],
+                ["Título", titulo || "(sin definir)"],
+                ["Descripción", descripcion || "(sin definir)"],
                 ["Categoría", categoria],
                 ["Prioridad", "Normal"],
-                ["Cantidad", "1 servicio / mes"],
-                ["Presupuesto", "$185,000"],
-                ["Fecha requerida", "2024-09-15"],
+                ["Presupuesto", presupuesto ? `$${Number(presupuesto).toLocaleString()}` : "(sin definir)"],
+                ["Fecha requerida", fechaLimite || "(sin definir)"],
                 ["Criterios", `Precio ${criterios.precio}% · Tiempo ${criterios.tiempo}% · Calidad ${criterios.calidad}% · Pago ${criterios.pago}%`],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm gap-4">
@@ -230,8 +256,8 @@ export function NuevoRequerimiento() {
               Siguiente <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (
-            <Button onClick={handleSubmit} className="gradient-success text-white">
-              <Check className="mr-2 h-4 w-4" /> Enviar a aprobación
+            <Button onClick={handleSubmit} disabled={submitting} className="gradient-success text-white">
+              <Check className="mr-2 h-4 w-4" /> {submitting ? "Enviando..." : "Enviar a aprobación"}
             </Button>
           )}
         </div>

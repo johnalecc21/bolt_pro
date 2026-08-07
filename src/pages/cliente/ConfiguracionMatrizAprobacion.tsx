@@ -1,27 +1,19 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator } from "lucide-react";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { cn } from "@/lib/utils";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMatrizAprobacion, guardarMatrizAprobacion, type Regla } from "@/lib/api/matrizAprobacion";
+import { apiErrorMessage } from "@/lib/api/http";
 
-interface Regla {
-  id: string;
-  min: number;
-  max: number | null;
-  aprobadores: string;
-  tipo: "Única" | "Secuencial";
+let tempId = 0;
+function nextTempId() {
+  tempId += 1;
+  return `tmp-${tempId}`;
 }
-
-const reglasIniciales: Regla[] = [
-  { id: "R1", min: 0, max: 10000, aprobadores: "Comprador", tipo: "Única" },
-  { id: "R2", min: 10001, max: 50000, aprobadores: "Gerente de Compras", tipo: "Única" },
-  { id: "R3", min: 50001, max: 200000, aprobadores: "CFO", tipo: "Secuencial" },
-  { id: "R4", min: 200001, max: null, aprobadores: "CEO + CFO", tipo: "Secuencial" },
-];
 
 function validar(reglas: Regla[]): string | null {
   const sorted = [...reglas].sort((a, b) => a.min - b.min);
@@ -38,31 +30,43 @@ function validar(reglas: Regla[]): string | null {
 }
 
 export function ConfiguracionMatrizAprobacion() {
-  const { currentUser } = useAuth();
-  const [reglas, setReglas] = useState(reglasIniciales);
+  const { data: fetched, reload } = useApiData(fetchMatrizAprobacion);
+  const [reglas, setReglas] = useState<Regla[]>([]);
   const [ejemplo, setEjemplo] = useState(75000);
+  const [saving, setSaving] = useState(false);
   const error = validar(reglas);
+
+  useEffect(() => {
+    if (fetched) setReglas(fetched);
+  }, [fetched]);
 
   function actualizar(id: string, patch: Partial<Regla>) {
     setReglas((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
   }
 
   function agregarRegla() {
-    const id = `R${reglas.length + 1}`;
-    setReglas((prev) => [...prev, { id, min: 0, max: 0, aprobadores: "", tipo: "Única" }]);
+    setReglas((prev) => [...prev, { id: nextTempId(), min: 0, max: 0, aprobadores: "", tipo: "Única" }]);
   }
 
   function eliminarRegla(id: string) {
     setReglas((prev) => prev.filter((r) => r.id !== id));
   }
 
-  function guardar() {
+  async function guardar() {
     if (error) {
       toast.error("No se puede guardar", { description: error });
       return;
     }
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Matriz de aprobación actualizada", detalle: `${reglas.length} reglas configuradas` });
-    toast.success("Matriz de aprobación guardada");
+    setSaving(true);
+    try {
+      await guardarMatrizAprobacion(reglas);
+      toast.success("Matriz de aprobación guardada");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo guardar la matriz."));
+    } finally {
+      setSaving(false);
+    }
   }
 
   const reglaEjemplo = [...reglas].sort((a, b) => a.min - b.min).find((r) => ejemplo >= r.min && (r.max === null || ejemplo <= r.max));
@@ -136,7 +140,7 @@ export function ConfiguracionMatrizAprobacion() {
       </Card>
 
       <div className="flex justify-end">
-        <Button className="gradient-brand text-white" onClick={guardar} disabled={!!error}>Guardar matriz</Button>
+        <Button className="gradient-brand text-white" onClick={guardar} disabled={!!error || saving}>{saving ? "Guardando..." : "Guardar matriz"}</Button>
       </div>
     </div>
   );

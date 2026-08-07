@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { aprobaciones as seedAprobaciones, type Aprobacion } from "@/lib/mockData";
-import { logAudit } from "@/lib/mock/auditLog";
-import { useAuth } from "@/lib/auth/AuthContext";
+import { type Aprobacion } from "@/lib/mockData";
+import { fetchAprobaciones, aprobarSolicitud, rechazarSolicitud } from "@/lib/api/aprobaciones";
+import { apiErrorMessage } from "@/lib/api/http";
 import { Check, X, Clock, AlertTriangle, FileText, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMockLoading } from "@/hooks/useMockLoading";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { useApiData } from "@/hooks/useApiData";
 
 const tabs = ["Todos", "Urgentes", "Licitaciones", "Adjudicaciones", "Excepciones"] as const;
 
@@ -26,30 +26,36 @@ function matchesTab(item: Aprobacion, tab: (typeof tabs)[number]) {
 }
 
 export function BandejaAprobaciones() {
-  const { currentUser } = useAuth();
-  const loading = useMockLoading();
-  const [items, setItems] = useState<Aprobacion[]>(seedAprobaciones);
-  const [resolvedToday, setResolvedToday] = useState({ aprobados: 7, rechazados: 1 });
+  const { data: items, loading, reload } = useApiData(fetchAprobaciones);
+  const [resolvedToday, setResolvedToday] = useState({ aprobados: 0, rechazados: 0 });
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Todos");
 
-  const filtered = items.filter((item) => matchesTab(item, activeTab));
+  const filtered = (items ?? []).filter((item) => matchesTab(item, activeTab));
 
-  function handleApprove(item: Aprobacion) {
-    setItems((prev) => prev.filter((i) => i.id !== item.id));
-    setResolvedToday((prev) => ({ ...prev, aprobados: prev.aprobados + 1 }));
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Aprobación", detalle: item.descripcion });
-    toast.success("Solicitud aprobada", { description: item.descripcion });
+  async function handleApprove(item: Aprobacion) {
+    try {
+      await aprobarSolicitud(item.id);
+      setResolvedToday((prev) => ({ ...prev, aprobados: prev.aprobados + 1 }));
+      toast.success("Solicitud aprobada", { description: item.descripcion });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
-  function handleReject(item: Aprobacion, reason?: string) {
-    setItems((prev) => prev.filter((i) => i.id !== item.id));
-    setResolvedToday((prev) => ({ ...prev, rechazados: prev.rechazados + 1 }));
-    logAudit({ usuario: currentUser?.nombre ?? "—", accion: "Rechazo", detalle: item.descripcion, motivo: reason });
-    toast.info("Solicitud rechazada", { description: "El solicitante fue notificado con tu justificación." });
+  async function handleReject(item: Aprobacion, reason?: string) {
+    try {
+      await rechazarSolicitud(item.id, reason ?? "");
+      setResolvedToday((prev) => ({ ...prev, rechazados: prev.rechazados + 1 }));
+      toast.info("Solicitud rechazada", { description: "El solicitante fue notificado con tu justificación." });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
   }
 
   const stats = [
-    { label: "Pendientes", value: items.length, color: "text-warning-foreground" },
+    { label: "Pendientes", value: (items ?? []).length, color: "text-warning-foreground" },
     { label: "Aprobados hoy", value: resolvedToday.aprobados, color: "text-success" },
     { label: "Rechazados hoy", value: resolvedToday.rechazados, color: "text-destructive" },
   ];

@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2, CheckCircle2, Building2 } from "lucide-react";
 import { simulateProcess } from "@/lib/mock/simulate";
-import { registerProveedor } from "@/lib/mock/users";
+import { apiRegisterProveedor } from "@/lib/api/auth";
+import { apiErrorMessage } from "@/lib/api/http";
 
 export function RegistroProveedor() {
   const navigate = useNavigate();
@@ -21,9 +22,10 @@ export function RegistroProveedor() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    const result = registerProveedor(razonSocial, email, password);
-    if (!result.ok) {
-      setError(result.error ?? "No se pudo crear la cuenta.");
+    try {
+      await apiRegisterProveedor({ razonSocial, email, password, categoria, pais });
+    } catch (err) {
+      setError(apiErrorMessage(err, "No se pudo crear la cuenta."));
       return;
     }
     setStep("verifying");
