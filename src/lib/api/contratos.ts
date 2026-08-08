@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import type { Contrato } from "@/lib/mockData";
+import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
 
 interface ApiContrato {
   id: string;
@@ -48,4 +49,41 @@ export async function fetchContratos(params?: { categoria?: string; q?: string }
 export async function fetchContrato(id: string): Promise<Contrato> {
   const { data } = await api.get<ApiContrato>(`/contratos/${id}`);
   return toContrato(data);
+}
+
+export interface ContratoConHitos extends Contrato {
+  cliente: string;
+  hitos: Hito[];
+}
+
+interface ApiHito {
+  id: string;
+  label: string;
+  comprometido: string;
+  real: string | null;
+  estado: "COMPLETADO" | "EN_RIESGO" | "ATRASADO" | "PENDIENTE";
+}
+
+interface ApiContratoMine extends ApiContrato {
+  company: { nombre: string };
+  hitos: ApiHito[];
+}
+
+function toContratoConHitos(c: ApiContratoMine): ContratoConHitos {
+  return {
+    ...toContrato(c),
+    cliente: c.company.nombre,
+    hitos: c.hitos.map((h) => ({
+      id: h.id,
+      label: h.label,
+      comprometido: h.comprometido.slice(0, 10),
+      real: h.real ? h.real.slice(0, 10) : null,
+      estado: h.estado.toLowerCase() as EstadoHito,
+    })),
+  };
+}
+
+export async function fetchMisContratos(): Promise<ContratoConHitos[]> {
+  const { data } = await api.get<ApiContratoMine[]>("/contratos/mine");
+  return data.map(toContratoConHitos);
 }

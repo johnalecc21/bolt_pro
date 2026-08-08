@@ -37,6 +37,7 @@ const destinationsByPortal: Record<Portal, { label: string; to: string }[]> = {
     { label: "Mis ofertas", to: "ofertas" },
     { label: "Subasta en vivo", to: "subasta" },
     { label: "Historial", to: "historial" },
+    { label: "Mis Contratos", to: "contratos" },
     { label: "Pagos / Factoring", to: "pagos" },
     { label: "Perfil empresa", to: "perfil" },
   ],

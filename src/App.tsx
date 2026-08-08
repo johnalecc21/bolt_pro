@@ -37,6 +37,7 @@ import { InvitacionesProveedor } from "@/pages/proveedor/InvitacionesProveedor";
 import { CargaOferta } from "@/pages/proveedor/CargaOferta";
 import { SubastaVivo } from "@/pages/proveedor/SubastaVivo";
 import { HistorialProveedor } from "@/pages/proveedor/HistorialProveedor";
+import { MisContratos } from "@/pages/proveedor/MisContratos";
 import { PagosFactoring } from "@/pages/proveedor/PagosFactoring";
 import { PerfilEmpresa } from "@/pages/proveedor/PerfilEmpresa";
 
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="subasta" element={<SubastaVivo />} />
           <Route path="subasta/:requerimientoId" element={<SubastaVivo />} />
           <Route path="historial" element={<HistorialProveedor />} />
+          <Route path="contratos" element={<MisContratos />} />
           <Route path="pagos" element={<PagosFactoring />} />
           <Route path="perfil" element={<PerfilEmpresa />} />
         </Route>

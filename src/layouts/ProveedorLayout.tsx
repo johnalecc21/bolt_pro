@@ -2,7 +2,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   LayoutDashboard, ShieldCheck, Inbox, FileText,
-  Trophy, Wallet, User, Gavel, LogOut,
+  Trophy, Wallet, User, Gavel, LogOut, FileCheck2,
   ChevronsLeft, ChevronsRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ const navItems = [
   { to: "ofertas", label: "Mis Ofertas", icon: FileText },
   { to: "subasta", label: "Subasta en Vivo", icon: Gavel },
   { to: "historial", label: "Historial", icon: Trophy },
+  { to: "contratos", label: "Mis Contratos", icon: FileCheck2 },
   { to: "pagos", label: "Pagos / Factoring", icon: Wallet },
   { to: "perfil", label: "Perfil Empresa", icon: User },
 ];
