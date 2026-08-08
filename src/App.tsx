@@ -16,6 +16,7 @@ import { DetalleRequerimiento } from "@/pages/cliente/DetalleRequerimiento";
 import { ShortlistProveedores } from "@/pages/cliente/ShortlistProveedores";
 import { BandejaAprobaciones } from "@/pages/cliente/BandejaAprobaciones";
 import { LicitacionEnCurso } from "@/pages/cliente/LicitacionEnCurso";
+import { Licitaciones } from "@/pages/cliente/Licitaciones";
 import { CuadroComparativo } from "@/pages/cliente/CuadroComparativo";
 import { Negociacion } from "@/pages/cliente/Negociacion";
 import { Adjudicacion } from "@/pages/cliente/Adjudicacion";
@@ -73,7 +74,7 @@ export default function App() {
           <Route path="requerimientos/:id" element={<DetalleRequerimiento />} />
           <Route path="requerimientos/:id/shortlist" element={<RequireRole allow={["comprador", "admin_cliente"]}><ShortlistProveedores /></RequireRole>} />
           <Route path="aprobaciones" element={<RequireRole allow={["aprobador_cfo", "admin_cliente"]}><BandejaAprobaciones /></RequireRole>} />
-          <Route path="licitaciones" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><LicitacionEnCurso /></RequireRole>} />
+          <Route path="licitaciones" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><Licitaciones /></RequireRole>} />
           <Route path="licitaciones/:id" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><LicitacionEnCurso /></RequireRole>} />
           <Route path="licitaciones/:id/comparativo" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><CuadroComparativo /></RequireRole>} />
           <Route path="negociacion" element={<RequireRole allow={["comprador", "admin_cliente"]}><Negociacion /></RequireRole>} />
