@@ -29,8 +29,14 @@ export function Negociacion() {
   const navigate = useNavigate();
   const { id } = useParams();
   const requerimientoId = id ?? "";
-  const { data: requerimiento } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
-  const { data: ofertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: requerimiento } = useApiData(
+    () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
+    [requerimientoId],
+  );
+  const { data: ofertas } = useApiData(
+    () => (requerimientoId ? fetchOfertasPorRequerimiento(requerimientoId) : Promise.resolve([])),
+    [requerimientoId],
+  );
   const [formato, setFormato] = useState("subasta");
   const { state: auction, iniciar, cerrar } = useSubasta(requerimientoId);
   const activa = auction.status === "activa";

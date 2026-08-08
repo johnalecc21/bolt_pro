@@ -53,9 +53,18 @@ export function CuadroComparativo() {
   const navigate = useNavigate();
   const requerimientoId = id ?? "";
   const [adjudicando, setAdjudicando] = useState(false);
-  const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
-  const { data: ofertasData, loading: loadingOfertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
-  const { data: adjudicacion } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
+  const { data: requerimiento, loading: loadingReq } = useApiData(
+    () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
+    [requerimientoId],
+  );
+  const { data: ofertasData, loading: loadingOfertas } = useApiData(
+    () => (requerimientoId ? fetchOfertasPorRequerimiento(requerimientoId) : Promise.resolve([])),
+    [requerimientoId],
+  );
+  const { data: adjudicacion } = useApiData(
+    () => (requerimientoId ? fetchAdjudicacion(requerimientoId) : Promise.resolve(null)),
+    [requerimientoId],
+  );
   const mode = usePermissionMode();
   const [weights, setWeights] = useState(defaultWeights);
   const [appliedWeights, setAppliedWeights] = useState(defaultWeights);

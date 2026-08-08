@@ -22,8 +22,14 @@ export function LicitacionEnCurso() {
   const navigate = useNavigate();
   const { id } = useParams();
   const requerimientoId = id ?? "";
-  const { data: requerimiento } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
-  const { data: ofertas } = useApiData(() => fetchOfertasPorRequerimiento(requerimientoId), [requerimientoId]);
+  const { data: requerimiento } = useApiData(
+    () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
+    [requerimientoId],
+  );
+  const { data: ofertas } = useApiData(
+    () => (requerimientoId ? fetchOfertasPorRequerimiento(requerimientoId) : Promise.resolve([])),
+    [requerimientoId],
+  );
   const { data: proveedores } = useApiData(() => fetchProveedores());
   const mode = usePermissionMode();
   const [tiempo, setTiempo] = useState({ dias: 3, horas: 14, min: 22 });
