@@ -16,6 +16,7 @@ function nextTempId() {
 }
 
 function validar(reglas: Regla[]): string | null {
+  if (reglas.length === 0) return "Agrega al menos un rango.";
   const sorted = [...reglas].sort((a, b) => a.min - b.min);
   if (sorted[0].min !== 0) return "El primer rango debe empezar en $0.";
   if (sorted[sorted.length - 1].max !== null) return "Debe existir una regla que cubra 'cualquier monto' (rango sin máximo).";
