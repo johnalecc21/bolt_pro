@@ -45,8 +45,15 @@ export function ShortlistProveedores() {
     if (!id || selected.length < 3) return;
     setSubmitting(true);
     try {
-      await invitarProveedores(id, selected);
-      toast.success("Invitaciones enviadas", { description: `${selected.length} proveedores invitados a licitar.` });
+      const { excluidos } = await invitarProveedores(id, selected);
+      const invitados = selected.length - excluidos.length;
+      if (excluidos.length > 0) {
+        toast.warning(`${invitados} proveedor(es) invitados`, {
+          description: `${excluidos.length} no se invitaron por no tener homologación aprobada: ${excluidos.map((e) => e.nombre).join(", ")}.`,
+        });
+      } else {
+        toast.success("Invitaciones enviadas", { description: `${invitados} proveedores invitados a licitar.` });
+      }
       navigate(`/cliente/licitaciones/${id}`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudieron enviar las invitaciones."));

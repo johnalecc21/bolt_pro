@@ -84,7 +84,15 @@ export async function addComentario(id: string, texto: string) {
   return data;
 }
 
-export async function invitarProveedores(id: string, proveedorIds: string[]): Promise<Requerimiento> {
-  const { data } = await api.post<ApiRequerimiento>(`/requerimientos/${id}/invitaciones`, { proveedorIds });
-  return toRequerimiento(data);
+export interface InvitarProveedoresResultado {
+  requerimiento: Requerimiento;
+  excluidos: { id: string; nombre: string }[];
+}
+
+export async function invitarProveedores(id: string, proveedorIds: string[]): Promise<InvitarProveedoresResultado> {
+  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: { id: string; nombre: string }[] }>(
+    `/requerimientos/${id}/invitaciones`,
+    { proveedorIds },
+  );
+  return { requerimiento: toRequerimiento(data), excluidos: data.excluidosPorHomologacion ?? [] };
 }
