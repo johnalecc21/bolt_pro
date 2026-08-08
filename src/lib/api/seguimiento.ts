@@ -48,7 +48,17 @@ export async function fetchSeguimiento(): Promise<SeguimientoContrato[]> {
   }));
 }
 
-export async function confirmarRecepcion(hitoId: string) {
-  const { data } = await api.post(`/seguimiento/hitos/${hitoId}/confirmar-recepcion`);
+export async function crearHito(contratoId: string, label: string, comprometido: string) {
+  const { data } = await api.post(`/seguimiento/contratos/${contratoId}/hitos`, { label, comprometido });
+  return data;
+}
+
+export async function actualizarEstadoHito(hitoId: string, estado: EstadoHito) {
+  const { data } = await api.patch(`/seguimiento/hitos/${hitoId}`, { estado: estado.toUpperCase() });
+  return data;
+}
+
+export async function eliminarHito(hitoId: string) {
+  const { data } = await api.delete(`/seguimiento/hitos/${hitoId}`);
   return data;
 }
