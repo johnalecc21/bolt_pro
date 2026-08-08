@@ -188,7 +188,7 @@ function HomologacionPreview() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.4 }}
-        className="mt-6 flex items-center gap-2.5 rounded-lg bg-success/10 px-3.5 py-3 text-sm text-success-foreground"
+        className="mt-6 flex items-center gap-2.5 rounded-lg bg-success/10 px-3.5 py-3 text-sm text-success"
       >
         <ShieldCheck className="h-4 w-4 shrink-0 text-success" />
         Sin coincidencias en la lista OFAC/SDN
@@ -205,7 +205,7 @@ function NegociacionPreview() {
   ];
   return (
     <PreviewShell label="Subasta en vivo · Ronda 2">
-      <div className="mb-5 flex items-center gap-2 text-xs font-medium text-success-foreground">
+      <div className="mb-5 flex items-center gap-2 text-xs font-medium text-success">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
@@ -299,7 +299,7 @@ function AuditoriaPreview() {
           />
         ))}
       </div>
-      <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-success-foreground">
+      <div className="mt-2 flex items-center gap-1.5 text-xs font-medium text-success">
         <ArrowUpRight className="h-3.5 w-3.5" /> +18% frente al trimestre anterior
       </div>
     </PreviewShell>

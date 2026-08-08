@@ -104,10 +104,10 @@ function ComplianceCell() {
       <h3 className="mt-5 text-lg font-semibold">Compliance real, no simulado</h3>
       <p className="mt-2 text-sm text-muted-foreground">OCR y verificación OFAC/SDN contra datos reales.</p>
       <div className="mt-4 flex flex-wrap gap-2">
-        <Badge variant="outline" className="gap-1 border-success/40 text-success-foreground">
+        <Badge variant="outline" className="gap-1 border-success/40 text-success">
           <CheckCircle2 className="h-3 w-3" /> OFAC/SDN
         </Badge>
-        <Badge variant="outline" className="gap-1 border-success/40 text-success-foreground">
+        <Badge variant="outline" className="gap-1 border-success/40 text-success">
           <CheckCircle2 className="h-3 w-3" /> OCR
         </Badge>
       </div>
