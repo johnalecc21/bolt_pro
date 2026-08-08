@@ -27,7 +27,11 @@ export interface AuthContextValue {
   pendingUser: PendingUser | null;
   /** True while the initial Supabase session is being resolved on page load. */
   sessionLoading: boolean;
+  /** Set when a Google/SSO redirect resolves to an account that can't log into this portal. */
+  oauthError: string | null;
+  clearOauthError: () => void;
   login: (email: string, password: string, portal: Portal) => Promise<LoginResult>;
+  loginWithGoogle: (portal: Portal) => Promise<{ error?: string }>;
   verify2FA: (code: string) => Promise<{ status: "invalid" | "success" }>;
   selectCompany: (companyId: string) => Promise<void>;
   switchCompany: (companyId: string) => Promise<void>;

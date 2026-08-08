@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -21,7 +21,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
 }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, verify2FA, selectCompany, pendingUser, loginStep } = useAuth();
+  const { login, loginWithGoogle, verify2FA, selectCompany, pendingUser, loginStep, oauthError, clearOauthError } = useAuth();
 
   const step = loginStep === "2fa" ? "2fa" : loginStep === "select-company" ? "company" : "credentials";
   const [email, setEmail] = useState("");
@@ -34,6 +34,13 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
   const [ssoLoading, setSsoLoading] = useState<string | null>(null);
 
   const from = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
+
+  useEffect(() => {
+    if (oauthError) {
+      toast.error(oauthError);
+      clearOauthError();
+    }
+  }, [oauthError, clearOauthError]);
 
   function goToDashboard() {
     navigate(from ?? `/${portal}/dashboard`, { replace: true });
@@ -86,10 +93,20 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
   }
 
   async function handleSSO(provider: string) {
+    if (provider !== "Google") {
+      setSsoLoading(provider);
+      await sleep(900);
+      setSsoLoading(null);
+      toast.info(`Autenticación con ${provider} no disponible en este entorno de demostración.`);
+      return;
+    }
     setSsoLoading(provider);
-    await sleep(900);
-    setSsoLoading(null);
-    toast.info(`Autenticación con ${provider} no disponible en este entorno de demostración.`);
+    const { error } = await loginWithGoogle(portal);
+    if (error) {
+      setSsoLoading(null);
+      toast.error(error);
+    }
+    // On success the browser navigates away to Google — nothing more to do here.
   }
 
   async function handleForgotPassword() {
