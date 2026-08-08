@@ -1,6 +1,7 @@
 import { Target, Heart, Compass } from "lucide-react";
 import { Reveal, StaggerGroup, staggerItem, AnimatedCounter } from "./Reveal";
 import { motion } from "framer-motion";
+import { SectionGlow } from "./SectionGlow";
 
 const values = [
   {
@@ -28,8 +29,9 @@ const milestones = [
 
 export function LandingAboutUs() {
   return (
-    <section id="nosotros" className="mx-auto max-w-7xl px-6 py-28">
-      <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
+    <section id="nosotros" className="relative overflow-hidden py-28">
+      <SectionGlow variant="reverse" />
+      <div className="relative mx-auto grid max-w-7xl gap-16 px-6 lg:grid-cols-2 lg:items-center">
         <Reveal>
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Nosotros</span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">

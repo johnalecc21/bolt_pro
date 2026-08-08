@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { SectionGlow } from "./SectionGlow";
 
 const plans = [
   {
@@ -54,8 +55,9 @@ const plans = [
 
 export function LandingPricing() {
   return (
-    <section id="precios" className="bg-muted/30 py-28">
-      <div className="mx-auto max-w-7xl px-6">
+    <section id="precios" className="relative overflow-hidden bg-muted/30 py-28">
+      <SectionGlow />
+      <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Precios</span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Un plan para cada etapa de tu operación</h2>

@@ -62,7 +62,7 @@ export function LandingHero() {
           className="mt-6 max-w-2xl text-lg text-white/70"
         >
           Automatiza requerimientos, homologa proveedores con verificación real, negocia en vivo
-          y cierra contratos — todo con trazabilidad completa y expertos humanos detrás de cada decisión.
+          y cierra contratos, con trazabilidad completa y expertos humanos detrás de cada decisión.
         </motion.p>
 
         <motion.div
