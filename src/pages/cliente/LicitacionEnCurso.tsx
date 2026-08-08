@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -9,20 +9,33 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Plus, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimiento } from "@/lib/api/requerimientos";
+import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 import { fetchProveedores } from "@/lib/api/proveedores";
+import { apiErrorMessage } from "@/lib/api/http";
 
 const qaItems = [
   { q: "¿El servicio incluye migración de bases de datos?", a: "Sí, incluye migración completa de hasta 5 bases de datos relacionales.", autor: "Proveedor anónimo" },
   { q: "¿Qué SLA de soporte técnico ofrecen?", a: "SLA 24/7 con respuesta en menos de 2 horas para incidentes críticos.", autor: "Proveedor anónimo" },
 ];
 
+function calcularTiempoRestante(fechaLimite: string | undefined) {
+  if (!fechaLimite) return { dias: 0, horas: 0, min: 0, vencido: true };
+  const objetivo = new Date(`${fechaLimite}T23:59:59`).getTime();
+  const diffMs = Math.max(0, objetivo - Date.now());
+  return {
+    dias: Math.floor(diffMs / 86_400_000),
+    horas: Math.floor((diffMs % 86_400_000) / 3_600_000),
+    min: Math.floor((diffMs % 3_600_000) / 60_000),
+    vencido: diffMs <= 0,
+  };
+}
+
 export function LicitacionEnCurso() {
   const navigate = useNavigate();
   const { id } = useParams();
   const requerimientoId = id ?? "";
-  const { data: requerimiento } = useApiData(
+  const { data: requerimiento, reload: reloadRequerimiento } = useApiData(
     () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
     [requerimientoId],
   );
@@ -32,10 +45,19 @@ export function LicitacionEnCurso() {
   );
   const { data: proveedores } = useApiData(() => fetchProveedores());
   const mode = usePermissionMode();
-  const [tiempo, setTiempo] = useState({ dias: 3, horas: 14, min: 22 });
+  const [tiempo, setTiempo] = useState(() => calcularTiempoRestante(requerimiento?.fechaLimite));
   const [cerrada, setCerrada] = useState(false);
   const [qa, setQa] = useState(qaItems);
   const [respuesta, setRespuesta] = useState("");
+
+  useEffect(() => {
+    setTiempo(calcularTiempoRestante(requerimiento?.fechaLimite));
+    if (!requerimiento?.fechaLimite) return;
+    const intervalo = setInterval(() => {
+      setTiempo(calcularTiempoRestante(requerimiento.fechaLimite));
+    }, 30_000);
+    return () => clearInterval(intervalo);
+  }, [requerimiento?.fechaLimite]);
 
   if (!requerimiento) {
     return (
@@ -62,9 +84,14 @@ export function LicitacionEnCurso() {
     ? Math.round((requerimiento.ofertasRecibidas / requerimiento.proveedoresInvitados) * 100)
     : 0;
 
-  function extenderPlazo(motivo?: string) {
-    setTiempo((prev) => ({ ...prev, dias: prev.dias + 2 }));
-    toast.success("Plazo extendido 2 días", { description: motivo });
+  async function extenderPlazo(motivo?: string) {
+    try {
+      await apiExtenderPlazo(requerimientoId, 2, motivo);
+      toast.success("Plazo extendido 2 días", { description: motivo });
+      reloadRequerimiento();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo extender el plazo."));
+    }
   }
 
   function cerrarAnticipadamente() {
@@ -102,7 +129,13 @@ export function LicitacionEnCurso() {
         <div className="gradient-hero p-6 text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-white/70">{cerrada ? "Licitación cerrada — no se aceptan nuevas ofertas" : "Tiempo restante para cierre"}</p>
+              <p className="text-sm text-white/70">
+                {cerrada
+                  ? "Licitación cerrada — no se aceptan nuevas ofertas"
+                  : tiempo.vencido
+                    ? "Plazo vencido — extiéndelo o cierra la licitación"
+                    : "Tiempo restante para cierre"}
+              </p>
               <div className="mt-2 flex items-end gap-3">
                 <div className="text-center">
                   <p className="text-4xl font-bold">{cerrada ? 0 : tiempo.dias}</p>

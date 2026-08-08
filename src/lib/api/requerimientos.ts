@@ -79,6 +79,11 @@ export async function updateRequerimientoEstado(id: string, estado: EstadoReq): 
   return toRequerimiento(data);
 }
 
+export async function extenderPlazo(id: string, dias: number, motivo?: string): Promise<Requerimiento> {
+  const { data } = await api.patch<ApiRequerimiento>(`/requerimientos/${id}/extender-plazo`, { dias, motivo });
+  return toRequerimiento(data);
+}
+
 export async function addComentario(id: string, texto: string) {
   const { data } = await api.post(`/requerimientos/${id}/comentarios`, { texto });
   return data;
