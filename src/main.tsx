@@ -12,7 +12,7 @@ createRoot(document.getElementById("root")!).render(
     <ThemeProvider defaultTheme="light">
       <AuthProvider>
         <App />
-        <Toaster position="top-right" richColors />
+        <Toaster position="top-right" />
       </AuthProvider>
     </ThemeProvider>
   </StrictMode>
