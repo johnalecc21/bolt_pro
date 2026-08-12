@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,11 +17,19 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
 };
 
 export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedor" | "interno" }) {
+  const navigate = useNavigate();
   const { notifications, markAsRead, markAllAsRead } = useNotifications();
   const unread = notifications.filter((n) => !n.leida).length;
+  const [open, setOpen] = useState(false);
+
+  function handleClick(n: Notificacion) {
+    markAsRead(n.id);
+    setOpen(false);
+    if (n.link) navigate(n.link);
+  }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative text-muted-foreground">
           <Bell className="h-4 w-4" />
@@ -44,8 +53,8 @@ export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedo
             return (
               <button
                 key={n.id}
-                onClick={() => markAsRead(n.id)}
-                className={cn("flex w-full items-start gap-3 border-b px-4 py-3 text-left last:border-b-0 hover:bg-muted/50", !n.leida && "bg-primary/5")}
+                onClick={() => handleClick(n)}
+                className={cn("flex w-full items-start gap-3 border-b px-4 py-3 text-left last:border-b-0 hover:bg-muted/50", !n.leida && "bg-primary/5", n.link && "cursor-pointer")}
               >
                 <div className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full", n.leida ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary")}>
                   <Icon className="h-3.5 w-3.5" />
@@ -62,7 +71,7 @@ export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedo
         </div>
         <div className="border-t p-2">
           <Button asChild variant="ghost" size="sm" className="w-full">
-            <Link to={`/${portal}/notificaciones`}>Ver todas</Link>
+            <Link to={`/${portal}/notificaciones`} onClick={() => setOpen(false)}>Ver todas</Link>
           </Button>
         </div>
       </PopoverContent>

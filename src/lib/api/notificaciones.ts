@@ -8,6 +8,7 @@ export interface Notificacion {
   desc: string;
   tiempo: string;
   leida: boolean;
+  link: string | null;
 }
 
 interface ApiNotificacion {
@@ -17,6 +18,7 @@ interface ApiNotificacion {
   desc: string;
   leida: boolean;
   createdAt: string;
+  link: string | null;
 }
 
 function toNotificacion(n: ApiNotificacion): Notificacion {
@@ -27,6 +29,7 @@ function toNotificacion(n: ApiNotificacion): Notificacion {
     desc: n.desc,
     tiempo: new Date(n.createdAt).toLocaleString(),
     leida: n.leida,
+    link: n.link,
   };
 }
 

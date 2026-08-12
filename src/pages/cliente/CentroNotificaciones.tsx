@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,8 +20,14 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
 };
 
 export function CentroNotificaciones() {
+  const navigate = useNavigate();
   const { notifications: notificaciones, markAsRead, markAllAsRead } = useNotifications();
   const unread = notificaciones.filter((n) => !n.leida).length;
+
+  function handleClick(n: Notificacion) {
+    markAsRead(n.id);
+    if (n.link) navigate(n.link);
+  }
   const [prefs, setPrefs] = useState<Record<string, { email: boolean; whatsapp: boolean }>>(
     Object.fromEntries(notificationTypes.map((t) => [t.key, { email: true, whatsapp: t.key === "aprobacion" }]))
   );
@@ -56,8 +63,8 @@ export function CentroNotificaciones() {
               return (
                 <button
                   key={n.id}
-                  onClick={() => markAsRead(n.id)}
-                  className={cn("flex w-full items-start gap-3 p-4 text-left hover:bg-muted/30", !n.leida && "bg-primary/5")}
+                  onClick={() => handleClick(n)}
+                  className={cn("flex w-full items-start gap-3 p-4 text-left hover:bg-muted/30", !n.leida && "bg-primary/5", n.link && "cursor-pointer")}
                 >
                   <div className={cn("mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full", n.leida ? "bg-muted text-muted-foreground" : "bg-primary/15 text-primary")}>
                     <Icon className="h-4 w-4" />

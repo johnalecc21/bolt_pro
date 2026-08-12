@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,8 +30,25 @@ export function BandejaAprobaciones() {
   const { data: items, loading, reload } = useApiData(fetchAprobaciones);
   const [resolvedToday, setResolvedToday] = useState({ aprobados: 0, rechazados: 0 });
   const [activeTab, setActiveTab] = useState<(typeof tabs)[number]>("Todos");
+  const [searchParams] = useSearchParams();
+  const highlightId = searchParams.get("highlight");
 
   const filtered = (items ?? []).filter((item) => matchesTab(item, activeTab));
+
+  // Coming from a notification click: make sure the specific request is
+  // actually visible (switch off any tab filter that would hide it) and
+  // scroll straight to it instead of making the user hunt for it.
+  useEffect(() => {
+    if (!highlightId || !items) return;
+    const target = items.find((i) => i.id === highlightId);
+    if (!target) return;
+    if (!matchesTab(target, activeTab)) {
+      setActiveTab("Todos");
+      return;
+    }
+    document.getElementById(`aprobacion-${highlightId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [highlightId, items, activeTab]);
 
   async function handleApprove(item: Aprobacion) {
     try {
@@ -97,7 +115,15 @@ export function BandejaAprobaciones() {
           <EmptyState icon={ShieldCheck} title="No hay solicitudes en esta vista" description="Cuando haya nuevas solicitudes que requieran tu firma, aparecerán aquí." />
         )}
         {filtered.map((item) => (
-          <Card key={item.id} className={cn("p-4", item.urgente && "border-warning/40 bg-warning/5")}>
+          <Card
+            key={item.id}
+            id={`aprobacion-${item.id}`}
+            className={cn(
+              "p-4 transition-shadow",
+              item.urgente && "border-warning/40 bg-warning/5",
+              item.id === highlightId && "ring-2 ring-primary",
+            )}
+          >
             <div className="flex flex-wrap items-center gap-4">
               <div className={cn(
                 "flex h-10 w-10 shrink-0 items-center justify-center rounded-lg",

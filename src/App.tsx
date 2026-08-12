@@ -114,6 +114,7 @@ export default function App() {
           <Route path="contratos" element={<MisContratos />} />
           <Route path="pagos" element={<PagosFactoring />} />
           <Route path="perfil" element={<PerfilEmpresa />} />
+          <Route path="notificaciones" element={<CentroNotificaciones />} />
         </Route>
 
         {/* Panel Interno */}
@@ -133,6 +134,7 @@ export default function App() {
           <Route path="mediacion" element={<MediacionDisputas />} />
           <Route path="clientes" element={<RequireRole allow={["compliance_ops"]}><AdminClientes /></RequireRole>} />
           <Route path="benchmark" element={<BenchmarkMercado />} />
+          <Route path="notificaciones" element={<CentroNotificaciones />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
