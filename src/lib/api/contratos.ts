@@ -1,6 +1,10 @@
 import { api } from "@/lib/api/http";
+import { supabase } from "@/lib/supabase/client";
 import type { Contrato } from "@/lib/mockData";
 import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
+
+const BUCKET = "contratos-documentos";
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 interface ApiContrato {
   id: string;
@@ -12,6 +16,7 @@ interface ApiContrato {
   vigenciaFin: string;
   estado: "ACTIVO" | "POR_VENCER" | "VENCIDO" | "EN_RENOVACION";
   companyId: string;
+  archivoNombre: string | null;
 }
 
 const TIPO_LABEL: Record<ApiContrato["tipo"], Contrato["tipo"]> = {
@@ -38,6 +43,7 @@ function toContrato(c: ApiContrato): Contrato {
     vigenciaFin: c.vigenciaFin.slice(0, 10),
     estado: ESTADO_LABEL[c.estado],
     companyId: c.companyId,
+    archivoNombre: c.archivoNombre,
   };
 }
 
@@ -89,4 +95,30 @@ function toContratoConHitos(c: ApiContratoMine): ContratoConHitos {
 export async function fetchMisContratos(): Promise<ContratoConHitos[]> {
   const { data } = await api.get<ApiContratoMine[]>("/contratos/mine");
   return data.map(toContratoConHitos);
+}
+
+// Lets the company replace the Procurex-generated template with their own
+// signed PO/contract file — only the cliente portal can call this.
+export async function subirArchivoContrato(id: string, file: File) {
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error("El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo.");
+  }
+
+  const { data: uploadUrlData } = await api.post<{ path: string; token: string }>(
+    `/contratos/${id}/upload-url`,
+    { filename: file.name },
+  );
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .uploadToSignedUrl(uploadUrlData.path, uploadUrlData.token, file);
+  if (uploadError) throw uploadError;
+
+  const { data } = await api.post(`/contratos/${id}/adjuntar`, { path: uploadUrlData.path, nombre: file.name });
+  return data;
+}
+
+export async function obtenerUrlArchivoContrato(id: string): Promise<{ url: string; nombre: string | null }> {
+  const { data } = await api.get<{ url: string; nombre: string | null }>(`/contratos/${id}/archivo-url`);
+  return data;
 }

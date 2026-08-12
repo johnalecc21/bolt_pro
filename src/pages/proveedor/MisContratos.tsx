@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -5,15 +6,11 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMisContratos, type ContratoConHitos } from "@/lib/api/contratos";
+import { fetchMisContratos, obtenerUrlArchivoContrato, type ContratoConHitos } from "@/lib/api/contratos";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
-import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar, Download } from "lucide-react";
+import { apiErrorMessage } from "@/lib/api/http";
+import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar, Download, Loader2, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-function descargar(c: ContratoConHitos) {
-  generateContratoPdf(c);
-  toast.success("PDF generado", { description: `${c.id}.pdf` });
-}
 
 const semaforoConfig = {
   completado: { label: "Completado", color: "text-success", bg: "bg-success/15" },
@@ -24,6 +21,27 @@ const semaforoConfig = {
 
 export function MisContratos() {
   const { data: contratos, loading } = useApiData(fetchMisContratos);
+  const [descargando, setDescargando] = useState<string | null>(null);
+
+  async function descargar(c: ContratoConHitos) {
+    setDescargando(c.id);
+    const pendingTab = c.archivoNombre ? window.open("", "_blank") : null;
+    try {
+      if (c.archivoNombre) {
+        const { url } = await obtenerUrlArchivoContrato(c.id);
+        if (pendingTab) pendingTab.location.href = url;
+        toast.success("Documento del cliente abierto", { description: c.archivoNombre });
+      } else {
+        generateContratoPdf(c);
+        toast.success("PDF generado", { description: `${c.id}.pdf` });
+      }
+    } catch (err) {
+      pendingTab?.close();
+      toast.error(apiErrorMessage(err, "No se pudo descargar el documento."));
+    } finally {
+      setDescargando(null);
+    }
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -45,6 +63,11 @@ export function MisContratos() {
                   <div className="flex items-center gap-2">
                     <h2 className="font-semibold">{c.id}</h2>
                     <Badge variant="secondary" className="text-xs">{c.categoria}</Badge>
+                    {c.archivoNombre && (
+                      <span className="flex items-center gap-0.5 text-xs text-info" title={c.archivoNombre}>
+                        <FileUp className="h-3 w-3" /> Documento propio del cliente
+                      </span>
+                    )}
                   </div>
                   <p className="text-sm text-muted-foreground">{c.cliente}</p>
                 </div>
@@ -53,8 +76,8 @@ export function MisContratos() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" /> {c.vigenciaInicio} — {c.vigenciaFin}
                   </div>
-                  <Button variant="ghost" size="icon" onClick={() => descargar(c)} title="Descargar PDF">
-                    <Download className="h-4 w-4" />
+                  <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} title="Descargar">
+                    {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>

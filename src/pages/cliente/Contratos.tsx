@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -8,18 +8,21 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
 import { type Contrato } from "@/lib/mockData";
-import { fetchContratos, fetchContrato } from "@/lib/api/contratos";
+import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato } from "@/lib/api/contratos";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";
-import { Search, Download, FileCheck, Calendar, Loader2 } from "lucide-react";
+import { Search, Download, FileCheck, Calendar, Loader2, Upload, FileUp } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
 export function Contratos() {
-  const { data: contratos, loading } = useApiData(() => fetchContratos());
+  const { data: contratos, loading, reload } = useApiData(() => fetchContratos());
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("Todas");
   const [descargando, setDescargando] = useState<string | null>(null);
+  const [subiendo, setSubiendo] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const subiendoIdRef = useRef<string | null>(null);
   const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
 
   const filtrados = (contratos ?? []).filter((c: Contrato) => {
@@ -30,14 +33,47 @@ export function Contratos() {
 
   async function descargar(c: Contrato) {
     setDescargando(c.id);
+    // Open the tab synchronously (still inside the click's user-activation
+    // window) and navigate it once the signed URL resolves — opening after
+    // the await gets silently popup-blocked in most browsers.
+    const pendingTab = c.archivoNombre ? window.open("", "_blank") : null;
     try {
-      const detalle = await fetchContrato(c.id);
-      generateContratoPdf(detalle);
-      toast.success("PDF generado", { description: `${c.id}.pdf` });
+      if (c.archivoNombre) {
+        const { url } = await obtenerUrlArchivoContrato(c.id);
+        if (pendingTab) pendingTab.location.href = url;
+        toast.success("Documento propio abierto", { description: c.archivoNombre });
+      } else {
+        const detalle = await fetchContrato(c.id);
+        generateContratoPdf(detalle);
+        toast.success("PDF generado", { description: `${c.id}.pdf` });
+      }
     } catch (err) {
-      toast.error(apiErrorMessage(err, "No se pudo generar el PDF."));
+      pendingTab?.close();
+      toast.error(apiErrorMessage(err, "No se pudo descargar el documento."));
     } finally {
       setDescargando(null);
+    }
+  }
+
+  function abrirSelectorArchivo(id: string) {
+    subiendoIdRef.current = id;
+    fileInputRef.current?.click();
+  }
+
+  async function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const id = subiendoIdRef.current;
+    e.target.value = "";
+    if (!file || !id) return;
+    setSubiendo(id);
+    try {
+      await subirArchivoContrato(id, file);
+      toast.success("Documento adjuntado", { description: file.name });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo adjuntar el documento."));
+    } finally {
+      setSubiendo(null);
     }
   }
 
@@ -47,6 +83,8 @@ export function Contratos() {
         <h1 className="text-2xl font-bold">Contratos / Órdenes de Compra</h1>
         <p className="text-sm text-muted-foreground">Archivo central y versionado de todo lo firmado</p>
       </div>
+
+      <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" onChange={onFileSelected} />
 
       <div className="flex flex-wrap gap-3">
         <div className="relative min-w-[240px] flex-1">
@@ -81,7 +119,14 @@ export function Contratos() {
                   <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30">
                     <td className="p-4">
                       <p className="text-sm font-medium">{c.id}</p>
-                      <p className="text-xs text-muted-foreground">{c.tipo}</p>
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        {c.tipo}
+                        {c.archivoNombre && (
+                          <span className="flex items-center gap-0.5 text-info" title={c.archivoNombre}>
+                            <FileUp className="h-3 w-3" /> Documento propio
+                          </span>
+                        )}
+                      </p>
                     </td>
                     <td className="p-4 text-sm">{c.proveedor}</td>
                     <td className="p-4 text-sm text-muted-foreground">{c.categoria}</td>
@@ -94,9 +139,20 @@ export function Contratos() {
                     </td>
                     <td className="p-4"><StatusBadge estado={c.estado} /></td>
                     <td className="p-4 text-right">
-                      <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)}>
-                        {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={subiendo === c.id}
+                          onClick={() => abrirSelectorArchivo(c.id)}
+                          title={c.archivoNombre ? "Reemplazar documento propio" : "Adjuntar mi propio PO/contrato"}
+                        >
+                          {subiendo === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                        </Button>
+                        <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} title="Descargar">
+                          {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

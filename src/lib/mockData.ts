@@ -76,6 +76,8 @@ export interface Contrato {
   estado: "Activo" | "Por vencer" | "Vencido" | "En renovación";
   /** Defaults to "acme" when omitted — most seed data predates multi-tenant support. */
   companyId?: string;
+  /** Set when the company attached their own PO/contract file — otherwise downloads use the Procurex template. */
+  archivoNombre?: string | null;
 }
 
 export const contratos: Contrato[] = [
