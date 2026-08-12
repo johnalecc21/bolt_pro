@@ -97,7 +97,7 @@ function SavingsCell() {
 
 function ComplianceCell() {
   return (
-    <CellShell>
+    <CellShell className="bg-card">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
         <ShieldCheck className="h-5 w-5" />
       </div>
@@ -117,7 +117,7 @@ function ComplianceCell() {
 
 function ExpertsCell() {
   return (
-    <CellShell>
+    <CellShell className="bg-card">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
         <Users2 className="h-5 w-5" />
       </div>
@@ -134,7 +134,7 @@ function SecurityCell() {
     { label: "Admin Cliente", active: false },
   ];
   return (
-    <CellShell className="md:col-span-2">
+    <CellShell className="bg-card md:col-span-2">
       <div className="flex items-start justify-between gap-6">
         <div>
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
@@ -163,7 +163,7 @@ function SecurityCell() {
 
 function SpeedCell() {
   return (
-    <CellShell>
+    <CellShell className="bg-card">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
         <Rocket className="h-5 w-5" />
       </div>
