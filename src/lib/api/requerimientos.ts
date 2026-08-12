@@ -6,6 +6,26 @@ export interface Especificacion {
   value: string;
 }
 
+export interface AprobacionPaso {
+  rol: string;
+  aprobadoAt: string;
+  aprobadoPor: { nombre: string };
+}
+
+export interface AprobacionRequerimiento {
+  id: string;
+  tipo: string;
+  estado: "PENDIENTE" | "APROBADA" | "RECHAZADA";
+  monto: number;
+  tipoRegla: "UNICA" | "SECUENCIAL";
+  rolesRequeridos: string[];
+  pasoActual: number;
+  motivoRechazo: string | null;
+  resueltoPor: { nombre: string } | null;
+  resueltoAt: string | null;
+  pasos: AprobacionPaso[];
+}
+
 interface ApiRequerimiento {
   id: string;
   companyId: string;
@@ -25,6 +45,7 @@ interface ApiRequerimiento {
   documentos?: { id: string; nombre: string }[];
   adjudicacion?: unknown;
   ofertas?: unknown[];
+  aprobaciones?: AprobacionRequerimiento[];
 }
 
 function toRequerimiento(r: ApiRequerimiento): Requerimiento {
@@ -49,6 +70,7 @@ export interface RequerimientoDetalle extends Requerimiento {
   especificaciones: Especificacion[];
   comentarios: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos: { id: string; nombre: string }[];
+  aprobaciones: AprobacionRequerimiento[];
 }
 
 function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
@@ -59,6 +81,7 @@ function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
     especificaciones: r.especificaciones ?? [],
     comentarios: r.comentarios ?? [],
     documentos: r.documentos ?? [],
+    aprobaciones: r.aprobaciones ?? [],
   };
 }
 
