@@ -3,8 +3,9 @@ import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download } from "lucide-react";
+import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 import { useApiData } from "@/hooks/useApiData";
@@ -33,6 +34,7 @@ export function DetalleRequerimiento() {
   const { data: req, loading, reload } = useApiData(() => fetchRequerimiento(id!), [id]);
   const [comentario, setComentario] = useState("");
   const [sending, setSending] = useState(false);
+  const [detalleAbierto, setDetalleAbierto] = useState(true);
 
   async function enviarComentario() {
     if (!comentario.trim() || !id) return;
@@ -89,7 +91,33 @@ export function DetalleRequerimiento() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Timeline */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-6">
+          <Card className="p-6">
+            <Collapsible open={detalleAbierto} onOpenChange={setDetalleAbierto}>
+              <CollapsibleTrigger className="flex w-full items-center justify-between text-left">
+                <h2 className="font-semibold">Descripción y especificaciones</h2>
+                <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", detalleAbierto && "rotate-180")} />
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-4 space-y-4">
+                {req.descripcion ? (
+                  <p className="whitespace-pre-line text-sm text-muted-foreground">{req.descripcion}</p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Sin descripción registrada para este requerimiento.</p>
+                )}
+                {req.especificaciones.length > 0 && (
+                  <div className="space-y-2">
+                    {req.especificaciones.map((spec, i) => (
+                      <div key={i} className="flex justify-between rounded-lg border border-border px-3 py-2 text-sm">
+                        <span className="text-muted-foreground">{spec.name}</span>
+                        <span className="font-medium">{spec.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
+
           <Card className="p-6">
             <h2 className="mb-6 font-semibold">Línea de tiempo del proceso</h2>
             <div className="relative space-y-6">

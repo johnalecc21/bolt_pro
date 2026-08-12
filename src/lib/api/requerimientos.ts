@@ -1,10 +1,16 @@
 import { api } from "@/lib/api/http";
 import type { EstadoReq, Requerimiento } from "@/lib/mockData";
 
+export interface Especificacion {
+  name: string;
+  value: string;
+}
+
 interface ApiRequerimiento {
   id: string;
   companyId: string;
   titulo: string;
+  descripcion: string | null;
   categoria: string;
   estado: string;
   montoEstimado: number;
@@ -13,6 +19,7 @@ interface ApiRequerimiento {
   proveedoresInvitados: number;
   ofertasRecibidas: number;
   criteriosPeso: Record<string, number> | null;
+  especificaciones: Especificacion[] | null;
   solicitante?: { nombre: string };
   comentarios?: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos?: { id: string; nombre: string }[];
@@ -37,7 +44,9 @@ function toRequerimiento(r: ApiRequerimiento): Requerimiento {
 }
 
 export interface RequerimientoDetalle extends Requerimiento {
+  descripcion: string | null;
   criteriosPeso: Record<string, number> | null;
+  especificaciones: Especificacion[];
   comentarios: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos: { id: string; nombre: string }[];
 }
@@ -45,7 +54,9 @@ export interface RequerimientoDetalle extends Requerimiento {
 function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
   return {
     ...toRequerimiento(r),
+    descripcion: r.descripcion ?? null,
     criteriosPeso: r.criteriosPeso ?? null,
+    especificaciones: r.especificaciones ?? [],
     comentarios: r.comentarios ?? [],
     documentos: r.documentos ?? [],
   };
@@ -63,10 +74,12 @@ export async function fetchRequerimiento(id: string): Promise<RequerimientoDetal
 
 export async function createRequerimiento(payload: {
   titulo: string;
+  descripcion?: string;
   categoria: string;
   montoEstimado: number;
   fechaLimite: string;
   criteriosPeso?: Record<string, number>;
+  especificaciones?: Especificacion[];
 }): Promise<Requerimiento> {
   const { data } = await api.post<ApiRequerimiento>("/requerimientos", payload);
   return toRequerimiento(data);

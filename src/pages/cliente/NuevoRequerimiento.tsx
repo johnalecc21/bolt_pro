@@ -52,12 +52,18 @@ export function NuevoRequerimiento() {
     }
     setSubmitting(true);
     try {
+      const descripcionCompleta = [
+        descripcion.trim(),
+        requisitosTecnicos.trim() ? `Requisitos técnicos:\n${requisitosTecnicos.trim()}` : "",
+      ].filter(Boolean).join("\n\n");
       const req = await createRequerimiento({
         titulo: titulo.trim(),
+        descripcion: descripcionCompleta || undefined,
         categoria,
         montoEstimado: Number(presupuesto),
         fechaLimite,
         criteriosPeso: criterios,
+        especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
       });
       toast.success("Requerimiento enviado a aprobación", { description: req.id });
       navigate(`/cliente/requerimientos/${req.id}`);
