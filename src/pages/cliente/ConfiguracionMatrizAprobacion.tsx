@@ -6,7 +6,15 @@ import { Input } from "@/components/ui/input";
 import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMatrizAprobacion, guardarMatrizAprobacion, type Regla } from "@/lib/api/matrizAprobacion";
+import {
+  fetchMatrizAprobacion,
+  guardarMatrizAprobacion,
+  etiquetaAprobadores,
+  ROLE_OPTIONS,
+  ROLE_LABELS,
+  type Regla,
+  type RoleCode,
+} from "@/lib/api/matrizAprobacion";
 import { apiErrorMessage } from "@/lib/api/http";
 
 let tempId = 0;
@@ -17,6 +25,7 @@ function nextTempId() {
 
 function validar(reglas: Regla[]): string | null {
   if (reglas.length === 0) return "Agrega al menos un rango.";
+  if (reglas.some((r) => r.roles.length === 0)) return "Cada rango necesita al menos un aprobador.";
   const sorted = [...reglas].sort((a, b) => a.min - b.min);
   if (sorted[0].min !== 0) return "El primer rango debe empezar en $0.";
   if (sorted[sorted.length - 1].max !== null) return "Debe existir una regla que cubra 'cualquier monto' (rango sin máximo).";
@@ -45,8 +54,16 @@ export function ConfiguracionMatrizAprobacion() {
     setReglas((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
   }
 
+  function alternarRol(id: string, role: RoleCode) {
+    setReglas((prev) => prev.map((r) => {
+      if (r.id !== id) return r;
+      const roles = r.roles.includes(role) ? r.roles.filter((x) => x !== role) : [...r.roles, role];
+      return { ...r, roles };
+    }));
+  }
+
   function agregarRegla() {
-    setReglas((prev) => [...prev, { id: nextTempId(), min: 0, max: 0, aprobadores: "", tipo: "Única" }]);
+    setReglas((prev) => [...prev, { id: nextTempId(), min: 0, max: 0, roles: [], tipo: "Única" }]);
   }
 
   function eliminarRegla(id: string) {
@@ -76,7 +93,7 @@ export function ConfiguracionMatrizAprobacion() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Matriz de Aprobación</h1>
-        <p className="text-sm text-muted-foreground">Define quién aprueba qué monto — reemplaza el flujo de firmas en papel/email</p>
+        <p className="text-sm text-muted-foreground">Define quién aprueba qué monto — cada rol seleccionado aquí es quien realmente puede aprobar o rechazar en la Bandeja de Aprobaciones.</p>
       </div>
 
       <Card className="overflow-hidden">
@@ -93,7 +110,7 @@ export function ConfiguracionMatrizAprobacion() {
             </thead>
             <tbody>
               {reglas.map((r) => (
-                <tr key={r.id} className="border-b border-border last:border-0">
+                <tr key={r.id} className="border-b border-border last:border-0 align-top">
                   <td className="p-3"><Input type="number" className="w-28" value={r.min} onChange={(e) => actualizar(r.id, { min: Number(e.target.value) })} /></td>
                   <td className="p-3">
                     <Input
@@ -104,7 +121,30 @@ export function ConfiguracionMatrizAprobacion() {
                       onChange={(e) => actualizar(r.id, { max: e.target.value === "" ? null : Number(e.target.value) })}
                     />
                   </td>
-                  <td className="p-3"><Input className="min-w-[160px]" value={r.aprobadores} onChange={(e) => actualizar(r.id, { aprobadores: e.target.value })} /></td>
+                  <td className="p-3 min-w-[240px]">
+                    <div className="flex flex-wrap gap-1.5">
+                      {ROLE_OPTIONS.map((role) => {
+                        const selected = r.roles.includes(role);
+                        const orden = r.roles.indexOf(role);
+                        return (
+                          <button
+                            key={role}
+                            type="button"
+                            onClick={() => alternarRol(r.id, role)}
+                            className={cn(
+                              "rounded-full border px-2.5 py-1 text-xs font-medium transition-colors",
+                              selected ? "border-primary bg-primary/10 text-primary" : "border-input text-muted-foreground hover:bg-muted/50",
+                            )}
+                          >
+                            {r.tipo === "Secuencial" && selected ? `${orden + 1}. ` : ""}{ROLE_LABELS[role]}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {r.tipo === "Secuencial" && r.roles.length > 1 && (
+                      <p className="mt-1 text-xs text-muted-foreground">Orden de aprobación: {r.roles.map((role) => ROLE_LABELS[role]).join(" → ")}</p>
+                    )}
+                  </td>
                   <td className="p-3">
                     <select className="rounded-md border border-input bg-background px-2 py-1.5 text-sm" value={r.tipo} onChange={(e) => actualizar(r.id, { tipo: e.target.value as Regla["tipo"] })}>
                       <option>Única</option>
@@ -136,7 +176,7 @@ export function ConfiguracionMatrizAprobacion() {
           <Input type="number" className="w-40" value={ejemplo} onChange={(e) => setEjemplo(Number(e.target.value))} />
         </div>
         <p className="mt-3 rounded-lg bg-info/10 p-3 text-sm text-info">
-          Una compra de <strong>${ejemplo.toLocaleString()}</strong> requeriría aprobación de: <strong>{reglaEjemplo?.aprobadores ?? "sin regla aplicable"}</strong> {reglaEjemplo && `(${reglaEjemplo.tipo.toLowerCase()})`}.
+          Una compra de <strong>${ejemplo.toLocaleString()}</strong> requeriría aprobación de: <strong>{reglaEjemplo ? etiquetaAprobadores(reglaEjemplo.roles, reglaEjemplo.tipo) : "sin regla aplicable"}</strong>.
         </p>
       </Card>
 

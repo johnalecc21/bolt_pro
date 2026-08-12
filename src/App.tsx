@@ -73,7 +73,7 @@ export default function App() {
           <Route path="requerimientos/nuevo" element={<RequireRole allow={["comprador", "admin_cliente"]}><NuevoRequerimiento /></RequireRole>} />
           <Route path="requerimientos/:id" element={<DetalleRequerimiento />} />
           <Route path="requerimientos/:id/shortlist" element={<RequireRole allow={["comprador", "admin_cliente"]}><ShortlistProveedores /></RequireRole>} />
-          <Route path="aprobaciones" element={<RequireRole allow={["aprobador_cfo", "admin_cliente"]}><BandejaAprobaciones /></RequireRole>} />
+          <Route path="aprobaciones" element={<RequireRole allow={["comprador", "aprobador_cfo", "admin_cliente"]}><BandejaAprobaciones /></RequireRole>} />
           <Route path="licitaciones" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><Licitaciones /></RequireRole>} />
           <Route path="licitaciones/:id" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><LicitacionEnCurso /></RequireRole>} />
           <Route path="licitaciones/:id/comparativo" element={<RequireRole allow={["comprador", "admin_cliente"]} readonly={["aprobador_cfo"]}><CuadroComparativo /></RequireRole>} />

@@ -1,10 +1,20 @@
 import { api } from "@/lib/api/http";
 
+export type RoleCode = "COMPRADOR" | "APROBADOR_CFO" | "ADMIN_CLIENTE";
+
+export const ROLE_LABELS: Record<RoleCode, string> = {
+  COMPRADOR: "Comprador",
+  ADMIN_CLIENTE: "Admin de Cuenta",
+  APROBADOR_CFO: "Aprobador / CFO",
+};
+
+export const ROLE_OPTIONS: RoleCode[] = ["COMPRADOR", "ADMIN_CLIENTE", "APROBADOR_CFO"];
+
 export interface Regla {
   id: string;
   min: number;
   max: number | null;
-  aprobadores: string;
+  roles: RoleCode[];
   tipo: "Única" | "Secuencial";
 }
 
@@ -12,7 +22,7 @@ interface ApiRegla {
   id: string;
   montoMin: number;
   montoMax: number | null;
-  aprobadores: string;
+  roles: RoleCode[];
   tipo: "UNICA" | "SECUENCIAL";
 }
 
@@ -21,9 +31,15 @@ function toRegla(r: ApiRegla): Regla {
     id: r.id,
     min: r.montoMin,
     max: r.montoMax,
-    aprobadores: r.aprobadores,
+    roles: r.roles,
     tipo: r.tipo === "UNICA" ? "Única" : "Secuencial",
   };
+}
+
+export function etiquetaAprobadores(roles: RoleCode[], tipo: Regla["tipo"]): string {
+  if (roles.length === 0) return "sin aprobador asignado";
+  const labels = roles.map((r) => ROLE_LABELS[r]);
+  return tipo === "Secuencial" ? labels.join(" → ") : labels.join(" o ");
 }
 
 export async function fetchMatrizAprobacion(): Promise<Regla[]> {
@@ -36,7 +52,7 @@ export async function guardarMatrizAprobacion(reglas: Regla[]): Promise<Regla[]>
     reglas: reglas.map((r) => ({
       montoMin: r.min,
       montoMax: r.max ?? undefined,
-      aprobadores: r.aprobadores,
+      roles: r.roles,
       tipo: r.tipo === "Única" ? "UNICA" : "SECUENCIAL",
     })),
   };

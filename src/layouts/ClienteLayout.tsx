@@ -22,7 +22,7 @@ const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles
   { to: "disputas", label: "Disputas", icon: Scale, roles: ["comprador", "admin_cliente"] },
   { to: "directorio", label: "Directorio Proveedores", icon: Building2, roles: ["comprador", "admin_cliente"] },
   { to: "analitica", label: "Analítica CFO", icon: BarChart3, roles: ["aprobador_cfo", "admin_cliente"] },
-  { to: "aprobaciones", label: "Aprobaciones", icon: ShieldCheck, roles: ["aprobador_cfo", "admin_cliente"] },
+  { to: "aprobaciones", label: "Aprobaciones", icon: ShieldCheck, roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
   { to: "usuarios", label: "Usuarios y Roles", icon: Users, roles: ["admin_cliente"] },
   { to: "matriz-aprobacion", label: "Matriz de Aprobación", icon: SlidersHorizontal, roles: ["admin_cliente"] },
 ];

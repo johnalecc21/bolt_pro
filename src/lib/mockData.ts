@@ -99,6 +99,8 @@ export interface Aprobacion {
   monto: number;
   fecha: string;
   urgente: boolean;
+  pasoActual?: number;
+  totalPasos?: number;
 }
 
 export const aprobaciones: Aprobacion[] = [

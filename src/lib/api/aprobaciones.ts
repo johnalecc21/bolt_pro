@@ -7,6 +7,9 @@ interface ApiAprobacion {
   monto: number;
   urgente: boolean;
   createdAt: string;
+  tipoRegla: "UNICA" | "SECUENCIAL";
+  pasoActual: number;
+  rolesRequeridos: string[];
   requerimiento: { titulo: string; solicitante?: { nombre: string } };
 }
 
@@ -31,6 +34,8 @@ function toAprobacion(a: ApiAprobacion): Aprobacion {
     monto: a.monto,
     fecha: a.createdAt.slice(0, 10),
     urgente: a.urgente,
+    pasoActual: a.tipoRegla === "SECUENCIAL" ? a.pasoActual + 1 : undefined,
+    totalPasos: a.tipoRegla === "SECUENCIAL" ? a.rolesRequeridos.length : undefined,
   };
 }
 

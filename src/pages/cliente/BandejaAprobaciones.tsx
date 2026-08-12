@@ -113,6 +113,9 @@ export function BandejaAprobaciones() {
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium">{item.tipo}</span>
                   {item.urgente && <Badge className="bg-destructive text-destructive-foreground text-[10px]">URGENTE</Badge>}
+                  {item.totalPasos && item.totalPasos > 1 && (
+                    <Badge className="bg-info/15 text-info text-[10px]">Paso {item.pasoActual} de {item.totalPasos}</Badge>
+                  )}
                 </div>
                 <p className="mt-0.5 truncate text-sm">{item.descripcion}</p>
                 <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
