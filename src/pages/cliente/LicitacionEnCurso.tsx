@@ -9,9 +9,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Send, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo } from "@/lib/api/requerimientos";
+import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, type InvitacionRequerimiento } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
-import { fetchProveedores } from "@/lib/api/proveedores";
 import { fetchPreguntas, responderPregunta } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
@@ -39,7 +38,6 @@ export function LicitacionEnCurso() {
     () => (requerimientoId ? fetchOfertasPorRequerimiento(requerimientoId) : Promise.resolve([])),
     [requerimientoId],
   );
-  const { data: proveedores } = useApiData(() => fetchProveedores());
   const { data: preguntas, reload: reloadPreguntas } = useApiData(
     () => (requerimientoId ? fetchPreguntas(requerimientoId) : Promise.resolve([])),
     [requerimientoId],
@@ -71,18 +69,21 @@ export function LicitacionEnCurso() {
     );
   }
 
-  // Providers that already submitted a structured offer for this process,
-  // padded with a few more from the same category shown as "invitado"/"sin respuesta" for realism.
-  const todosProveedores = proveedores ?? [];
-  const respondieron = (ofertas ?? []).filter((o) => o.enviada).map((o) => ({ proveedorId: o.proveedorId, estado: "Oferta enviada" }));
-  const idsRespondieron = new Set(respondieron.map((r) => r.proveedorId));
-  const otrosInvitados = todosProveedores
-    .filter((p) => p.categorias.includes(requerimiento.categoria) && !idsRespondieron.has(p.id))
-    .slice(0, Math.max(0, requerimiento.proveedoresInvitados - respondieron.length))
-    .map((p, i) => ({ proveedorId: p.id, estado: i === 0 ? "Visto" : "Sin respuesta" }));
-  const listaProveedores = [...respondieron, ...otrosInvitados]
-    .map((r) => ({ ...r, proveedor: todosProveedores.find((p) => p.id === r.proveedorId) }))
-    .filter((r): r is typeof r & { proveedor: NonNullable<typeof r.proveedor> } => !!r.proveedor);
+  // Real invited-provider status: derived from the actual Invitacion + Oferta
+  // records for this proceso, not padded with unrelated providers.
+  const idsConOfertaEnviada = new Set((ofertas ?? []).filter((o) => o.enviada).map((o) => o.proveedorId));
+  const estadoLabel: Record<InvitacionRequerimiento["estado"], string> = {
+    NUEVA: "Sin respuesta",
+    VISTA: "Visto",
+    RESPONDIDA: "Oferta enviada",
+    VENCIDA: "Vencida",
+    DECLINADA: "Declinó",
+  };
+  const listaProveedores = requerimiento.invitaciones.map((inv) => ({
+    proveedor: inv.proveedor,
+    invitadoAt: inv.createdAt.slice(0, 10),
+    estado: idsConOfertaEnviada.has(inv.proveedorId) ? "Oferta enviada" : estadoLabel[inv.estado],
+  }));
 
   const pctRespuesta = requerimiento.proveedoresInvitados > 0
     ? Math.round((requerimiento.ofertasRecibidas / requerimiento.proveedoresInvitados) * 100)
@@ -189,12 +190,13 @@ export function LicitacionEnCurso() {
             <EmptyState icon={Users} title="Sin proveedores invitados todavía" />
           ) : (
             <div className="space-y-2">
-              {listaProveedores.map(({ proveedor: p, estado }) => {
+              {listaProveedores.map(({ proveedor: p, estado, invitadoAt }) => {
                 const colorClass =
                   estado === "Oferta enviada" ? "bg-success/15 text-success" :
                   estado === "Visto" ? "bg-info/15 text-info" :
-                  estado === "Sin respuesta" ? "bg-destructive/15 text-destructive" :
-                  "bg-muted text-muted-foreground";
+                  estado === "Declinó" ? "bg-destructive/15 text-destructive" :
+                  estado === "Vencida" ? "bg-muted text-muted-foreground" :
+                  "bg-warning/15 text-warning-foreground";
                 return (
                   <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
                     <div className="flex h-9 w-9 items-center justify-center rounded-lg text-white text-xs font-bold" style={{ background: p.color }}>
@@ -202,7 +204,7 @@ export function LicitacionEnCurso() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="truncate text-sm font-medium">{p.nombre}</p>
-                      <p className="text-xs text-muted-foreground">Invitado {requerimiento.fechaLimite}</p>
+                      <p className="text-xs text-muted-foreground">Invitado {invitadoAt}</p>
                     </div>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}>{estado}</span>
                   </div>

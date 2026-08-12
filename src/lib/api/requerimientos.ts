@@ -26,6 +26,13 @@ export interface AprobacionRequerimiento {
   pasos: AprobacionPaso[];
 }
 
+export interface InvitacionRequerimiento {
+  proveedorId: string;
+  estado: "NUEVA" | "VISTA" | "RESPONDIDA" | "VENCIDA" | "DECLINADA";
+  createdAt: string;
+  proveedor: { id: string; nombre: string; iniciales: string; color: string };
+}
+
 interface ApiRequerimiento {
   id: string;
   companyId: string;
@@ -46,6 +53,7 @@ interface ApiRequerimiento {
   adjudicacion?: unknown;
   ofertas?: unknown[];
   aprobaciones?: AprobacionRequerimiento[];
+  invitaciones?: InvitacionRequerimiento[];
 }
 
 function toRequerimiento(r: ApiRequerimiento): Requerimiento {
@@ -71,6 +79,7 @@ export interface RequerimientoDetalle extends Requerimiento {
   comentarios: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos: { id: string; nombre: string }[];
   aprobaciones: AprobacionRequerimiento[];
+  invitaciones: InvitacionRequerimiento[];
 }
 
 function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
@@ -82,6 +91,7 @@ function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
     comentarios: r.comentarios ?? [],
     documentos: r.documentos ?? [],
     aprobaciones: r.aprobaciones ?? [],
+    invitaciones: r.invitaciones ?? [],
   };
 }
 
