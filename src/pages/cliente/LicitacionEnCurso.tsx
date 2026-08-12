@@ -31,7 +31,7 @@ export function LicitacionEnCurso() {
   const navigate = useNavigate();
   const { id } = useParams();
   const requerimientoId = id ?? "";
-  const { data: requerimiento, reload: reloadRequerimiento } = useApiData(
+  const { data: requerimiento, loading: cargandoRequerimiento, reload: reloadRequerimiento } = useApiData(
     () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
     [requerimientoId],
   );
@@ -58,6 +58,10 @@ export function LicitacionEnCurso() {
     }, 30_000);
     return () => clearInterval(intervalo);
   }, [requerimiento?.fechaLimite]);
+
+  if (cargandoRequerimiento) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+  }
 
   if (!requerimiento) {
     return (
