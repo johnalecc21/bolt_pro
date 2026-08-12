@@ -7,12 +7,17 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
-import { Sparkles, ArrowLeft, ArrowRight, Plus, X, Check, AlertCircle } from "lucide-react";
+import { ProviderCard } from "@/components/shared/ProviderCard";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Sparkles, ArrowLeft, ArrowRight, Plus, X, Check, AlertCircle, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchProveedores } from "@/lib/api/proveedores";
 import { createRequerimiento } from "@/lib/api/requerimientos";
 import { apiErrorMessage } from "@/lib/api/http";
 
 const categoriasCatalogo = ["Servicios Generales", "Materia Prima"];
+const TOTAL_STEPS = 6;
 
 export function NuevoRequerimiento() {
   const navigate = useNavigate();
@@ -29,7 +34,13 @@ export function NuevoRequerimiento() {
     { name: "SLA requerido", value: "99.9%" },
     { name: "Soporte", value: "24/7" },
   ]);
+  const [proveedoresSeleccionados, setProveedoresSeleccionados] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const { data: proveedores, loading: loadingProveedores } = useApiData(() => fetchProveedores());
+
+  function toggleProveedor(id: string) {
+    setProveedoresSeleccionados((prev) => prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]);
+  }
 
   function actualizarEspecificacion(index: number, campo: "name" | "value", valor: string) {
     setEspecificaciones((prev) => prev.map((spec, i) => (i === index ? { ...spec, [campo]: valor } : spec)));
@@ -56,7 +67,7 @@ export function NuevoRequerimiento() {
         descripcion.trim(),
         requisitosTecnicos.trim() ? `Requisitos técnicos:\n${requisitosTecnicos.trim()}` : "",
       ].filter(Boolean).join("\n\n");
-      const req = await createRequerimiento({
+      const { requerimiento, excluidos } = await createRequerimiento({
         titulo: titulo.trim(),
         descripcion: descripcionCompleta || undefined,
         categoria,
@@ -64,9 +75,16 @@ export function NuevoRequerimiento() {
         fechaLimite,
         criteriosPeso: criterios,
         especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
+        proveedorIds: proveedoresSeleccionados,
       });
-      toast.success("Requerimiento enviado a aprobación", { description: req.id });
-      navigate(`/cliente/requerimientos/${req.id}`);
+      if (excluidos.length > 0) {
+        toast.warning("Requerimiento enviado a aprobación", {
+          description: `${excluidos.length} proveedor(es) no se preseleccionaron por no tener homologación aprobada: ${excluidos.map((e) => e.nombre).join(", ")}.`,
+        });
+      } else {
+        toast.success("Requerimiento enviado a aprobación", { description: requerimiento.id });
+      }
+      navigate(`/cliente/requerimientos/${requerimiento.id}`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo crear el requerimiento."));
     } finally {
@@ -82,13 +100,13 @@ export function NuevoRequerimiento() {
         </Button>
         <div>
           <h1 className="text-2xl font-bold">Nuevo Requerimiento</h1>
-          <p className="text-sm text-muted-foreground">Paso {step} de 5</p>
+          <p className="text-sm text-muted-foreground">Paso {step} de {TOTAL_STEPS}</p>
         </div>
       </div>
 
       {/* Progress */}
       <div className="flex gap-1">
-        {[1, 2, 3, 4, 5].map((s) => (
+        {Array.from({ length: TOTAL_STEPS }, (_, i) => i + 1).map((s) => (
           <div key={s} className={cn("h-1.5 flex-1 rounded-full transition-colors", s <= step ? "gradient-brand" : "bg-muted")} />
         ))}
       </div>
@@ -253,6 +271,41 @@ export function NuevoRequerimiento() {
 
         {step === 5 && (
           <div className="space-y-4">
+            <h2 className="text-xl font-semibold">Selecciona proveedores</h2>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium">{proveedoresSeleccionados.length} seleccionados</span>
+              <span className="text-sm text-muted-foreground">· Mínimo recomendado: 3</span>
+              {proveedoresSeleccionados.length < 3 && (
+                <span className="flex items-center gap-1 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4" /> Selecciona al menos 3
+                </span>
+              )}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Se invitarán automáticamente en cuanto el requerimiento sea aprobado — no antes.
+            </p>
+            {loadingProveedores ? (
+              <p className="text-sm text-muted-foreground">Cargando proveedores...</p>
+            ) : (proveedores ?? []).length === 0 ? (
+              <EmptyState icon={Users} title="Sin proveedores disponibles" description="No hay proveedores homologados en el directorio todavía." />
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {(proveedores ?? []).map((p) => (
+                  <ProviderCard
+                    key={p.id}
+                    proveedor={p}
+                    selectable
+                    selected={proveedoresSeleccionados.includes(p.id)}
+                    onSelect={() => toggleProveedor(p.id)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {step === 6 && (
+          <div className="space-y-4">
             <h2 className="text-xl font-semibold">Revisión final</h2>
             <div className="space-y-3 rounded-lg border border-border p-4">
               {[
@@ -263,6 +316,7 @@ export function NuevoRequerimiento() {
                 ["Presupuesto", presupuesto ? `$${Number(presupuesto).toLocaleString()}` : "(sin definir)"],
                 ["Fecha requerida", fechaLimite || "(sin definir)"],
                 ["Criterios", `Precio ${criterios.precio}% · Tiempo ${criterios.tiempo}% · Calidad ${criterios.calidad}% · Pago ${criterios.pago}%`],
+                ["Proveedores preseleccionados", String(proveedoresSeleccionados.length)],
               ].map(([k, v]) => (
                 <div key={k} className="flex justify-between text-sm gap-4">
                   <span className="shrink-0 text-muted-foreground">{k}</span>
@@ -288,8 +342,12 @@ export function NuevoRequerimiento() {
               <ArrowLeft className="mr-2 h-4 w-4" /> Anterior
             </Button>
           ) : <div />}
-          {step < 5 ? (
-            <Button onClick={() => setStep((s) => s + 1)} disabled={step === 4 && total !== 100} className="gradient-brand text-white">
+          {step < TOTAL_STEPS ? (
+            <Button
+              onClick={() => setStep((s) => s + 1)}
+              disabled={(step === 4 && total !== 100) || (step === 5 && proveedoresSeleccionados.length < 3)}
+              className="gradient-brand text-white"
+            >
               Siguiente <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           ) : (

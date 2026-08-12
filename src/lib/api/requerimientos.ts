@@ -95,6 +95,11 @@ export async function fetchRequerimiento(id: string): Promise<RequerimientoDetal
   return toRequerimientoDetalle(data);
 }
 
+export interface CreateRequerimientoResultado {
+  requerimiento: Requerimiento;
+  excluidos: { id: string; nombre: string }[];
+}
+
 export async function createRequerimiento(payload: {
   titulo: string;
   descripcion?: string;
@@ -103,9 +108,13 @@ export async function createRequerimiento(payload: {
   fechaLimite: string;
   criteriosPeso?: Record<string, number>;
   especificaciones?: Especificacion[];
-}): Promise<Requerimiento> {
-  const { data } = await api.post<ApiRequerimiento>("/requerimientos", payload);
-  return toRequerimiento(data);
+  proveedorIds?: string[];
+}): Promise<CreateRequerimientoResultado> {
+  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: { id: string; nombre: string }[] }>(
+    "/requerimientos",
+    payload,
+  );
+  return { requerimiento: toRequerimiento(data), excluidos: data.excluidosPorHomologacion ?? [] };
 }
 
 export async function updateRequerimientoEstado(id: string, estado: EstadoReq): Promise<Requerimiento> {

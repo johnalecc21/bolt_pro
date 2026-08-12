@@ -129,7 +129,7 @@ export function DetalleRequerimiento() {
           <p className="text-sm text-muted-foreground">{req.titulo}</p>
         </div>
         <Link to={`/cliente/requerimientos/${id}/shortlist`}>
-          <Button variant="outline">Ver Shortlist</Button>
+          <Button variant="outline">Agregar proveedores</Button>
         </Link>
         <Link to={`/cliente/licitaciones/${id}/comparativo`}>
           <Button className="gradient-brand text-white">Ver Comparativo</Button>

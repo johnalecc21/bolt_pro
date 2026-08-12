@@ -69,8 +69,8 @@ export function ShortlistProveedores() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div className="flex-1">
-          <h1 className="text-2xl font-bold">Shortlist de Proveedores</h1>
-          <p className="text-sm text-muted-foreground">{id} — {req?.titulo ?? "Cargando..."}</p>
+          <h1 className="text-2xl font-bold">Agregar Proveedores</h1>
+          <p className="text-sm text-muted-foreground">{id} — {req?.titulo ?? "Cargando..."} · Se notifica de inmediato a quien selecciones aquí.</p>
         </div>
       </div>
 
