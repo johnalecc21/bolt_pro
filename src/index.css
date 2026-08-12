@@ -3,7 +3,39 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Plus Jakarta Sans — self-hosted (no external <link>, no render-blocking
+   third-party request). Only the weights actually used are included. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/PlusJakartaSans-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/PlusJakartaSans-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/PlusJakartaSans-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 800;
+  font-display: swap;
+  src: url("/fonts/PlusJakartaSans-800.woff2") format("woff2");
+}
+
 @theme inline {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -60,38 +92,40 @@
 :root {
   --radius: 0.5rem;
 
-  /* Brand: Corporate Navy Blue system */
-  --brand-50: oklch(0.97 0.012 246);
-  --brand-100: oklch(0.93 0.03 246);
-  --brand-500: oklch(0.46 0.14 246);
-  --brand-600: oklch(0.38 0.15 246);
-  --brand-700: oklch(0.30 0.14 246);
-  /* Complementary hue paired with --primary in every two-tone brand gradient
-     below (buttons, hero backgrounds, wordmark) — change --primary and
+  /* Brand: Procurex system — navy scale, unused directly as utility classes
+     today but kept for future decorative use (charts, tints). */
+  --brand-50: oklch(0.97 0.01 240);
+  --brand-100: oklch(0.93 0.02 240);
+  --brand-500: oklch(0.35 0.1 250);
+  --brand-600: oklch(0.25 0.09 250);
+  --brand-700: oklch(0.16 0.07 250);
+  /* Complementary accent paired with --primary in every two-tone brand
+     gradient (buttons, hero backgrounds, wordmark) — change --primary and
      --brand-accent together to rebrand; nothing else needs touching. */
-  --brand-accent: oklch(0.46 0.13 225);
+  --brand-accent: #5dbaeb;
 
-  --background: oklch(0.98 0.003 246);
-  --foreground: oklch(0.17 0.015 246);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.17 0.015 246);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.17 0.015 246);
-  --primary: oklch(0.40 0.14 246);
-  --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.95 0.012 246);
-  --secondary-foreground: oklch(0.30 0.06 246);
-  --muted: oklch(0.96 0.006 246);
-  --muted-foreground: oklch(0.50 0.02 246);
-  --accent: oklch(0.93 0.02 246);
-  --accent-foreground: oklch(0.30 0.07 246);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.89 0.01 246);
-  --input: oklch(0.89 0.01 246);
-  --ring: oklch(0.40 0.14 246);
+  /* --- Procurex palette --- */
+  --background: #f0f0f0;
+  --foreground: #001635;
+  --card: #ffffff;
+  --card-foreground: #001635;
+  --popover: #ffffff;
+  --popover-foreground: #001635;
+  --primary: #0b7dbb;
+  --primary-foreground: #ffffff;
+  --secondary: #ffffff;
+  --secondary-foreground: #001635;
+  --muted: #f0f0f0;
+  --muted-foreground: #314b70;
+  --accent: #f0faff;
+  --accent-foreground: #0b7dbb;
+  --destructive: #e62f27;
+  --destructive-foreground: #ffffff;
+  --border: #f2f7ff;
+  --input: #001635;
+  --ring: #5dbaeb;
 
-  /* Status colors */
+  /* Status colors — not part of the Procurex spec, kept as-is */
   --success: oklch(0.52 0.14 155);
   --success-foreground: oklch(0.98 0 0);
   --success-accent: oklch(0.58 0.15 175);
@@ -105,11 +139,11 @@
   --bronze: oklch(0.55 0.12 50);
   --bronze-foreground: oklch(0.32 0.10 40);
 
-  /* Full-bleed dark hero backgrounds (login screens, live countdown cards) —
-     intentionally static across light/dark mode. */
-  --hero-from: oklch(0.15 0.03 246);
-  --hero-via: oklch(0.22 0.04 235);
-  --hero-to: oklch(0.16 0.03 220);
+  /* Full-bleed dark hero backgrounds (login screens, live countdown cards).
+     Procurex: "el fondo de la portada usa el navy como base". */
+  --hero-from: #001635;
+  --hero-via: color-mix(in oklab, #001635 78%, #0b7dbb 22%);
+  --hero-to: #001635;
 
   /* Charts */
   --chart-1: oklch(0.42 0.14 246);
@@ -118,15 +152,16 @@
   --chart-4: oklch(0.52 0.14 155);
   --chart-5: oklch(0.50 0.04 245);
 
-  /* Sidebar */
-  --sidebar: oklch(0.18 0.03 246);
-  --sidebar-foreground: oklch(0.90 0.01 246);
-  --sidebar-primary: oklch(0.55 0.14 246);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.25 0.03 246);
-  --sidebar-accent-foreground: oklch(0.92 0.01 246);
-  --sidebar-border: oklch(0.28 0.03 246);
-  --sidebar-ring: oklch(0.55 0.14 246);
+  /* Sidebar / "menú zona privada" — light shell per the Procurex nav spec
+     (transparent/white default, light-blue active state, navy text). */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #001635;
+  --sidebar-primary: #f0faff;
+  --sidebar-primary-foreground: #0b7dbb;
+  --sidebar-accent: #f0f0f0;
+  --sidebar-accent-foreground: #001635;
+  --sidebar-border: #f0f0f0;
+  --sidebar-ring: #5dbaeb;
 }
 
 .dark {
@@ -185,6 +220,7 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-sans);
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }

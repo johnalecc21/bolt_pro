@@ -15,7 +15,7 @@ export function ProviderCard({ proveedor, selectable, selected, onSelect }: {
       onClick={selectable ? onSelect : undefined}
       className={cn(
         "p-4 transition-all hover:shadow-lg hover:-translate-y-0.5",
-        selectable && "cursor-pointer",
+        selectable && "cursor-pointer border-foreground hover:border-brand-accent",
         selected && "ring-2 ring-primary bg-primary/5"
       )}
     >
