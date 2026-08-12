@@ -95,7 +95,7 @@ export function AnaliticaCFO() {
               <XAxis dataKey="categoria" tickLine={false} axisLine={false} fontSize={11} />
               <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `${v}d`} />
               <ChartTooltip content={<ChartTooltipContent />} />
-              <Bar dataKey="dias" fill="var(--color-dias)" radius={4} />
+              <Bar dataKey="dias" fill="var(--color-dias)" radius={4} isAnimationActive={false} />
             </BarChart>
           </ChartContainer>
         </Card>
@@ -105,7 +105,7 @@ export function AnaliticaCFO() {
           <div className="flex items-center gap-6">
             <ChartContainer config={{}} className="h-[200px] w-[200px]">
               <PieChart>
-                <Pie data={concentracionGasto} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} strokeWidth={2}>
+                <Pie data={concentracionGasto} dataKey="value" nameKey="name" innerRadius={50} outerRadius={80} strokeWidth={2} isAnimationActive={false}>
                   {concentracionGasto.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
                 </Pie>
                 <ChartTooltip content={<ChartTooltipContent />} />
@@ -135,7 +135,7 @@ export function AnaliticaCFO() {
             <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
             <YAxis type="category" dataKey="proveedor" tickLine={false} axisLine={false} width={90} fontSize={12} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Bar dataKey="gasto" fill="var(--color-gasto)" radius={4} />
+            <Bar dataKey="gasto" fill="var(--color-gasto)" radius={4} isAnimationActive={false} />
           </BarChart>
         </ChartContainer>
       </Card>

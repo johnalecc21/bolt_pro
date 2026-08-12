@@ -145,12 +145,15 @@
   --hero-via: color-mix(in oklab, #001635 78%, #0b7dbb 22%);
   --hero-to: #001635;
 
-  /* Charts */
-  --chart-1: oklch(0.42 0.14 246);
-  --chart-2: oklch(0.62 0.12 195);
-  --chart-3: oklch(0.70 0.16 68);
-  --chart-4: oklch(0.52 0.14 155);
-  --chart-5: oklch(0.50 0.04 245);
+  /* Charts — anchored to the same brand/semantic tokens as the rest of the
+     UI (not independent colors) so a rebrand or theme switch stays in sync
+     automatically. chart-1 carries the "primary metric" in any given chart;
+     chart-5 is the neutral "everything else" bucket in categorical charts. */
+  --chart-1: var(--primary);
+  --chart-2: var(--brand-accent);
+  --chart-3: var(--warning);
+  --chart-4: var(--success);
+  --chart-5: var(--muted-foreground);
 
   /* Sidebar / "menú zona privada" — light shell per the Procurex nav spec
      (transparent/white default, light-blue active state, navy text). */
@@ -197,12 +200,6 @@
   --brand-accent: oklch(0.58 0.13 225);
   --bronze: oklch(0.62 0.12 50);
   --bronze-foreground: oklch(0.92 0.05 60);
-
-  --chart-1: oklch(0.62 0.14 246);
-  --chart-2: oklch(0.68 0.13 195);
-  --chart-3: oklch(0.76 0.17 68);
-  --chart-4: oklch(0.58 0.16 155);
-  --chart-5: oklch(0.65 0.02 245);
 
   --sidebar: oklch(0.11 0.015 246);
   --sidebar-foreground: oklch(0.90 0.01 246);
