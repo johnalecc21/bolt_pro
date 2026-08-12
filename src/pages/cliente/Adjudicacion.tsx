@@ -140,7 +140,7 @@ export function Adjudicacion() {
           </div>
           {!adjudicacion.confirmada && (
             <ConfirmDialog
-              trigger={<Button className="mt-4 gradient-brand text-white"><Check className="mr-2 h-4 w-4" /> Confirmar adjudicación</Button>}
+              trigger={<Button className="mt-4"><Check className="mr-2 h-4 w-4" /> Confirmar adjudicación</Button>}
               title="Confirmar adjudicación"
               description={`${adjudicacion.proveedor} será notificado como ganador. Esta decisión queda registrada en el log de auditoría.`}
               confirmLabel="Confirmar"
@@ -238,13 +238,13 @@ export function Adjudicacion() {
         {adjudicacion.yaFirmado ? (
           <span className="flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Contrato firmado</span>
         ) : firmando ? (
-          <Button disabled className="gradient-brand text-white">
+          <Button disabled>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {firmando}
           </Button>
         ) : (
           <ConfirmDialog
             trigger={
-              <Button disabled={!puedeFirmar} className="gradient-brand text-white">
+              <Button disabled={!puedeFirmar}>
                 <Send className="mr-2 h-4 w-4" /> Enviar a firma electrónica
               </Button>
             }

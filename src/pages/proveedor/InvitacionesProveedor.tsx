@@ -72,7 +72,7 @@ export function InvitacionesProveedor() {
                     <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10" onClick={() => declinar(inv)}>
                       <X className="h-4 w-4" /> Declinar
                     </Button>
-                    <Button size="sm" className="gradient-brand text-white" onClick={() => aceptar(inv)}>
+                    <Button size="sm" onClick={() => aceptar(inv)}>
                       <Check className="h-4 w-4" /> Aceptar participar
                     </Button>
                   </div>

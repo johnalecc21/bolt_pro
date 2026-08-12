@@ -64,7 +64,7 @@ export function GestionUsuarios() {
           <h1 className="text-2xl font-bold">Gestión de Usuarios y Roles</h1>
           <p className="text-sm text-muted-foreground">Administra quién tiene acceso y con qué permisos</p>
         </div>
-        <Button className="gradient-brand text-white" onClick={() => setInviteOpen(true)}>
+        <Button onClick={() => setInviteOpen(true)}>
           <UserPlus className="mr-2 h-4 w-4" /> Invitar usuario
         </Button>
       </div>
@@ -128,7 +128,7 @@ export function GestionUsuarios() {
             </div>
             <div className="space-y-1.5">
               <Label>Rol</Label>
-              <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)}>
+              <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={inviteRole} onChange={(e) => setInviteRole(e.target.value as Role)}>
                 {rolesEditables.map((r) => <option key={r} value={r}>{roleLabels[r]}</option>)}
               </select>
             </div>

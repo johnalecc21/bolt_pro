@@ -218,7 +218,7 @@ export function OnboardingWizard() {
               <h2 className="text-xl font-semibold">Invita a tu equipo</h2>
               <div className="flex gap-2">
                 <Input placeholder="email@empresa.com" value={inviteEmail} onChange={(e) => setInviteEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && invitarUsuario()} />
-                <select className="rounded-md border border-input bg-background px-3 text-sm" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
+                <select className="rounded-md border border-input bg-white px-3 text-sm" value={inviteRole} onChange={(e) => setInviteRole(e.target.value)}>
                   <option>Comprador</option>
                   <option>Aprobador</option>
                   <option>Admin</option>
@@ -289,7 +289,7 @@ export function OnboardingWizard() {
                 </Button>
               )}
               {step < 5 ? (
-                <Button onClick={next} className="gradient-brand text-white">
+                <Button onClick={next}>
                   Siguiente <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (

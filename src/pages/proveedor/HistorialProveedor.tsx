@@ -18,7 +18,7 @@ export function HistorialProveedor() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Historial de Procesos y Resultados</h1>
-        <p className="text-sm text-muted-foreground">Tu desempeño histórico en la red ProcureOS</p>
+        <p className="text-sm text-muted-foreground">Tu desempeño histórico en la red Procurex</p>
       </div>
 
       {loading ? <KpiRowSkeleton count={3} /> : <div className="grid grid-cols-3 gap-4">

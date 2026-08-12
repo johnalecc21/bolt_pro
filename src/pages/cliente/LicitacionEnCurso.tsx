@@ -214,7 +214,7 @@ export function LicitacionEnCurso() {
           </div>
           <div className="mt-4 flex gap-2">
             <input
-              className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+              className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm"
               placeholder="Escribe una respuesta..."
               value={respuesta}
               onChange={(e) => setRespuesta(e.target.value)}

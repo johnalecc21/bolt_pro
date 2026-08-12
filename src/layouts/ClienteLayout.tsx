@@ -46,7 +46,7 @@ export function ClienteLayout() {
       <aside className={cn("flex shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200", collapsed ? "w-16" : "w-64")}>
         <div className={cn("flex h-16 items-center gap-2", collapsed ? "justify-center px-2" : "px-6")}>
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand text-white font-bold text-sm">P</div>
-          {!collapsed && <span className="text-lg font-bold text-gradient">ProcureOS</span>}
+          {!collapsed && <span className="text-lg font-bold text-gradient">Procurex</span>}
         </div>
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
           {visibleItems.map((item) => (

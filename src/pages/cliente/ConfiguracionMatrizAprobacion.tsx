@@ -146,7 +146,7 @@ export function ConfiguracionMatrizAprobacion() {
                     )}
                   </td>
                   <td className="p-3">
-                    <select className="rounded-md border border-input bg-background px-2 py-1.5 text-sm" value={r.tipo} onChange={(e) => actualizar(r.id, { tipo: e.target.value as Regla["tipo"] })}>
+                    <select className="rounded-md border border-input bg-white px-2 py-1.5 text-sm" value={r.tipo} onChange={(e) => actualizar(r.id, { tipo: e.target.value as Regla["tipo"] })}>
                       <option>Única</option>
                       <option>Secuencial</option>
                     </select>
@@ -181,7 +181,7 @@ export function ConfiguracionMatrizAprobacion() {
       </Card>
 
       <div className="flex justify-end">
-        <Button className="gradient-brand text-white" onClick={guardar} disabled={!!error || saving}>{saving ? "Guardando..." : "Guardar matriz"}</Button>
+        <Button onClick={guardar} disabled={!!error || saving}>{saving ? "Guardando..." : "Guardar matriz"}</Button>
       </div>
     </div>
   );

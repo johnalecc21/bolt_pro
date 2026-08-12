@@ -132,7 +132,7 @@ export function DetalleRequerimiento() {
           <Button variant="outline">Agregar proveedores</Button>
         </Link>
         <Link to={`/cliente/licitaciones/${id}/comparativo`}>
-          <Button className="gradient-brand text-white">Ver Comparativo</Button>
+          <Button>Ver Comparativo</Button>
         </Link>
       </div>
 
@@ -216,7 +216,7 @@ export function DetalleRequerimiento() {
               </div>
               <div className="mt-4 flex gap-2">
                 <input
-                  className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm"
                   placeholder="Escribe un comentario..."
                   value={comentario}
                   onChange={(e) => setComentario(e.target.value)}

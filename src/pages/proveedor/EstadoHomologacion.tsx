@@ -26,7 +26,7 @@ export function EstadoHomologacion() {
       <div className="p-6">
         <Card className="p-6 text-center">
           <p className="text-sm text-muted-foreground">Aún no has iniciado tu homologación.</p>
-          <Button asChild className="mt-3 gradient-brand text-white"><Link to="/proveedor/homologacion">Iniciar homologación</Link></Button>
+          <Button asChild className="mt-3"><Link to="/proveedor/homologacion">Iniciar homologación</Link></Button>
         </Card>
       </div>
     );
@@ -40,7 +40,7 @@ export function EstadoHomologacion() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Estado de Homologación</h1>
-        <p className="text-sm text-muted-foreground">Sigue el progreso de tu validación en la red ProcureOS</p>
+        <p className="text-sm text-muted-foreground">Sigue el progreso de tu validación en la red Procurex</p>
       </div>
 
       <Card className="p-6">

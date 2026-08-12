@@ -21,7 +21,7 @@ const portals = [
   {
     icon: Users2,
     title: "Panel Interno",
-    description: "Herramientas de consultoría, compliance y soporte human-in-the-loop para el equipo de ProcureOS.",
+    description: "Herramientas de consultoría, compliance y soporte human-in-the-loop para el equipo de Procurex.",
     to: "/interno/login",
   },
 ];

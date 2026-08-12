@@ -40,10 +40,10 @@ export function DirectorioProveedores() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar proveedor..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+        <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {categorias.map((c) => <option key={c}>{c}</option>)}
         </select>
-        <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))}>
+        <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={minScore} onChange={(e) => setMinScore(Number(e.target.value))}>
           <option value={0}>Cualquier score</option>
           <option value={80}>Score ≥ 80</option>
           <option value={90}>Score ≥ 90</option>
@@ -108,7 +108,7 @@ export function DirectorioProveedores() {
               <div className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
                 Disputas históricas: {perfil.disputas} · Solo se muestran datos agregados y reputacionales — nunca condiciones comerciales dadas a otros clientes.
               </div>
-              <Button className="w-full gradient-brand text-white gap-2" onClick={() => { toast.success("Agregado a shortlist", { description: `${perfil.nombre} — selecciona el requerimiento activo desde su pantalla de shortlist.` }); setPerfil(null); }}>
+              <Button className="w-full gap-2" onClick={() => { toast.success("Agregado a shortlist", { description: `${perfil.nombre} — selecciona el requerimiento activo desde su pantalla de shortlist.` }); setPerfil(null); }}>
                 <Plus className="h-4 w-4" /> Agregar a shortlist de un requerimiento
               </Button>
             </>

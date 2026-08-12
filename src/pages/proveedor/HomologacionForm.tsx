@@ -180,7 +180,7 @@ export function HomologacionForm() {
               <Loader2 className="h-4 w-4 animate-spin" /> {pasoActual}
             </div>
           ) : (
-            <Button className="gradient-brand text-white gap-2" onClick={enviarHomologacion} disabled={completitud < 100}>
+            <Button className="gap-2" onClick={enviarHomologacion} disabled={completitud < 100}>
               <CheckCircle2 className="h-4 w-4" /> Enviar a validación
             </Button>
           )}

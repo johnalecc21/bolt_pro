@@ -75,7 +75,7 @@ export function Disputas() {
           <h1 className="text-2xl font-bold">Gestión de Disputas</h1>
           <p className="text-sm text-muted-foreground">Formaliza y da seguimiento a desacuerdos con proveedores</p>
         </div>
-        <Button className="gradient-brand text-white" onClick={() => setShowForm(true)}>
+        <Button onClick={() => setShowForm(true)}>
           <Plus className="mr-2 h-4 w-4" /> Abrir caso
         </Button>
       </div>
@@ -90,7 +90,7 @@ export function Disputas() {
             </div>
             <div className="space-y-1.5">
               <Label>Severidad</Label>
-              <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={severidad} onChange={(e) => setSeveridad(e.target.value as Disputa["severidad"])}>
+              <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={severidad} onChange={(e) => setSeveridad(e.target.value as Disputa["severidad"])}>
                 <option>Baja</option>
                 <option>Media</option>
                 <option>Alta</option>

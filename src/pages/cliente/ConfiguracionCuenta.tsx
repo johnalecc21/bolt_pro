@@ -79,7 +79,7 @@ export function ConfiguracionCuenta() {
           </div>
           <div className="space-y-1.5">
             <Label className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> Idioma</Label>
-            <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={idioma} onChange={(e) => setIdioma(e.target.value)}>
+            <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={idioma} onChange={(e) => setIdioma(e.target.value)}>
               <option value="es">Español</option>
               <option value="en">English</option>
               <option value="pt">Português</option>

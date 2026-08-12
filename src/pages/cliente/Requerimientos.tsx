@@ -47,7 +47,7 @@ export function Requerimientos() {
           <p className="text-sm text-muted-foreground">Todos tus procesos de compra, en cualquier etapa</p>
         </div>
         <Link to="/cliente/requerimientos/nuevo">
-          <Button className="gradient-brand text-white"><Plus className="mr-2 h-4 w-4" /> Nuevo Requerimiento</Button>
+          <Button><Plus className="mr-2 h-4 w-4" /> Nuevo Requerimiento</Button>
         </Link>
       </div>
 
@@ -56,7 +56,7 @@ export function Requerimientos() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar por ID o título..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReq | "todos")}>
+        <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReq | "todos")}>
           {estados.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
         </select>
       </div>

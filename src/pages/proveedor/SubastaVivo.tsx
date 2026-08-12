@@ -98,7 +98,7 @@ export function SubastaVivo() {
           {auction.status === "activa" && (
             <div className="mt-4 flex gap-2">
               <Input type="number" placeholder="Nueva oferta mejorada" value={mejora} onChange={(e) => setMejora(e.target.value)} />
-              <Button onClick={enviarMejora} className="gap-2 gradient-brand text-white shrink-0"><TrendingDown className="h-4 w-4" /> Mejorar oferta</Button>
+              <Button onClick={enviarMejora} className="gap-2 shrink-0"><TrendingDown className="h-4 w-4" /> Mejorar oferta</Button>
             </div>
           )}
         </Card>

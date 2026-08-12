@@ -58,7 +58,7 @@ export function RegistroProveedor() {
               </div>
               <div className="space-y-1.5">
                 <Label>Categoría principal</Label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
                   <option>Tecnología</option>
                   <option>Servicios Generales</option>
                   <option>Materia Prima</option>
@@ -76,7 +76,7 @@ export function RegistroProveedor() {
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full gradient-brand text-white">Crear cuenta</Button>
+            <Button type="submit" className="w-full">Crear cuenta</Button>
             <p className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta? <Link to="/proveedor/login" className="font-medium text-primary hover:underline">Inicia sesión</Link>
             </p>
@@ -95,7 +95,7 @@ export function RegistroProveedor() {
             <CheckCircle2 className="h-10 w-10 text-success" />
             <p className="font-medium">Cuenta creada</p>
             <p className="text-sm text-muted-foreground">Te enviamos un enlace de verificación a {email}. Ya puedes iniciar sesión con este correo y tu contraseña para completar tu homologación.</p>
-            <Button className="mt-2 w-full gradient-brand text-white" onClick={() => navigate("/proveedor/login")}>Ir a iniciar sesión</Button>
+            <Button className="mt-2 w-full" onClick={() => navigate("/proveedor/login")}>Ir a iniciar sesión</Button>
           </div>
         )}
       </div>

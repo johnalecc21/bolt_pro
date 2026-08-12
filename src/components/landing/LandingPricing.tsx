@@ -99,7 +99,7 @@ export function LandingPricing() {
                     p.highlighted ? "bg-white text-primary hover:bg-white/90" : "gradient-brand text-white",
                   )}
                 >
-                  <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20ProcureOS">Hablar con ventas</a>
+                  <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20Procurex">Hablar con ventas</a>
                 </Button>
               </Card>
             </motion.div>

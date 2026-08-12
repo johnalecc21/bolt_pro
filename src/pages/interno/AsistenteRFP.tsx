@@ -46,11 +46,11 @@ export function AsistenteRFP() {
             <div className="mb-4 grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Cliente</Label>
-                <input className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={cliente} onChange={(e) => setCliente(e.target.value)} />
+                <input className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={cliente} onChange={(e) => setCliente(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label>Plantilla por industria/categoría</Label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={plantilla} onChange={(e) => setPlantilla(e.target.value)}>
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={plantilla} onChange={(e) => setPlantilla(e.target.value)}>
                   {plantillas.map((p) => <option key={p}>{p}</option>)}
                 </select>
               </div>
@@ -68,7 +68,7 @@ export function AsistenteRFP() {
               <Textarea rows={10} value={contenido} onChange={(e) => setContenido(e.target.value)} placeholder="Redacta o genera el contenido del RFP..." />
             </div>
             <ConfirmDialog
-              trigger={<Button className="mt-4 gap-2 gradient-brand text-white" disabled={!contenido.trim()}><Send className="h-4 w-4" /> Enviar al cliente para validación</Button>}
+              trigger={<Button className="mt-4 gap-2" disabled={!contenido.trim()}><Send className="h-4 w-4" /> Enviar al cliente para validación</Button>}
               title="Enviar RFP al cliente"
               description={`El RFP aparecerá en el portal de ${cliente} para su aprobación final antes de publicarse.`}
               confirmLabel="Enviar"

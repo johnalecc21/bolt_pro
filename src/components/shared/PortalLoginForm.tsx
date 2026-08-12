@@ -134,7 +134,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           </InputOTP>
           {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
-        <Button className="w-full gradient-brand text-white" disabled={otp.length < 6 || loading} onClick={handleVerify2FA}>
+        <Button className="w-full" disabled={otp.length < 6 || loading} onClick={handleVerify2FA}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Verificar"}
         </Button>
         <div className="flex items-center gap-2 rounded-lg bg-muted p-3 text-xs text-muted-foreground">
@@ -191,7 +191,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">Recordarme</Label>
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
-        <Button type="submit" className="w-full gradient-brand text-white hover:opacity-90" disabled={loading}>
+        <Button type="submit" className="w-full" disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Iniciar sesión"}
         </Button>
       </form>
@@ -226,7 +226,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           ) : (
             <div className="space-y-3">
               <p className="text-sm text-muted-foreground">Enviaremos el enlace a <span className="font-medium text-foreground">{email || "tu correo"}</span>.</p>
-              <Button className="w-full gradient-brand text-white" disabled={!email.trim()} onClick={handleForgotPassword}>Enviar enlace</Button>
+              <Button className="w-full" disabled={!email.trim()} onClick={handleForgotPassword}>Enviar enlace</Button>
             </div>
           )}
         </DialogContent>

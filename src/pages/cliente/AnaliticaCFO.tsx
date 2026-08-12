@@ -44,7 +44,7 @@ export function AnaliticaCFO() {
           <p className="text-sm text-muted-foreground">Visibilidad financiera y de desempeño a nivel gerencial</p>
         </div>
         <div className="flex gap-2">
-          <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
+          <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={periodo} onChange={(e) => setPeriodo(e.target.value)}>
             <option value="3m">Últimos 3 meses</option>
             <option value="6m">Últimos 6 meses</option>
             <option value="12m">Últimos 12 meses</option>

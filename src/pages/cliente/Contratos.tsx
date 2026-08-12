@@ -41,7 +41,7 @@ export function Contratos() {
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input placeholder="Buscar por ID o proveedor..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+        <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {categorias.map((c) => <option key={c}>{c}</option>)}
         </select>
       </div>

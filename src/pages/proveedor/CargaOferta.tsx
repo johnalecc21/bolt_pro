@@ -150,7 +150,7 @@ export function CargaOferta() {
               </div>
             </div>
             <ConfirmDialog
-              trigger={<Button className="mt-6 gradient-brand text-white gap-2" disabled={!camposCompletos || guardando}><Send className="h-4 w-4" /> Enviar oferta</Button>}
+              trigger={<Button className="mt-6 gap-2" disabled={!camposCompletos || guardando}><Send className="h-4 w-4" /> Enviar oferta</Button>}
               title="Enviar oferta"
               description="Una vez enviada, no podrás editarla salvo que el comprador habilite una nueva ventana. Esta es la misma estructura que verán todos los proveedores del proceso."
               confirmLabel="Enviar"

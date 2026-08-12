@@ -63,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (result.status === "invalid") setOauthError(result.message ?? "No se pudo iniciar sesión con esa cuenta.");
         } catch {
           await logout();
-          setOauthError("Tu cuenta de Google no está registrada en ProcureOS. Contacta a tu administrador.");
+          setOauthError("Tu cuenta de Google no está registrada en Procurex. Contacta a tu administrador.");
         } finally {
           if (!cancelled) setSessionLoading(false);
         }

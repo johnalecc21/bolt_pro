@@ -44,7 +44,7 @@ export function Dashboard() {
         </div>
         {currentUser?.role !== "aprobador_cfo" && (
           <Link to="/cliente/requerimientos/nuevo">
-            <Button className="gradient-brand text-white">
+            <Button>
               <Plus className="mr-2 h-4 w-4" /> Nuevo Requerimiento
             </Button>
           </Link>

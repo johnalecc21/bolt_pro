@@ -144,7 +144,7 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
         </DropdownMenu>
       </div>
 
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar" description="Navega rápidamente por ProcureOS">
+      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen} title="Buscar" description="Navega rápidamente por Procurex">
         <CommandInput placeholder="Buscar pantallas, requerimientos, proveedores..." />
         <CommandList>
           <CommandEmpty>Sin resultados.</CommandEmpty>

@@ -43,7 +43,7 @@ export function LandingNavbar() {
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-2">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-brand font-bold text-white">P</div>
-          <span className="text-lg font-bold text-white">ProcureOS</span>
+          <span className="text-lg font-bold text-white">Procurex</span>
         </a>
 
         <nav className="hidden items-center gap-8 lg:flex">

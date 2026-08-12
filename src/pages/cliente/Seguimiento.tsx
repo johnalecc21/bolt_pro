@@ -114,7 +114,7 @@ export function Seguimiento() {
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">Comprometido {h.comprometido}{h.real && ` · Real ${h.real}`}</span>
                             <select
-                              className="h-7 rounded-md border border-input bg-background px-2 text-xs"
+                              className="h-7 rounded-md border border-input bg-white px-2 text-xs"
                               value={h.estado}
                               onChange={(e) => cambiarEstado(h.id, e.target.value as EstadoHito)}
                             >
@@ -147,7 +147,7 @@ export function Seguimiento() {
                     <label className="text-xs font-medium text-muted-foreground">Fecha comprometida</label>
                     <Input type="date" value={nuevaFecha} onChange={(e) => setNuevaFecha(e.target.value)} className="h-8 text-sm" />
                   </div>
-                  <Button size="sm" className="h-8 gradient-brand text-white" disabled={!nuevoLabel.trim() || !nuevaFecha || submitting} onClick={() => agregarHito(s.poId)}>
+                  <Button size="sm" className="h-8" disabled={!nuevoLabel.trim() || !nuevaFecha || submitting} onClick={() => agregarHito(s.poId)}>
                     Agregar
                   </Button>
                   <Button size="sm" variant="ghost" className="h-8" onClick={() => setAddingTo(null)}>Cancelar</Button>

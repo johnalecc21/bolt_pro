@@ -109,7 +109,7 @@ export function MediacionDisputas() {
                     <label className="flex items-center gap-1.5 text-sm"><input type="radio" checked={impacto === "negativo"} onChange={() => setImpacto("negativo")} /> Negativo</label>
                   </div>
                   <ConfirmDialog
-                    trigger={<Button className="mt-4 gap-2 gradient-brand text-white" disabled={!decision.trim()}><Gavel className="h-4 w-4" /> Registrar decisión final</Button>}
+                    trigger={<Button className="mt-4 gap-2" disabled={!decision.trim()}><Gavel className="h-4 w-4" /> Registrar decisión final</Button>}
                     title="Registrar decisión de mediación"
                     description="El caso se marcará como resuelto y el impacto se aplicará al score del proveedor."
                     confirmLabel="Confirmar decisión"

@@ -303,7 +303,7 @@ export function CuadroComparativo() {
               <Settings className="h-4 w-4" /> Iniciar negociación
             </Button>
           </Link>
-          <Button className="gradient-brand text-white gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
+          <Button className="gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
             <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : "Adjudicar directamente"}
           </Button>
         </div>

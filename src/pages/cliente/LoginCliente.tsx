@@ -12,7 +12,7 @@ export function LoginCliente() {
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm font-bold">P</div>
-            <span className="text-2xl font-bold">ProcureOS</span>
+            <span className="text-2xl font-bold">Procurex</span>
           </Link>
         </div>
         <div className="relative z-10 space-y-8">
@@ -40,7 +40,7 @@ export function LoginCliente() {
             ))}
           </div>
         </div>
-        <p className="relative z-10 text-sm text-white/40">© 2026 ProcureOS. Todos los derechos reservados.</p>
+        <p className="relative z-10 text-sm text-white/40">© 2026 Procurex. Todos los derechos reservados.</p>
       </div>
 
       {/* Right form */}

@@ -22,11 +22,11 @@ export function LandingCta() {
       <Reveal className="relative mx-auto flex max-w-3xl flex-col items-center gap-6 px-6 text-center">
         <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">¿Listo para transformar tus compras?</h2>
         <p className="max-w-xl text-white/70">
-          Agenda una demo con nuestro equipo y te mostramos cómo ProcureOS se adapta al proceso de tu empresa.
+          Agenda una demo con nuestro equipo y te mostramos cómo Procurex se adapta al proceso de tu empresa.
         </p>
         <div className="flex flex-wrap justify-center gap-4">
           <Button asChild size="lg" className="gap-2 bg-white text-primary hover:bg-white/90">
-            <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20ProcureOS">
+            <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20Procurex">
               Solicitar una demo <ArrowRight className="h-4 w-4" />
             </a>
           </Button>

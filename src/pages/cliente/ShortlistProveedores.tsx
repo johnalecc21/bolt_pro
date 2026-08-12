@@ -110,7 +110,6 @@ export function ShortlistProveedores() {
         <Button
           onClick={confirmarInvitaciones}
           disabled={selected.length < 3 || submitting}
-          className="gradient-brand text-white"
         >
           <Check className="mr-2 h-4 w-4" /> {submitting ? "Enviando..." : "Confirmar y enviar invitaciones"}
         </Button>
@@ -124,16 +123,16 @@ export function ShortlistProveedores() {
             <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="ext-nombre">Nombre de la empresa</Label>
-                <input id="ext-nombre" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+                <input id="ext-nombre" className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={nombre} onChange={(e) => setNombre(e.target.value)} />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="ext-email">Email de contacto</Label>
-                <input id="ext-email" type="email" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <input id="ext-email" type="email" className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
             </div>
             <div className="mt-6 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowModal(false)}>Cancelar</Button>
-              <Button onClick={agregarExterno} disabled={!nombre.trim() || !email.trim()} className="gradient-brand text-white">Enviar invitación</Button>
+              <Button onClick={agregarExterno} disabled={!nombre.trim() || !email.trim()}>Enviar invitación</Button>
             </div>
           </Card>
         </div>

@@ -59,7 +59,7 @@ export function CopilotoPanel({ context, trigger, onInsert }: {
     <Sheet>
       <SheetTrigger asChild>
         {trigger ?? (
-          <Button size="icon" className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full gradient-brand text-white shadow-lg">
+          <Button size="icon" className="fixed bottom-6 right-6 z-40 h-12 w-12 rounded-full shadow-lg">
             <Sparkles className="h-5 w-5" />
           </Button>
         )}

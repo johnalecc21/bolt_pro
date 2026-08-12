@@ -103,7 +103,7 @@ export function PagosFactoring() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSeleccion(null)}>Cancelar</Button>
-            <Button onClick={solicitar} disabled={solicitando} className="gradient-brand text-white">Solicitar pronto pago</Button>
+            <Button onClick={solicitar} disabled={solicitando}>Solicitar pronto pago</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

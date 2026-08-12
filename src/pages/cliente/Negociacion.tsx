@@ -116,7 +116,7 @@ export function Negociacion() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ventana de tiempo</label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
                   <option>30 minutos</option>
                   <option>1 hora</option>
                   <option>2 horas</option>
@@ -125,7 +125,7 @@ export function Negociacion() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Proveedores incluidos</label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
                   <option>3 finalistas</option>
                   <option>Todos los ofertantes</option>
                 </select>
@@ -133,7 +133,7 @@ export function Negociacion() {
             </div>
           </Card>
 
-          <Button onClick={iniciarRonda} className="gradient-brand text-white">
+          <Button onClick={iniciarRonda}>
             <Gavel className="mr-2 h-4 w-4" /> Iniciar ronda de negociación
           </Button>
         </>

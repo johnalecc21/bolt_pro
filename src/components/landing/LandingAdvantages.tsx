@@ -12,7 +12,7 @@ export function LandingAdvantages() {
       <SectionGlow variant="reverse" />
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Por qué los equipos de compras eligen ProcureOS</h2>
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Por qué los equipos de compras eligen Procurex</h2>
         </Reveal>
 
         <div className="mt-16 grid grid-cols-1 gap-5 md:grid-cols-3 md:[grid-auto-rows:minmax(200px,auto)]">

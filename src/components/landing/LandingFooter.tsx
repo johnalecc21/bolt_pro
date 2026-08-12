@@ -37,7 +37,7 @@ export function LandingFooter() {
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-brand font-bold text-white">P</div>
-              <span className="text-lg font-bold text-white">ProcureOS</span>
+              <span className="text-lg font-bold text-white">Procurex</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-white/50">
               Procurement-as-a-Service para equipos de compras que quieren velocidad y ahorro
@@ -73,7 +73,7 @@ export function LandingFooter() {
         </div>
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-white/10 py-6 text-xs text-white/40 sm:flex-row">
-          <span>© {new Date().getFullYear()} ProcureOS. Todos los derechos reservados.</span>
+          <span>© {new Date().getFullYear()} Procurex. Todos los derechos reservados.</span>
           <span>Hecho para equipos de compras en Latinoamérica.</span>
         </div>
       </div>

@@ -11,7 +11,7 @@ export function LoginInterno() {
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm font-bold">P</div>
-            <span className="text-2xl font-bold">ProcureOS</span>
+            <span className="text-2xl font-bold">Procurex</span>
           </Link>
         </div>
         <div className="relative z-10 space-y-8">
@@ -37,20 +37,20 @@ export function LoginInterno() {
             ))}
           </div>
         </div>
-        <p className="relative z-10 text-sm text-white/40">© 2026 ProcureOS. Todos los derechos reservados.</p>
+        <p className="relative z-10 text-sm text-white/40">© 2026 Procurex. Todos los derechos reservados.</p>
       </div>
 
       <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-20">
         <div className="mx-auto w-full max-w-sm mb-8">
           <h2 className="text-2xl font-bold">Panel Interno</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Acceso exclusivo para el equipo ProcureOS</p>
+          <p className="mt-1 text-sm text-muted-foreground">Acceso exclusivo para el equipo Procurex</p>
         </div>
         <PortalLoginForm
           portal="interno"
           demoHint="ana.consultora@procureos.com / demo123"
           footer={
             <p className="text-center text-sm text-muted-foreground">
-              ¿No trabajas en ProcureOS?{" "}
+              ¿No trabajas en Procurex?{" "}
               <Link to="/" className="font-medium text-primary hover:underline">Volver al inicio</Link>
             </p>
           }

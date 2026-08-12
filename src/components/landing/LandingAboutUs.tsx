@@ -38,7 +38,7 @@ export function LandingAboutUs() {
             Somos el equipo detrás de un procurement más humano
           </h2>
           <p className="mt-5 text-muted-foreground">
-            ProcureOS nació de una idea simple: la tecnología debería hacer las compras corporativas
+            Procurex nació de una idea simple: la tecnología debería hacer las compras corporativas
             más rápidas sin sacrificar el criterio experto que evita errores costosos. Por eso cada
             homologación, cada negociación y cada disputa en la plataforma tiene, en algún punto, una
             persona real revisando lo que importa.

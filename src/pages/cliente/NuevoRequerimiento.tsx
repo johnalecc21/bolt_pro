@@ -142,7 +142,7 @@ export function NuevoRequerimiento() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Categoría</Label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
                   <option>Tecnología</option>
                   <option>Servicios Generales</option>
                   <option>Materia Prima</option>
@@ -151,7 +151,7 @@ export function NuevoRequerimiento() {
               </div>
               <div className="space-y-2">
                 <Label>Prioridad</Label>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm">
+                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
                   <option>Normal</option>
                   <option>Alta</option>
                   <option>Urgente</option>
@@ -346,7 +346,6 @@ export function NuevoRequerimiento() {
             <Button
               onClick={() => setStep((s) => s + 1)}
               disabled={(step === 4 && total !== 100) || (step === 5 && proveedoresSeleccionados.length < 3)}
-              className="gradient-brand text-white"
             >
               Siguiente <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
