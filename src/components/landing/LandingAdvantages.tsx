@@ -180,7 +180,7 @@ function TraceabilityCell() {
     { time: "11:03", text: "Contrato firmado electrónicamente" },
   ];
   return (
-    <CellShell className="md:col-span-3">
+    <CellShell className="bg-card md:col-span-3">
       <div className="flex items-start gap-6">
         <div className="shrink-0">
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
