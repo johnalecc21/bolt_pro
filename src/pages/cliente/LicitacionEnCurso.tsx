@@ -6,18 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Clock, Users, MessageSquare, Plus, Calendar, Eye, FileQuestion } from "lucide-react";
+import { Clock, Users, MessageSquare, Send, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 import { fetchProveedores } from "@/lib/api/proveedores";
+import { fetchPreguntas, responderPregunta } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
-
-const qaItems = [
-  { q: "¿El servicio incluye migración de bases de datos?", a: "Sí, incluye migración completa de hasta 5 bases de datos relacionales.", autor: "Proveedor anónimo" },
-  { q: "¿Qué SLA de soporte técnico ofrecen?", a: "SLA 24/7 con respuesta en menos de 2 horas para incidentes críticos.", autor: "Proveedor anónimo" },
-];
 
 function calcularTiempoRestante(fechaLimite: string | undefined) {
   if (!fechaLimite) return { dias: 0, horas: 0, min: 0, vencido: true };
@@ -44,11 +40,15 @@ export function LicitacionEnCurso() {
     [requerimientoId],
   );
   const { data: proveedores } = useApiData(() => fetchProveedores());
+  const { data: preguntas, reload: reloadPreguntas } = useApiData(
+    () => (requerimientoId ? fetchPreguntas(requerimientoId) : Promise.resolve([])),
+    [requerimientoId],
+  );
   const mode = usePermissionMode();
   const [tiempo, setTiempo] = useState(() => calcularTiempoRestante(requerimiento?.fechaLimite));
   const [cerrada, setCerrada] = useState(false);
-  const [qa, setQa] = useState(qaItems);
-  const [respuesta, setRespuesta] = useState("");
+  const [borradores, setBorradores] = useState<Record<string, string>>({});
+  const [respondiendoId, setRespondiendoId] = useState<string | null>(null);
 
   useEffect(() => {
     setTiempo(calcularTiempoRestante(requerimiento?.fechaLimite));
@@ -100,10 +100,20 @@ export function LicitacionEnCurso() {
     navigate(`/cliente/licitaciones/${requerimientoId}/comparativo`);
   }
 
-  function enviarRespuesta() {
-    if (!respuesta.trim()) return;
-    setQa((prev) => [...prev, { q: "Pregunta del comprador", a: respuesta.trim(), autor: "Carlos (Comprador)" }]);
-    setRespuesta("");
+  async function responder(preguntaId: string) {
+    const texto = (borradores[preguntaId] ?? "").trim();
+    if (!texto) return;
+    setRespondiendoId(preguntaId);
+    try {
+      await responderPregunta(preguntaId, texto);
+      setBorradores((prev) => ({ ...prev, [preguntaId]: "" }));
+      toast.success("Respuesta enviada");
+      reloadPreguntas();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo enviar la respuesta."));
+    } finally {
+      setRespondiendoId(null);
+    }
   }
 
   return (
@@ -203,26 +213,40 @@ export function LicitacionEnCurso() {
           <h2 className="mb-4 flex items-center gap-2 font-semibold">
             <MessageSquare className="h-4 w-4" /> Preguntas y respuestas (Q&A)
           </h2>
-          <div className="space-y-4">
-            {qa.map((item, i) => (
-              <div key={i} className="rounded-lg border border-border p-3">
-                <p className="text-sm font-medium">{item.q}</p>
-                <p className="mt-1 text-sm text-muted-foreground">{item.a}</p>
-                <p className="mt-2 text-xs text-muted-foreground">— {item.autor}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 flex gap-2">
-            <input
-              className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm"
-              placeholder="Escribe una respuesta..."
-              value={respuesta}
-              onChange={(e) => setRespuesta(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && enviarRespuesta()}
-              disabled={cerrada || mode === "readonly"}
-            />
-            <Button size="sm" onClick={enviarRespuesta} disabled={cerrada || mode === "readonly" || !respuesta.trim()}><Plus className="h-4 w-4" /></Button>
-          </div>
+          {(preguntas ?? []).length === 0 ? (
+            <p className="text-sm text-muted-foreground">Ningún proveedor ha preguntado todavía.</p>
+          ) : (
+            <div className="space-y-4">
+              {(preguntas ?? []).map((item) => (
+                <div key={item.id} className="rounded-lg border border-border p-3">
+                  <p className="text-sm font-medium">{item.pregunta}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">— {item.proveedor?.nombre ?? "Proveedor"}</p>
+                  {item.respuesta ? (
+                    <p className="mt-2 rounded-md bg-muted p-2 text-sm">{item.respuesta}</p>
+                  ) : mode === "full" && !cerrada ? (
+                    <div className="mt-2 flex gap-2">
+                      <input
+                        className="flex-1 rounded-md border border-input bg-white px-3 py-2 text-sm"
+                        placeholder="Escribe tu respuesta..."
+                        value={borradores[item.id] ?? ""}
+                        onChange={(e) => setBorradores((prev) => ({ ...prev, [item.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === "Enter" && responder(item.id)}
+                      />
+                      <Button
+                        size="sm"
+                        onClick={() => responder(item.id)}
+                        disabled={respondiendoId === item.id || !(borradores[item.id] ?? "").trim()}
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-warning-foreground">Pendiente de respuesta.</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
 

@@ -11,24 +11,23 @@ import { FileText, Send, CheckCircle2 } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchInvitaciones } from "@/lib/api/invitaciones";
 import { fetchMiOferta, guardarMiOferta, enviarMiOferta, type MiOferta } from "@/lib/api/ofertas";
+import { fetchPreguntas, preguntar as apiPreguntar } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
-
-interface QA {
-  autor: string;
-  pregunta: string;
-  respuesta: string;
-}
 
 export function CargaOferta() {
   const { requerimientoId } = useParams();
   const { data: invitaciones } = useApiData(fetchInvitaciones);
   const invitacion = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId);
   const { data: ofertaData, loading, reload } = useApiData(() => fetchMiOferta(requerimientoId!), [requerimientoId]);
+  const { data: preguntas, reload: reloadPreguntas } = useApiData(
+    () => (requerimientoId ? fetchPreguntas(requerimientoId) : Promise.resolve([])),
+    [requerimientoId],
+  );
 
   const [oferta, setOferta] = useState<MiOferta | null>(null);
-  const [preguntas, setPreguntas] = useState<QA[]>([]);
   const [pregunta, setPregunta] = useState("");
   const [guardando, setGuardando] = useState(false);
+  const [enviandoPregunta, setEnviandoPregunta] = useState(false);
 
   useEffect(() => {
     if (ofertaData) setOferta(ofertaData);
@@ -75,11 +74,19 @@ export function CargaOferta() {
     }
   }
 
-  function enviarPregunta() {
-    if (!pregunta.trim()) return;
-    setPreguntas((prev) => [...prev, { autor: "Tú", pregunta: pregunta.trim(), respuesta: "" }]);
-    setPregunta("");
-    toast.info("Pregunta enviada al comprador");
+  async function enviarPregunta() {
+    if (!pregunta.trim() || !requerimientoId) return;
+    setEnviandoPregunta(true);
+    try {
+      await apiPreguntar(requerimientoId, pregunta.trim());
+      setPregunta("");
+      toast.info("Pregunta enviada al comprador");
+      reloadPreguntas();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo enviar la pregunta."));
+    } finally {
+      setEnviandoPregunta(false);
+    }
   }
 
   return (
@@ -100,18 +107,18 @@ export function CargaOferta() {
       <Card className="p-5">
         <h2 className="mb-3 font-semibold">Preguntas y respuestas</h2>
         <div className="space-y-3">
-          {preguntas.length === 0 && <p className="text-sm text-muted-foreground">Aún no has hecho preguntas sobre este proceso.</p>}
-          {preguntas.map((qa, i) => (
-            <div key={i} className="rounded-lg border border-border p-3 text-sm">
+          {(preguntas ?? []).length === 0 && <p className="text-sm text-muted-foreground">Aún no has hecho preguntas sobre este proceso.</p>}
+          {(preguntas ?? []).map((qa) => (
+            <div key={qa.id} className="rounded-lg border border-border p-3 text-sm">
               <p className="font-medium">{qa.pregunta}</p>
               <p className="text-muted-foreground">{qa.respuesta || "Pendiente de respuesta del comprador."}</p>
-              <p className="mt-1 text-xs text-muted-foreground/70">— {qa.autor}</p>
+              <p className="mt-1 text-xs text-muted-foreground/70">— Tú</p>
             </div>
           ))}
         </div>
         <div className="mt-3 flex gap-2">
           <Input placeholder="Haz una pregunta sobre este RFP..." value={pregunta} onChange={(e) => setPregunta(e.target.value)} onKeyDown={(e) => e.key === "Enter" && enviarPregunta()} disabled={oferta.enviada} />
-          <Button size="icon" onClick={enviarPregunta} disabled={!pregunta.trim() || oferta.enviada}><Send className="h-4 w-4" /></Button>
+          <Button size="icon" onClick={enviarPregunta} disabled={!pregunta.trim() || oferta.enviada || enviandoPregunta}><Send className="h-4 w-4" /></Button>
         </div>
       </Card>
 
