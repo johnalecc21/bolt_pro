@@ -40,6 +40,38 @@ export async function fetchOfertasPorRequerimiento(requerimientoId: string): Pro
   return data.map(toOfertaProceso);
 }
 
+export interface MiOfertaResumen {
+  requerimientoId: string;
+  titulo: string;
+  cliente: string;
+  categoria: string;
+  fechaLimite: string;
+  enviada: boolean;
+  precioTotal: number | null;
+}
+
+interface ApiMiOfertaResumen {
+  requerimientoId: string;
+  titulo: string;
+  cliente: string;
+  categoria: string;
+  fechaLimite: string;
+  oferta: { enviada: boolean; precioTotal: number } | null;
+}
+
+export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
+  const { data } = await api.get<ApiMiOfertaResumen[]>("/ofertas/mine");
+  return data.map((o) => ({
+    requerimientoId: o.requerimientoId,
+    titulo: o.titulo,
+    cliente: o.cliente,
+    categoria: o.categoria,
+    fechaLimite: o.fechaLimite.slice(0, 10),
+    enviada: o.oferta?.enviada ?? false,
+    precioTotal: o.oferta?.precioTotal ?? null,
+  }));
+}
+
 export interface MiOferta {
   precioUnitario: number;
   precioTotal: number;

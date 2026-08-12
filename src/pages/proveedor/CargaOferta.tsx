@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,20 +7,88 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { FileText, Send, CheckCircle2 } from "lucide-react";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { TableSkeleton } from "@/components/shared/TableSkeleton";
+import { FileText, Send, CheckCircle2, Inbox, Calendar } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchInvitaciones } from "@/lib/api/invitaciones";
-import { fetchMiOferta, guardarMiOferta, enviarMiOferta, type MiOferta } from "@/lib/api/ofertas";
+import { fetchMiOferta, fetchMisOfertas, guardarMiOferta, enviarMiOferta, type MiOferta } from "@/lib/api/ofertas";
 import { fetchPreguntas, preguntar as apiPreguntar } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
 export function CargaOferta() {
   const { requerimientoId } = useParams();
+  return requerimientoId ? <OfertaDetalle requerimientoId={requerimientoId} /> : <MisOfertasList />;
+}
+
+function MisOfertasList() {
+  const navigate = useNavigate();
+  const { data: ofertas, loading } = useApiData(fetchMisOfertas);
+
+  if (loading) {
+    return (
+      <div className="space-y-6 p-6">
+        <div>
+          <h1 className="text-2xl font-bold">Mis Ofertas</h1>
+          <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta</p>
+        </div>
+        <TableSkeleton />
+      </div>
+    );
+  }
+
+  if (!ofertas || ofertas.length === 0) {
+    return (
+      <div className="p-6">
+        <EmptyState
+          icon={Inbox}
+          title="Aún no has aceptado ningún proceso"
+          description="Ve a Bandeja de Invitaciones y acepta un proceso para empezar a cargar tu oferta."
+          actionLabel="Ir a Bandeja de Invitaciones"
+          onAction={() => navigate("/proveedor/invitaciones")}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Mis Ofertas</h1>
+        <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta</p>
+      </div>
+      <div className="space-y-3">
+        {ofertas.map((o) => (
+          <Link key={o.requerimientoId} to={`/proveedor/ofertas/${o.requerimientoId}`}>
+            <Card className="p-4 transition-colors hover:bg-muted/30">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{o.titulo || o.requerimientoId} · {o.categoria}</p>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>{o.cliente}</span>
+                    <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Vence {o.fechaLimite}</span>
+                  </div>
+                </div>
+                {o.precioTotal != null && <p className="text-sm font-semibold">${o.precioTotal.toLocaleString()}</p>}
+                <StatusBadge estado={o.enviada ? "Activo" : "pendiente_aprobacion"} className="capitalize" />
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   const { data: invitaciones } = useApiData(fetchInvitaciones);
   const invitacion = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId);
-  const { data: ofertaData, loading, reload } = useApiData(() => fetchMiOferta(requerimientoId!), [requerimientoId]);
+  const { data: ofertaData, loading, reload } = useApiData(() => fetchMiOferta(requerimientoId), [requerimientoId]);
   const { data: preguntas, reload: reloadPreguntas } = useApiData(
-    () => (requerimientoId ? fetchPreguntas(requerimientoId) : Promise.resolve([])),
+    () => fetchPreguntas(requerimientoId),
     [requerimientoId],
   );
 
@@ -32,14 +100,6 @@ export function CargaOferta() {
   useEffect(() => {
     if (ofertaData) setOferta(ofertaData);
   }, [ofertaData]);
-
-  if (!requerimientoId) {
-    return (
-      <div className="p-6">
-        <EmptyState icon={FileText} title="Selecciona una invitación" description="Ve a Bandeja de Invitaciones y acepta un proceso para empezar a cargar tu oferta." />
-      </div>
-    );
-  }
 
   if (loading || !oferta) {
     return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
@@ -56,7 +116,7 @@ export function CargaOferta() {
     setGuardando(true);
     try {
       await guardarMiOferta({
-        requerimientoId: requerimientoId!,
+        requerimientoId,
         precioUnitario: oferta.precioUnitario,
         precioTotal: oferta.precioTotal,
         plazoEntregaDias: oferta.plazoEntregaDias,
@@ -64,7 +124,7 @@ export function CargaOferta() {
         garantiaMeses: oferta.garantiaMeses,
         vigenciaOfertaDias: oferta.vigenciaOfertaDias,
       });
-      await enviarMiOferta(requerimientoId!);
+      await enviarMiOferta(requerimientoId);
       toast.success("Oferta enviada", { description: "No podrás editarla salvo que se habilite una nueva ventana." });
       reload();
     } catch (err) {
