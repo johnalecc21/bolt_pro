@@ -23,7 +23,25 @@ export function NuevoRequerimiento() {
   const [presupuesto, setPresupuesto] = useState("");
   const [fechaLimite, setFechaLimite] = useState("");
   const [criterios, setCriterios] = useState({ precio: 50, tiempo: 25, calidad: 15, pago: 10 });
+  const [requisitosTecnicos, setRequisitosTecnicos] = useState("");
+  const [especificaciones, setEspecificaciones] = useState([
+    { name: "Capacidad mínima", value: "100 TB" },
+    { name: "SLA requerido", value: "99.9%" },
+    { name: "Soporte", value: "24/7" },
+  ]);
   const [submitting, setSubmitting] = useState(false);
+
+  function actualizarEspecificacion(index: number, campo: "name" | "value", valor: string) {
+    setEspecificaciones((prev) => prev.map((spec, i) => (i === index ? { ...spec, [campo]: valor } : spec)));
+  }
+
+  function eliminarEspecificacion(index: number) {
+    setEspecificaciones((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function agregarEspecificacion() {
+    setEspecificaciones((prev) => [...prev, { name: "", value: "" }]);
+  }
   const total = criterios.precio + criterios.tiempo + criterios.calidad + criterios.pago;
   const esCatalogo = categoriasCatalogo.includes(categoria);
 
@@ -130,23 +148,36 @@ export function NuevoRequerimiento() {
             <h2 className="text-xl font-semibold">Especificaciones técnicas</h2>
             <div className="space-y-2">
               <Label>Requisitos técnicos</Label>
-              <Textarea placeholder="Detalla las especificaciones que los proveedores deben cumplir..." rows={5} />
+              <Textarea
+                placeholder="Detalla las especificaciones que los proveedores deben cumplir..."
+                rows={5}
+                value={requisitosTecnicos}
+                onChange={(e) => setRequisitosTecnicos(e.target.value)}
+              />
             </div>
             <div className="space-y-2">
               <Label>Especificaciones detalladas</Label>
               <div className="space-y-2">
-                {[
-                  { name: "Capacidad mínima", value: "100 TB" },
-                  { name: "SLA requerido", value: "99.9%" },
-                  { name: "Soporte", value: "24/7" },
-                ].map((spec, i) => (
+                {especificaciones.map((spec, i) => (
                   <div key={i} className="flex gap-2">
-                    <Input defaultValue={spec.name} className="flex-1" />
-                    <Input defaultValue={spec.value} className="flex-1" />
-                    <Button variant="ghost" size="icon"><X className="h-4 w-4" /></Button>
+                    <Input
+                      placeholder="Nombre"
+                      value={spec.name}
+                      onChange={(e) => actualizarEspecificacion(i, "name", e.target.value)}
+                      className="flex-1"
+                    />
+                    <Input
+                      placeholder="Valor"
+                      value={spec.value}
+                      onChange={(e) => actualizarEspecificacion(i, "value", e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button variant="ghost" size="icon" onClick={() => eliminarEspecificacion(i)}>
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full" onClick={agregarEspecificacion}>
                   <Plus className="mr-2 h-4 w-4" /> Agregar especificación
                 </Button>
               </div>
