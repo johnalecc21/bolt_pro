@@ -70,7 +70,7 @@ export async function revisionLegalAdjudicacion(requerimientoId: string) {
   return data;
 }
 
-export async function firmarAdjudicacion(requerimientoId: string): Promise<{ ok: boolean; poId: string }> {
-  const { data } = await api.post(`/adjudicacion/${requerimientoId}/firmar`);
+export async function firmarAdjudicacion(requerimientoId: string, notificarPerdedores: boolean): Promise<{ ok: boolean; poId: string }> {
+  const { data } = await api.post(`/adjudicacion/${requerimientoId}/firmar`, { notificarPerdedores });
   return data;
 }

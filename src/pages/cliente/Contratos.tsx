@@ -8,8 +8,10 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
 import { type Contrato } from "@/lib/mockData";
-import { fetchContratos } from "@/lib/api/contratos";
-import { Search, Download, FileCheck, Calendar } from "lucide-react";
+import { fetchContratos, fetchContrato } from "@/lib/api/contratos";
+import { generateContratoPdf } from "@/lib/pdf/contrato";
+import { apiErrorMessage } from "@/lib/api/http";
+import { Search, Download, FileCheck, Calendar, Loader2 } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
@@ -17,6 +19,7 @@ export function Contratos() {
   const { data: contratos, loading } = useApiData(() => fetchContratos());
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("Todas");
+  const [descargando, setDescargando] = useState<string | null>(null);
   const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
 
   const filtrados = (contratos ?? []).filter((c: Contrato) => {
@@ -25,8 +28,17 @@ export function Contratos() {
     return matchQuery && matchCat;
   });
 
-  function descargar(c: Contrato) {
-    toast.success("Descarga iniciada", { description: `${c.id}.pdf` });
+  async function descargar(c: Contrato) {
+    setDescargando(c.id);
+    try {
+      const detalle = await fetchContrato(c.id);
+      generateContratoPdf(detalle);
+      toast.success("PDF generado", { description: `${c.id}.pdf` });
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo generar el PDF."));
+    } finally {
+      setDescargando(null);
+    }
   }
 
   return (
@@ -82,7 +94,9 @@ export function Contratos() {
                     </td>
                     <td className="p-4"><StatusBadge estado={c.estado} /></td>
                     <td className="p-4 text-right">
-                      <Button variant="ghost" size="icon" onClick={() => descargar(c)}><Download className="h-4 w-4" /></Button>
+                      <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)}>
+                        {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                      </Button>
                     </td>
                   </tr>
                 ))}

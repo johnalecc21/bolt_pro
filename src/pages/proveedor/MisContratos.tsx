@@ -1,11 +1,19 @@
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMisContratos } from "@/lib/api/contratos";
-import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar } from "lucide-react";
+import { fetchMisContratos, type ContratoConHitos } from "@/lib/api/contratos";
+import { generateContratoPdf } from "@/lib/pdf/contrato";
+import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+function descargar(c: ContratoConHitos) {
+  generateContratoPdf(c);
+  toast.success("PDF generado", { description: `${c.id}.pdf` });
+}
 
 const semaforoConfig = {
   completado: { label: "Completado", color: "text-success", bg: "bg-success/15" },
@@ -45,6 +53,9 @@ export function MisContratos() {
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" /> {c.vigenciaInicio} — {c.vigenciaFin}
                   </div>
+                  <Button variant="ghost" size="icon" onClick={() => descargar(c)} title="Descargar PDF">
+                    <Download className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
 

@@ -89,7 +89,7 @@ export function Adjudicacion() {
       (label) => setFirmando(label)
     );
     try {
-      await apiFirmar(requerimientoId);
+      await apiFirmar(requerimientoId, notificarPerdedores);
       setFirmando(null);
       reload();
       if (notificarPerdedores) {

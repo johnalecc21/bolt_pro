@@ -46,13 +46,8 @@ export async function fetchContratos(params?: { categoria?: string; q?: string }
   return data.map(toContrato);
 }
 
-export async function fetchContrato(id: string): Promise<Contrato> {
-  const { data } = await api.get<ApiContrato>(`/contratos/${id}`);
-  return toContrato(data);
-}
-
 export interface ContratoConHitos extends Contrato {
-  cliente: string;
+  cliente?: string;
   hitos: Hito[];
 }
 
@@ -64,23 +59,31 @@ interface ApiHito {
   estado: "COMPLETADO" | "EN_RIESGO" | "ATRASADO" | "PENDIENTE";
 }
 
-interface ApiContratoMine extends ApiContrato {
-  company: { nombre: string };
+function mapHitos(hitos: ApiHito[]): Hito[] {
+  return hitos.map((h) => ({
+    id: h.id,
+    label: h.label,
+    comprometido: h.comprometido.slice(0, 10),
+    real: h.real ? h.real.slice(0, 10) : null,
+    estado: h.estado.toLowerCase() as EstadoHito,
+  }));
+}
+
+interface ApiContratoDetalle extends ApiContrato {
   hitos: ApiHito[];
 }
 
+export async function fetchContrato(id: string): Promise<ContratoConHitos> {
+  const { data } = await api.get<ApiContratoDetalle>(`/contratos/${id}`);
+  return { ...toContrato(data), hitos: mapHitos(data.hitos) };
+}
+
+interface ApiContratoMine extends ApiContratoDetalle {
+  company: { nombre: string };
+}
+
 function toContratoConHitos(c: ApiContratoMine): ContratoConHitos {
-  return {
-    ...toContrato(c),
-    cliente: c.company.nombre,
-    hitos: c.hitos.map((h) => ({
-      id: h.id,
-      label: h.label,
-      comprometido: h.comprometido.slice(0, 10),
-      real: h.real ? h.real.slice(0, 10) : null,
-      estado: h.estado.toLowerCase() as EstadoHito,
-    })),
-  };
+  return { ...toContrato(c), cliente: c.company.nombre, hitos: mapHitos(c.hitos) };
 }
 
 export async function fetchMisContratos(): Promise<ContratoConHitos[]> {
