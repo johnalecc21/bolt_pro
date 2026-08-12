@@ -170,7 +170,7 @@ export function Negociacion() {
                         "flex h-12 w-12 items-center justify-center rounded-full font-bold text-lg",
                         pos === 1 ? "bg-warning/20 text-warning-foreground" :
                         pos === 2 ? "bg-muted text-muted-foreground" :
-                        "bg-orange-900/20 text-orange-700"
+                        "bg-bronze/20 text-bronze-foreground"
                       )}>
                         {pos === 1 ? <Crown className="h-6 w-6" /> : `${pos}°`}
                       </div>

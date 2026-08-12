@@ -202,7 +202,7 @@ export function CuadroComparativo() {
                 "flex h-10 w-10 items-center justify-center rounded-full font-bold text-sm",
                 i === 0 ? "bg-warning/20 text-warning-foreground" :
                 i === 1 ? "bg-muted text-muted-foreground" :
-                "bg-orange-900/20 text-orange-700"
+                "bg-bronze/20 text-bronze-foreground"
               )}>
                 {i === 0 ? "1°" : i === 1 ? "2°" : "3°"}
               </div>
