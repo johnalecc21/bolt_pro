@@ -29,7 +29,7 @@ export function Negociacion() {
   const navigate = useNavigate();
   const { id } = useParams();
   const requerimientoId = id ?? "";
-  const { data: requerimiento } = useApiData(
+  const { data: requerimiento, loading: cargandoRequerimiento } = useApiData(
     () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
     [requerimientoId],
   );
@@ -49,6 +49,10 @@ export function Negociacion() {
   }, [activa]);
 
   const ranking = getRanking(auction.pujas);
+
+  if (cargandoRequerimiento) {
+    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+  }
 
   if (!requerimiento) {
     return (
