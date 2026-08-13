@@ -50,6 +50,14 @@ export function Negociacion() {
 
   const ranking = getRanking(auction.pujas);
 
+  if (!requerimientoId) {
+    return (
+      <div className="p-6">
+        <EmptyState icon={Gavel} title="Selecciona un proceso para negociar" description="Inicia una ronda de negociación desde el Cuadro Comparativo del proceso que quieras negociar." />
+      </div>
+    );
+  }
+
   if (cargandoRequerimiento) {
     return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
   }
