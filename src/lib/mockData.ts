@@ -78,6 +78,8 @@ export interface Contrato {
   companyId?: string;
   /** Set when the company attached their own PO/contract file — otherwise downloads use the Procurex template. */
   archivoNombre?: string | null;
+  /** POs issued under this contract, when it's a Contrato Marco. */
+  hijas?: { id: string; monto: number; estado: string }[];
 }
 
 export const contratos: Contrato[] = [

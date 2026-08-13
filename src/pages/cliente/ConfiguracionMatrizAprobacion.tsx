@@ -3,13 +3,15 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
 import {
   fetchMatrizAprobacion,
   guardarMatrizAprobacion,
   etiquetaAprobadores,
+  fetchUmbralContratoMarco,
+  guardarUmbralContratoMarco,
   ROLE_OPTIONS,
   ROLE_LABELS,
   type Regla,
@@ -41,14 +43,34 @@ function validar(reglas: Regla[]): string | null {
 
 export function ConfiguracionMatrizAprobacion() {
   const { data: fetched, reload } = useApiData(fetchMatrizAprobacion);
+  const { data: umbralFetched, reload: reloadUmbral } = useApiData(fetchUmbralContratoMarco);
   const [reglas, setReglas] = useState<Regla[]>([]);
   const [ejemplo, setEjemplo] = useState(75000);
   const [saving, setSaving] = useState(false);
+  const [umbral, setUmbral] = useState(50000);
+  const [savingUmbral, setSavingUmbral] = useState(false);
   const error = validar(reglas);
 
   useEffect(() => {
     if (fetched) setReglas(fetched);
   }, [fetched]);
+
+  useEffect(() => {
+    if (umbralFetched != null) setUmbral(umbralFetched);
+  }, [umbralFetched]);
+
+  async function guardarUmbral() {
+    setSavingUmbral(true);
+    try {
+      await guardarUmbralContratoMarco(umbral);
+      toast.success("Umbral de Contrato Marco actualizado");
+      reloadUmbral();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo guardar el umbral."));
+    } finally {
+      setSavingUmbral(false);
+    }
+  }
 
   function actualizar(id: string, patch: Partial<Regla>) {
     setReglas((prev) => prev.map((r) => r.id === id ? { ...r, ...patch } : r));
@@ -95,6 +117,18 @@ export function ConfiguracionMatrizAprobacion() {
         <h1 className="text-2xl font-bold">Matriz de Aprobación</h1>
         <p className="text-sm text-muted-foreground">Define quién aprueba qué monto — cada rol seleccionado aquí es quien realmente puede aprobar o rechazar en la Bandeja de Aprobaciones.</p>
       </div>
+
+      <Card className="p-5">
+        <h2 className="mb-1 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Umbral: PO vs. Contrato Marco</h2>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Adjudicaciones por debajo de este monto generan una Orden de Compra (PO) simple. Desde este monto en adelante, se genera un Contrato Marco — bajo el cual luego pueden emitirse POs hijas sin necesitar cada una su propia revisión legal. Es independiente del umbral de revisión legal.
+        </p>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">A partir de</span>
+          <Input type="number" className="w-40" value={umbral} onChange={(e) => setUmbral(Number(e.target.value))} />
+          <Button size="sm" onClick={guardarUmbral} disabled={savingUmbral}>{savingUmbral ? "Guardando..." : "Guardar umbral"}</Button>
+        </div>
+      </Card>
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">

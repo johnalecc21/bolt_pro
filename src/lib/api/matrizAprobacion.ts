@@ -59,3 +59,13 @@ export async function guardarMatrizAprobacion(reglas: Regla[]): Promise<Regla[]>
   const { data } = await api.put<ApiRegla[]>("/matriz-aprobacion", payload);
   return data.map(toRegla);
 }
+
+export async function fetchUmbralContratoMarco(): Promise<number> {
+  const { data } = await api.get<{ umbralContratoMarco: number }>("/matriz-aprobacion/config");
+  return data.umbralContratoMarco;
+}
+
+export async function guardarUmbralContratoMarco(umbral: number): Promise<number> {
+  const { data } = await api.put<{ umbralContratoMarco: number }>("/matriz-aprobacion/config", { umbralContratoMarco: umbral });
+  return data.umbralContratoMarco;
+}

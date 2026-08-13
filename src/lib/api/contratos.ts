@@ -17,6 +17,7 @@ interface ApiContrato {
   estado: "ACTIVO" | "POR_VENCER" | "VENCIDO" | "EN_RENOVACION";
   companyId: string;
   archivoNombre: string | null;
+  hijas?: { id: string; monto: number; estado: ApiContrato["estado"] }[];
 }
 
 const TIPO_LABEL: Record<ApiContrato["tipo"], Contrato["tipo"]> = {
@@ -44,6 +45,7 @@ function toContrato(c: ApiContrato): Contrato {
     estado: ESTADO_LABEL[c.estado],
     companyId: c.companyId,
     archivoNombre: c.archivoNombre,
+    hijas: c.hijas?.map((h) => ({ id: h.id, monto: h.monto, estado: ESTADO_LABEL[h.estado] })),
   };
 }
 
@@ -121,4 +123,12 @@ export async function subirArchivoContrato(id: string, file: File) {
 export async function obtenerUrlArchivoContrato(id: string): Promise<{ url: string; nombre: string | null }> {
   const { data } = await api.get<{ url: string; nombre: string | null }>(`/contratos/${id}/archivo-url`);
   return data;
+}
+
+// Only valid under a Contrato Marco (tipo "Contrato") — issues a child PO
+// that inherits proveedor/categoría from the parent without needing its own
+// legal review cycle.
+export async function emitirPo(contratoPadreId: string, payload: { monto: number; vigenciaInicio: string; vigenciaFin: string }): Promise<Contrato> {
+  const { data } = await api.post<ApiContrato>(`/contratos/${contratoPadreId}/emitir-po`, payload);
+  return toContrato(data);
 }

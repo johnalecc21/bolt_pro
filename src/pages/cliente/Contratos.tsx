@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { Fragment, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -8,12 +8,14 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
 import { type Contrato } from "@/lib/mockData";
-import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato } from "@/lib/api/contratos";
+import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato, emitirPo } from "@/lib/api/contratos";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";
-import { Search, Download, FileCheck, Calendar, Loader2, Upload, FileUp } from "lucide-react";
+import { Search, Download, FileCheck, Calendar, Loader2, Upload, FileUp, FilePlus2 } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
+
+const hoy = new Date().toISOString().slice(0, 10);
 
 export function Contratos() {
   const { data: contratos, loading, reload } = useApiData(() => fetchContratos());
@@ -21,6 +23,9 @@ export function Contratos() {
   const [categoria, setCategoria] = useState("Todas");
   const [descargando, setDescargando] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState<string | null>(null);
+  const [emitiendoPoId, setEmitiendoPoId] = useState<string | null>(null);
+  const [nuevaPo, setNuevaPo] = useState({ monto: "", vigenciaInicio: hoy, vigenciaFin: "" });
+  const [emitiendo, setEmitiendo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const subiendoIdRef = useRef<string | null>(null);
   const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
@@ -77,6 +82,28 @@ export function Contratos() {
     }
   }
 
+  function abrirEmitirPo(id: string) {
+    setEmitiendoPoId(id);
+    setNuevaPo({ monto: "", vigenciaInicio: hoy, vigenciaFin: "" });
+  }
+
+  async function confirmarEmitirPo() {
+    if (!emitiendoPoId) return;
+    const monto = Number(nuevaPo.monto);
+    if (!monto || !nuevaPo.vigenciaFin) return;
+    setEmitiendo(true);
+    try {
+      const po = await emitirPo(emitiendoPoId, { monto, vigenciaInicio: nuevaPo.vigenciaInicio, vigenciaFin: nuevaPo.vigenciaFin });
+      toast.success("PO emitida", { description: `${po.id} — $${monto.toLocaleString()}` });
+      setEmitiendoPoId(null);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo emitir la PO."));
+    } finally {
+      setEmitiendo(false);
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
       <div>
@@ -116,45 +143,79 @@ export function Contratos() {
               </thead>
               <tbody>
                 {filtrados.map((c) => (
-                  <tr key={c.id} className="border-b border-border last:border-0 hover:bg-muted/30">
-                    <td className="p-4">
-                      <p className="text-sm font-medium">{c.id}</p>
-                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        {c.tipo}
-                        {c.archivoNombre && (
-                          <span className="flex items-center gap-0.5 text-info" title={c.archivoNombre}>
-                            <FileUp className="h-3 w-3" /> Documento propio
-                          </span>
-                        )}
-                      </p>
-                    </td>
-                    <td className="p-4 text-sm">{c.proveedor}</td>
-                    <td className="p-4 text-sm text-muted-foreground">{c.categoria}</td>
-                    <td className="p-4 text-sm font-medium">${c.monto.toLocaleString()}</td>
-                    <td className="p-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3.5 w-3.5" />
-                        {c.vigenciaInicio} — {c.vigenciaFin}
-                      </div>
-                    </td>
-                    <td className="p-4"><StatusBadge estado={c.estado} /></td>
-                    <td className="p-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={subiendo === c.id}
-                          onClick={() => abrirSelectorArchivo(c.id)}
-                          title={c.archivoNombre ? "Reemplazar documento propio" : "Adjuntar mi propio PO/contrato"}
-                        >
-                          {subiendo === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                        </Button>
-                        <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} title="Descargar">
-                          {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
+                  <Fragment key={c.id}>
+                    <tr className="border-b border-border last:border-0 hover:bg-muted/30">
+                      <td className="p-4">
+                        <p className="text-sm font-medium">{c.id}</p>
+                        <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
+                          {c.tipo}
+                          {c.archivoNombre && (
+                            <span className="flex items-center gap-0.5 text-info" title={c.archivoNombre}>
+                              <FileUp className="h-3 w-3" /> Documento propio
+                            </span>
+                          )}
+                          {c.hijas && c.hijas.length > 0 && (
+                            <span className="text-primary">{c.hijas.length} PO{c.hijas.length === 1 ? "" : "s"} emitida{c.hijas.length === 1 ? "" : "s"}</span>
+                          )}
+                        </p>
+                      </td>
+                      <td className="p-4 text-sm">{c.proveedor}</td>
+                      <td className="p-4 text-sm text-muted-foreground">{c.categoria}</td>
+                      <td className="p-4 text-sm font-medium">${c.monto.toLocaleString()}</td>
+                      <td className="p-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {c.vigenciaInicio} — {c.vigenciaFin}
+                        </div>
+                      </td>
+                      <td className="p-4"><StatusBadge estado={c.estado} /></td>
+                      <td className="p-4 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {c.tipo === "Contrato" && (
+                            <Button variant="ghost" size="icon" onClick={() => abrirEmitirPo(c.id)} title="Emitir PO bajo este Contrato Marco">
+                              <FilePlus2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={subiendo === c.id}
+                            onClick={() => abrirSelectorArchivo(c.id)}
+                            title={c.archivoNombre ? "Reemplazar documento propio" : "Adjuntar mi propio PO/contrato"}
+                          >
+                            {subiendo === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} title="Descargar">
+                            {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                    {emitiendoPoId === c.id && (
+                      <tr className="border-b border-border bg-muted/20">
+                        <td colSpan={7} className="p-4">
+                          <div className="flex flex-wrap items-end gap-3">
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Monto de la PO</label>
+                              <Input type="number" className="h-8 w-32 text-sm" value={nuevaPo.monto} onChange={(e) => setNuevaPo((p) => ({ ...p, monto: e.target.value }))} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Vigencia inicio</label>
+                              <Input type="date" className="h-8 text-sm" value={nuevaPo.vigenciaInicio} onChange={(e) => setNuevaPo((p) => ({ ...p, vigenciaInicio: e.target.value }))} />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="text-xs font-medium text-muted-foreground">Vigencia fin</label>
+                              <Input type="date" className="h-8 text-sm" value={nuevaPo.vigenciaFin} onChange={(e) => setNuevaPo((p) => ({ ...p, vigenciaFin: e.target.value }))} />
+                            </div>
+                            <Button size="sm" className="h-8" disabled={!nuevaPo.monto || !nuevaPo.vigenciaFin || emitiendo} onClick={confirmarEmitirPo}>
+                              {emitiendo ? "Emitiendo..." : "Emitir PO"}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-8" onClick={() => setEmitiendoPoId(null)}>Cancelar</Button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>
