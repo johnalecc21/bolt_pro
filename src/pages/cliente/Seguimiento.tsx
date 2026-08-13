@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
-import { CheckCircle2, Circle, Clock, AlertTriangle, Truck, MessageSquareWarning, Plus, X } from "lucide-react";
+import { CheckCircle2, Circle, Clock, AlertTriangle, Truck, MessageSquareWarning, Plus, X, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
@@ -14,6 +14,7 @@ import {
   fetchSeguimiento,
   crearHito as apiCrearHito,
   actualizarEstadoHito,
+  actualizarPorcentajeHito,
   eliminarHito as apiEliminarHito,
   type EstadoHito,
 } from "@/lib/api/seguimiento";
@@ -32,6 +33,7 @@ export function Seguimiento() {
   const [addingTo, setAddingTo] = useState<string | null>(null);
   const [nuevoLabel, setNuevoLabel] = useState("");
   const [nuevaFecha, setNuevaFecha] = useState("");
+  const [nuevoPorcentaje, setNuevoPorcentaje] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   async function cambiarEstado(hitoId: string, estado: EstadoHito) {
@@ -43,6 +45,15 @@ export function Seguimiento() {
       reload();
     } catch (err) {
       toast.error(apiErrorMessage(err));
+    }
+  }
+
+  async function guardarPorcentaje(hitoId: string, porcentaje: number) {
+    try {
+      await actualizarPorcentajeHito(hitoId, porcentaje);
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo actualizar el porcentaje."));
     }
   }
 
@@ -59,11 +70,13 @@ export function Seguimiento() {
     if (!nuevoLabel.trim() || !nuevaFecha) return;
     setSubmitting(true);
     try {
-      await apiCrearHito(contratoId, nuevoLabel.trim(), nuevaFecha);
+      const porcentaje = nuevoPorcentaje.trim() ? Number(nuevoPorcentaje) : undefined;
+      await apiCrearHito(contratoId, nuevoLabel.trim(), nuevaFecha, porcentaje);
       toast.success("Hito agregado");
       setAddingTo(null);
       setNuevoLabel("");
       setNuevaFecha("");
+      setNuevoPorcentaje("");
       reload();
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo agregar el hito."));
@@ -110,7 +123,30 @@ export function Seguimiento() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-2">
-                          <p className="text-sm font-medium">{h.label}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-medium">{h.label}</p>
+                            {h.pagoGeneradoId ? (
+                              <Badge variant="secondary" className="gap-1 bg-success/15 text-xs text-success">
+                                <DollarSign className="h-3 w-3" /> {h.porcentaje}% · Pago generado
+                              </Badge>
+                            ) : (
+                              <div className="flex items-center gap-1">
+                                <Input
+                                  type="number"
+                                  min={0}
+                                  max={100}
+                                  defaultValue={h.porcentaje}
+                                  onBlur={(e) => {
+                                    const v = Number(e.target.value);
+                                    if (!Number.isNaN(v) && v !== h.porcentaje) guardarPorcentaje(h.id, v);
+                                  }}
+                                  className="h-6 w-14 px-1.5 text-xs"
+                                  title="% de pago de este hito"
+                                />
+                                <span className="text-xs text-muted-foreground">%</span>
+                              </div>
+                            )}
+                          </div>
                           <div className="flex items-center gap-2">
                             <span className="text-xs text-muted-foreground">Comprometido {h.comprometido}{h.real && ` · Real ${h.real}`}</span>
                             <select
@@ -147,10 +183,14 @@ export function Seguimiento() {
                     <label className="text-xs font-medium text-muted-foreground">Fecha comprometida</label>
                     <Input type="date" value={nuevaFecha} onChange={(e) => setNuevaFecha(e.target.value)} className="h-8 text-sm" />
                   </div>
+                  <div className="w-20 space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">% de pago</label>
+                    <Input type="number" min={0} max={100} value={nuevoPorcentaje} onChange={(e) => setNuevoPorcentaje(e.target.value)} placeholder="0" className="h-8 text-sm" />
+                  </div>
                   <Button size="sm" className="h-8" disabled={!nuevoLabel.trim() || !nuevaFecha || submitting} onClick={() => agregarHito(s.poId)}>
                     Agregar
                   </Button>
-                  <Button size="sm" variant="ghost" className="h-8" onClick={() => setAddingTo(null)}>Cancelar</Button>
+                  <Button size="sm" variant="ghost" className="h-8" onClick={() => { setAddingTo(null); setNuevoPorcentaje(""); }}>Cancelar</Button>
                 </div>
               ) : (
                 <Button variant="ghost" size="sm" className="mt-3 gap-1.5 text-xs" onClick={() => setAddingTo(s.poId)}>

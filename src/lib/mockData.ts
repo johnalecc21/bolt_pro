@@ -80,6 +80,8 @@ export interface Contrato {
   archivoNombre?: string | null;
   /** POs issued under this contract, when it's a Contrato Marco. */
   hijas?: { id: string; monto: number; estado: string }[];
+  /** Days after milestone completion the contract's payments fall due. */
+  condicionesPagoDias?: number;
 }
 
 export const contratos: Contrato[] = [

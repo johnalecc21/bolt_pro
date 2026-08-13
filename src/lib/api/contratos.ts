@@ -18,6 +18,7 @@ interface ApiContrato {
   companyId: string;
   archivoNombre: string | null;
   hijas?: { id: string; monto: number; estado: ApiContrato["estado"] }[];
+  condicionesPagoDias: number;
 }
 
 const TIPO_LABEL: Record<ApiContrato["tipo"], Contrato["tipo"]> = {
@@ -46,6 +47,7 @@ function toContrato(c: ApiContrato): Contrato {
     companyId: c.companyId,
     archivoNombre: c.archivoNombre,
     hijas: c.hijas?.map((h) => ({ id: h.id, monto: h.monto, estado: ESTADO_LABEL[h.estado] })),
+    condicionesPagoDias: c.condicionesPagoDias,
   };
 }
 
@@ -56,6 +58,9 @@ export async function fetchContratos(params?: { categoria?: string; q?: string }
 
 export interface ContratoConHitos extends Contrato {
   cliente?: string;
+  objeto?: string;
+  garantiaMeses?: number;
+  plazoDias?: number;
   hitos: Hito[];
 }
 
@@ -77,13 +82,33 @@ function mapHitos(hitos: ApiHito[]): Hito[] {
   }));
 }
 
+interface ApiRequerimientoResumen {
+  titulo: string;
+  descripcion: string | null;
+  adjudicacion: { garantiaMeses: number; plazoDias: number } | null;
+}
+
 interface ApiContratoDetalle extends ApiContrato {
   hitos: ApiHito[];
+  requerimiento?: ApiRequerimientoResumen | null;
+}
+
+function requerimientoExtras(requerimiento?: ApiRequerimientoResumen | null) {
+  return {
+    objeto: requerimiento ? requerimiento.descripcion || requerimiento.titulo : undefined,
+    garantiaMeses: requerimiento?.adjudicacion?.garantiaMeses,
+    plazoDias: requerimiento?.adjudicacion?.plazoDias,
+  };
 }
 
 export async function fetchContrato(id: string): Promise<ContratoConHitos> {
-  const { data } = await api.get<ApiContratoDetalle>(`/contratos/${id}`);
-  return { ...toContrato(data), hitos: mapHitos(data.hitos) };
+  const { data } = await api.get<ApiContratoDetalle & { company?: { nombre: string } }>(`/contratos/${id}`);
+  return {
+    ...toContrato(data),
+    cliente: data.company?.nombre,
+    ...requerimientoExtras(data.requerimiento),
+    hitos: mapHitos(data.hitos),
+  };
 }
 
 interface ApiContratoMine extends ApiContratoDetalle {
@@ -91,7 +116,12 @@ interface ApiContratoMine extends ApiContratoDetalle {
 }
 
 function toContratoConHitos(c: ApiContratoMine): ContratoConHitos {
-  return { ...toContrato(c), cliente: c.company.nombre, hitos: mapHitos(c.hitos) };
+  return {
+    ...toContrato(c),
+    cliente: c.company.nombre,
+    ...requerimientoExtras(c.requerimiento),
+    hitos: mapHitos(c.hitos),
+  };
 }
 
 export async function fetchMisContratos(): Promise<ContratoConHitos[]> {
