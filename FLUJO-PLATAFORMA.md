@@ -95,7 +95,8 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 
 - **Firma electrónica simulada**: "Enviar a firma" muestra una animación tipo DocuSign que falla a propósito en el primer intento — no hay integración real con ningún proveedor de e-signature. Lo que pasa *después* de esa animación (contrato, hitos, notificaciones) sí es real.
 - **OCR / verificación OFAC simulados**: en Homologación, el archivo que sube el proveedor es real, pero la extracción de texto y el chequeo contra listas OFAC son simulados.
-- **"Recordatorios de vencimiento"** (Contratos) y **"Actividad reciente"** (Dashboard) son widgets decorativos — no hay ningún job/cron real detrás disparando esas alertas ni generando esa actividad.
+- **"Actividad reciente"** (Dashboard) es un widget decorativo.
+- **"Recordatorios de vencimiento"** (Contratos) ya es real: un cron diario (`VencimientosService`, `@nestjs/schedule`) revisa todos los contratos/POs activos, los pasa a "Por vencer"/"Vencido" según su `vigenciaFin`, y notifica una sola vez por umbral (60/30/15 días) a compradores y admins de la empresa.
 - **Documentos adjuntos a un Requerimiento** (paso "Detalle del Requerimiento") son solo metadatos (nombre de archivo) — a diferencia de Homologación y Contratos, no tienen almacenamiento real detrás todavía; "descargar" ahí sigue siendo un placeholder.
 - **Selector de idioma** es cosmético (no hay i18n real conectado).
 - **Pagos/Pronto Pago** es un simulador de descuento, no una integración financiera real.

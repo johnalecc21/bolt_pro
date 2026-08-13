@@ -36,6 +36,17 @@ export function Contratos() {
     return matchQuery && matchCat;
   });
 
+  const hoyMs = Date.now();
+  const diasHastaVencer = (fecha: string) => Math.ceil((new Date(fecha).getTime() - hoyMs) / (24 * 60 * 60 * 1000));
+  const vigentes = (contratos ?? []).filter((c) => c.estado !== "Vencido");
+  const proximosAVencer = [60, 30, 15].map((umbral) => ({
+    dias: umbral,
+    contratos: vigentes.filter((c) => {
+      const restantes = diasHastaVencer(c.vigenciaFin);
+      return restantes >= 0 && restantes <= umbral;
+    }),
+  }));
+
   async function descargar(c: Contrato) {
     setDescargando(c.id);
     // Open the tab synchronously (still inside the click's user-activation
@@ -226,12 +237,28 @@ export function Contratos() {
 
       <Card className="p-5">
         <h2 className="mb-1 font-semibold">Recordatorios de vencimiento</h2>
-        <p className="mb-3 text-sm text-muted-foreground">Se notifica automáticamente a los responsables en estos plazos antes del vencimiento.</p>
-        <div className="flex gap-2">
-          {["60 días", "30 días", "15 días"].map((d) => (
-            <span key={d} className="rounded-full bg-info/10 px-3 py-1 text-xs font-medium text-info">{d}</span>
+        <p className="mb-3 text-sm text-muted-foreground">
+          Un proceso diario notifica a compradores y administradores cuando un contrato o PO cruza estos plazos antes de su vencimiento.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {proximosAVencer.map(({ dias, contratos: c }) => (
+            <span
+              key={dias}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${c.length > 0 ? "bg-info/15 text-info" : "bg-muted text-muted-foreground"}`}
+            >
+              <Calendar className="h-3.5 w-3.5" /> {dias} días · {c.length === 0 ? "sin pendientes" : `${c.length} contrato${c.length === 1 ? "" : "s"}`}
+            </span>
           ))}
         </div>
+        {proximosAVencer[2].contratos.length > 0 && (
+          <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
+            {proximosAVencer[2].contratos.map((c) => (
+              <li key={c.id}>
+                <span className="font-medium text-foreground">{c.id}</span> ({c.proveedor}) vence en {diasHastaVencer(c.vigenciaFin)} días — {c.vigenciaFin}
+              </li>
+            ))}
+          </ul>
+        )}
       </Card>
 
       <div>
