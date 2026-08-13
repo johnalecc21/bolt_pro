@@ -7,21 +7,24 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Trophy, FileText, PenTool, ShieldAlert, ShieldCheck, Check, Send, Loader2, FileQuestion } from "lucide-react";
+import { Trophy, FileText, PenTool, ShieldAlert, ShieldCheck, Check, Send, Loader2, FileQuestion, FileDown } from "lucide-react";
 import { simulateProcess } from "@/lib/mock/simulate";
 import { useApiData } from "@/hooks/useApiData";
+import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchRequerimiento } from "@/lib/api/requerimientos";
 import {
   fetchAdjudicacion, confirmarAdjudicacion as apiConfirmar,
   revisionLegalAdjudicacion as apiRevisionLegal, firmarAdjudicacion as apiFirmar,
 } from "@/lib/api/adjudicacion";
 import { apiErrorMessage } from "@/lib/api/http";
+import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 
 const UMBRAL_LEGAL = 50000;
 
 export function Adjudicacion() {
   const { id } = useParams();
   const requerimientoId = id ?? "";
+  const { activeCompany } = useAuth();
   const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
   const { data: adjudicacion, loading: loadingAdj, reload } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
   const [notificarPerdedores, setNotificarPerdedores] = useState(true);
@@ -54,11 +57,25 @@ export function Adjudicacion() {
   async function confirmarAdjudicacionClick() {
     try {
       await apiConfirmar(requerimientoId);
-      toast.success("Adjudicación confirmada");
+      toast.success("Adjudicación confirmada", { description: `${adjudicacion!.proveedor} fue notificado.` });
       reload();
     } catch (err) {
       toast.error(apiErrorMessage(err));
     }
+  }
+
+  function descargarCarta() {
+    if (!adjudicacion || !requerimiento) return;
+    generateCartaAdjudicacionPdf({
+      poId: adjudicacion.poId,
+      cliente: activeCompany?.nombre ?? "",
+      proveedor: adjudicacion.proveedor,
+      tituloProceso: requerimiento.titulo,
+      precioFinal: adjudicacion.precioFinal,
+      plazoDias: adjudicacion.plazoDias,
+      condicionesPagoDias: adjudicacion.condicionesPagoDias,
+      garantiaMeses: adjudicacion.garantiaMeses,
+    });
   }
 
   async function completarRevisionLegal() {
@@ -148,7 +165,12 @@ export function Adjudicacion() {
             />
           )}
           {adjudicacion.confirmada && (
-            <p className="mt-4 flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Adjudicación confirmada</p>
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <p className="flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Adjudicación confirmada</p>
+              <Button size="sm" variant="outline" className="gap-1.5" onClick={descargarCarta}>
+                <FileDown className="h-3.5 w-3.5" /> Descargar carta de adjudicación
+              </Button>
+            </div>
           )}
         </div>
       </Card>
@@ -175,10 +197,7 @@ export function Adjudicacion() {
         </div>
         <div className="rounded-lg border border-border p-5 font-mono text-sm">
           <div className="mb-4 flex justify-between border-b border-border pb-3">
-            <div>
-              <p className="font-bold">ACME S.A.</p>
-              <p className="text-xs text-muted-foreground">NIT: 900.123.456-7</p>
-            </div>
+            <p className="font-bold">{activeCompany?.nombre}</p>
             <div className="text-right">
               <p className="font-bold">ORDEN DE COMPRA</p>
               <p className="text-xs text-muted-foreground">{adjudicacion.poId}</p>
@@ -225,7 +244,7 @@ export function Adjudicacion() {
         </div>
         <div className="rounded-lg border border-border p-5 text-sm">
           <p className="mb-3 font-medium">Contrato de Prestación de Servicios</p>
-          <p className="text-muted-foreground">Entre <span className="rounded bg-primary/10 px-1 font-medium text-primary">ACME S.A.</span> y <span className="rounded bg-primary/10 px-1 font-medium text-primary">{adjudicacion.proveedor}</span>, con fecha de inicio <span className="rounded bg-primary/10 px-1 font-medium text-primary">2024-08-15</span> y duración de <span className="rounded bg-primary/10 px-1 font-medium text-primary">12 meses</span>...</p>
+          <p className="text-muted-foreground">Entre <span className="rounded bg-primary/10 px-1 font-medium text-primary">{activeCompany?.nombre}</span> y <span className="rounded bg-primary/10 px-1 font-medium text-primary">{adjudicacion.proveedor}</span>, con fecha de inicio <span className="rounded bg-primary/10 px-1 font-medium text-primary">{new Date().toLocaleDateString("es-CO")}</span> y duración de <span className="rounded bg-primary/10 px-1 font-medium text-primary">12 meses</span>...</p>
         </div>
       </Card>
 

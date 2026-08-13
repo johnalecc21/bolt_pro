@@ -127,8 +127,13 @@ export interface ProcesoHistorial {
   cliente: string;
   fecha: string;
   monto: number;
-  resultado: "ganado" | "perdido" | "pendiente";
+  resultado: "ganado" | "perdido" | "pendiente" | "seleccionado";
   feedback?: string;
+  poId?: string;
+  precioFinal?: number;
+  plazoDias?: number;
+  condicionesPagoDias?: number;
+  garantiaMeses?: number;
 }
 
 export interface HistorialProveedor {
@@ -144,8 +149,13 @@ interface ApiHistorial {
     cliente: string;
     fecha: string;
     monto: number;
-    resultado: "ganado" | "perdido" | "pendiente";
+    resultado: "ganado" | "perdido" | "pendiente" | "seleccionado";
     feedback?: string;
+    poId?: string;
+    precioFinal?: number;
+    plazoDias?: number;
+    condicionesPagoDias?: number;
+    garantiaMeses?: number;
   }[];
   competitividad: { tuOfertaPromedioVsMercado: number };
 }
