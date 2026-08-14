@@ -71,6 +71,11 @@ export async function impersonarCliente(companyId: string, motivo: string) {
   return data;
 }
 
+export async function crearCliente(payload: { nombreEmpresa: string; adminNombre: string; adminEmail: string }) {
+  const { data } = await api.post<{ id: string; nombre: string }>("/interno/clientes", payload);
+  return data;
+}
+
 export interface BenchmarkEntry {
   id: string;
   categoria: string;

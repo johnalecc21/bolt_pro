@@ -4,7 +4,7 @@ import {
   LayoutDashboard, FileText, Gavel, Handshake, Award,
   FileCheck, Truck, Building2, BarChart3, Settings,
   ShieldCheck, Scale, Users, SlidersHorizontal, LogOut,
-  ChevronsLeft, ChevronsRight,
+  ChevronsLeft, ChevronsRight, Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -13,6 +13,7 @@ import type { Role } from "@/lib/mock/users";
 
 const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles?: Role[] }[] = [
   { to: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { to: "onboarding", label: "Configurar empresa", icon: Rocket, roles: ["admin_cliente"] },
   { to: "requerimientos", label: "Requerimientos", icon: FileText },
   { to: "licitaciones", label: "Licitaciones", icon: Gavel, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
   { to: "negociacion", label: "Negociación", icon: Handshake, roles: ["comprador", "admin_cliente"] },

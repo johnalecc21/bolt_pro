@@ -1,11 +1,15 @@
+import { useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
-import { LogIn, Building2 } from "lucide-react";
-import { fetchClientes, impersonarCliente, type ClienteAdmin } from "@/lib/api/interno";
+import { LogIn, Building2, Plus, Loader2 } from "lucide-react";
+import { fetchClientes, impersonarCliente, crearCliente, type ClienteAdmin } from "@/lib/api/interno";
 import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
@@ -18,8 +22,11 @@ const facturacionColor: Record<string, string> = {
 };
 
 export function AdminClientes() {
-  const { data, loading } = useApiData(fetchClientes);
+  const { data, loading, reload } = useApiData(fetchClientes);
   const clientesPlanes = data ?? [];
+  const [nuevoOpen, setNuevoOpen] = useState(false);
+  const [creando, setCreando] = useState(false);
+  const [nuevo, setNuevo] = useState({ nombreEmpresa: "", adminNombre: "", adminEmail: "" });
 
   async function impersonar(c: ClienteAdmin, motivo?: string) {
     try {
@@ -30,12 +37,65 @@ export function AdminClientes() {
     }
   }
 
+  async function confirmarNuevo() {
+    if (!nuevo.nombreEmpresa.trim() || !nuevo.adminNombre.trim() || !nuevo.adminEmail.trim()) return;
+    setCreando(true);
+    try {
+      const creado = await crearCliente(nuevo);
+      toast.success(`Empresa "${creado.nombre}" creada`, { description: `Invitación enviada a ${nuevo.adminEmail}` });
+      setNuevoOpen(false);
+      setNuevo({ nombreEmpresa: "", adminNombre: "", adminEmail: "" });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo crear la empresa."));
+    } finally {
+      setCreando(false);
+    }
+  }
+
   return (
     <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Administración de Clientes</h1>
-        <p className="text-sm text-muted-foreground">Gestión comercial y de cuentas de la plataforma</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Administración de Clientes</h1>
+          <p className="text-sm text-muted-foreground">Gestión comercial y de cuentas de la plataforma</p>
+        </div>
+        <Button onClick={() => setNuevoOpen(true)}><Plus className="mr-2 h-4 w-4" /> Nueva empresa</Button>
       </div>
+
+      <Dialog open={nuevoOpen} onOpenChange={setNuevoOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Nueva empresa cliente</DialogTitle>
+            <DialogDescription>
+              Se crea la empresa y se invita por correo a su primer administrador — el enlace de invitación le permite elegir su contraseña.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="nombreEmpresa">Nombre de la empresa</Label>
+              <Input id="nombreEmpresa" value={nuevo.nombreEmpresa} onChange={(e) => setNuevo((p) => ({ ...p, nombreEmpresa: e.target.value }))} placeholder="Acme S.A." />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="adminNombre">Nombre del administrador</Label>
+              <Input id="adminNombre" value={nuevo.adminNombre} onChange={(e) => setNuevo((p) => ({ ...p, adminNombre: e.target.value }))} placeholder="Carlos Méndez" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="adminEmail">Correo del administrador</Label>
+              <Input id="adminEmail" type="email" value={nuevo.adminEmail} onChange={(e) => setNuevo((p) => ({ ...p, adminEmail: e.target.value }))} placeholder="carlos@acme.com" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setNuevoOpen(false)} disabled={creando}>Cancelar</Button>
+            <Button
+              disabled={creando || !nuevo.nombreEmpresa.trim() || !nuevo.adminNombre.trim() || !nuevo.adminEmail.trim()}
+              onClick={confirmarNuevo}
+            >
+              {creando ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creando...</> : "Crear e invitar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {loading ? <TableSkeleton /> :
       <Card className="overflow-hidden">

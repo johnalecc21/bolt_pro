@@ -6,6 +6,7 @@ import { ProveedorLayout } from "@/layouts/ProveedorLayout";
 import { InternoLayout } from "@/layouts/InternoLayout";
 
 import { Landing } from "@/pages/Landing";
+import { SetPassword } from "@/pages/SetPassword";
 
 import { LoginCliente } from "@/pages/cliente/LoginCliente";
 import { OnboardingWizard } from "@/pages/cliente/OnboardingWizard";
@@ -56,6 +57,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/set-password" element={<SetPassword />} />
 
         {/* Portal Cliente */}
         <Route path="/cliente/login" element={<LoginCliente />} />
