@@ -263,7 +263,7 @@ export function Contratos() {
 
       <div>
         <h2 className="mb-3 font-semibold">Trazabilidad — registro de auditoría</h2>
-        <AuditLogTable limit={5} />
+        <AuditLogTable limit={5} showPagination={false} />
       </div>
 
       <p className="text-xs text-muted-foreground">

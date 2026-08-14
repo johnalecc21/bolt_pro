@@ -18,8 +18,7 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
 
 export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedor" | "interno" }) {
   const navigate = useNavigate();
-  const { notifications, markAsRead, markAllAsRead } = useNotifications();
-  const unread = notifications.filter((n) => !n.leida).length;
+  const { notifications, unread, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
 
   function handleClick(n: Notificacion) {

@@ -14,7 +14,12 @@ export interface AuctionState {
   requerimientoId: string;
   status: "inactiva" | "activa" | "cerrada";
   deadlineMs: number;
+  /** Full leaderboard — only ever populated for the cliente view. */
   pujas: Puja[];
+  /** Proveedor view: computed server-side so rival names/amounts never reach this client at all. */
+  miPuja: Puja | null;
+  miPosicion: number;
+  totalParticipantes: number;
 }
 
 interface ApiPuja {
@@ -28,11 +33,18 @@ interface ApiAuctionState {
   requerimientoId: string;
   status: "INACTIVA" | "ACTIVA" | "CERRADA";
   deadline: string | null;
-  pujas: ApiPuja[];
+  pujas?: ApiPuja[];
+  miPuja?: ApiPuja | null;
+  miPosicion?: number;
+  totalParticipantes?: number;
 }
 
 function emptyState(requerimientoId: string): AuctionState {
-  return { requerimientoId, status: "inactiva", deadlineMs: 0, pujas: [] };
+  return { requerimientoId, status: "inactiva", deadlineMs: 0, pujas: [], miPuja: null, miPosicion: 0, totalParticipantes: 0 };
+}
+
+function toPuja(p: ApiPuja): Puja {
+  return { proveedorId: p.proveedorId, proveedor: p.proveedorNombre, montoInicial: p.montoInicial, monto: p.monto };
 }
 
 function toAuctionState(raw: ApiAuctionState, requerimientoId: string): AuctionState {
@@ -40,12 +52,10 @@ function toAuctionState(raw: ApiAuctionState, requerimientoId: string): AuctionS
     requerimientoId: raw.requerimientoId ?? requerimientoId,
     status: raw.status.toLowerCase() as AuctionState["status"],
     deadlineMs: raw.deadline ? new Date(raw.deadline).getTime() : 0,
-    pujas: raw.pujas.map((p) => ({
-      proveedorId: p.proveedorId,
-      proveedor: p.proveedorNombre,
-      montoInicial: p.montoInicial,
-      monto: p.monto,
-    })),
+    pujas: raw.pujas?.map(toPuja) ?? [],
+    miPuja: raw.miPuja ? toPuja(raw.miPuja) : null,
+    miPosicion: raw.miPosicion ?? 0,
+    totalParticipantes: raw.totalParticipantes ?? 0,
   };
 }
 

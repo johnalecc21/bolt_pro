@@ -9,6 +9,14 @@ export interface AuditLogEntry {
   motivo?: string;
 }
 
+export interface PaginatedAuditLog {
+  items: AuditLogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 interface ApiAuditLogEntry {
   id: string;
   usuario: string;
@@ -18,14 +26,25 @@ interface ApiAuditLogEntry {
   createdAt: string;
 }
 
-export async function fetchAuditLog(limit?: number): Promise<AuditLogEntry[]> {
-  const { data } = await api.get<ApiAuditLogEntry[]>("/audit-log", { params: limit ? { limit } : undefined });
-  return data.map((e) => ({
-    id: e.id,
-    fecha: new Date(e.createdAt).toLocaleString(),
-    usuario: e.usuario,
-    accion: e.accion,
-    detalle: e.detalle,
-    motivo: e.motivo ?? undefined,
-  }));
+interface ApiPaginated {
+  items: ApiAuditLogEntry[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
+export async function fetchAuditLog(page = 1, limit = 20): Promise<PaginatedAuditLog> {
+  const { data } = await api.get<ApiPaginated>("/audit-log", { params: { page, limit } });
+  return {
+    ...data,
+    items: data.items.map((e) => ({
+      id: e.id,
+      fecha: new Date(e.createdAt).toLocaleString(),
+      usuario: e.usuario,
+      accion: e.accion,
+      detalle: e.detalle,
+      motivo: e.motivo ?? undefined,
+    })),
+  };
 }

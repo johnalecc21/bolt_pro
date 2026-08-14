@@ -6,9 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Trophy, Gavel, TrendingDown } from "lucide-react";
-import { useSubasta, getRanking } from "@/lib/api/subasta";
-import { useApiData } from "@/hooks/useApiData";
-import { fetchMiPerfil } from "@/lib/api/proveedores";
+import { useSubasta } from "@/lib/api/subasta";
 
 function formatCountdown(deadlineMs: number) {
   const remaining = Math.max(0, deadlineMs - Date.now());
@@ -19,7 +17,6 @@ function formatCountdown(deadlineMs: number) {
 
 export function SubastaVivo() {
   const { requerimientoId } = useParams();
-  const { data: perfil } = useApiData(fetchMiPerfil);
   const { state: auction, pujar } = useSubasta(requerimientoId);
   const [, forceTick] = useState(0);
   const [mejora, setMejora] = useState("");
@@ -30,20 +27,15 @@ export function SubastaVivo() {
     return () => clearInterval(id);
   }, [auction.status]);
 
-  const miProveedorId = perfil?.id;
-  const participo = !!miProveedorId && auction.pujas.some((p) => p.proveedorId === miProveedorId);
+  const { miPuja, miPosicion: miPos, totalParticipantes } = auction;
 
-  if (!requerimientoId || auction.status === "inactiva" || !participo) {
+  if (!requerimientoId || auction.status === "inactiva" || !miPuja) {
     return (
       <div className="p-6">
         <EmptyState icon={Gavel} title="No hay subastas activas" description="Cuando un comprador inicie una ronda de negociación en la que participes, aparecerá aquí." />
       </div>
     );
   }
-
-  const ranking = getRanking(auction.pujas);
-  const miPos = ranking.findIndex((p) => p.proveedorId === miProveedorId) + 1;
-  const miPuja = auction.pujas.find((p) => p.proveedorId === miProveedorId);
 
   function enviarMejora() {
     const monto = Number(mejora);
@@ -87,22 +79,20 @@ export function SubastaVivo() {
             {miPos === 1 && <Trophy className="h-8 w-8 text-warning" />}
             <p className="text-5xl font-bold">{miPos}°</p>
           </div>
-          <p className="mt-1 text-sm text-muted-foreground">de {ranking.length} participantes</p>
+          <p className="mt-1 text-sm text-muted-foreground">de {totalParticipantes} participantes</p>
         </div>
       </Card>
 
-      {miPuja && (
-        <Card className="p-5">
-          <p className="text-sm text-muted-foreground">Tu oferta actual</p>
-          <p className="text-2xl font-bold">${miPuja.monto.toLocaleString()}</p>
-          {auction.status === "activa" && (
-            <div className="mt-4 flex gap-2">
-              <Input type="number" placeholder="Nueva oferta mejorada" value={mejora} onChange={(e) => setMejora(e.target.value)} />
-              <Button onClick={enviarMejora} className="gap-2 shrink-0"><TrendingDown className="h-4 w-4" /> Mejorar oferta</Button>
-            </div>
-          )}
-        </Card>
-      )}
+      <Card className="p-5">
+        <p className="text-sm text-muted-foreground">Tu oferta actual</p>
+        <p className="text-2xl font-bold">${miPuja.monto.toLocaleString()}</p>
+        {auction.status === "activa" && (
+          <div className="mt-4 flex gap-2">
+            <Input type="number" placeholder="Nueva oferta mejorada" value={mejora} onChange={(e) => setMejora(e.target.value)} />
+            <Button onClick={enviarMejora} className="gap-2 shrink-0"><TrendingDown className="h-4 w-4" /> Mejorar oferta</Button>
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

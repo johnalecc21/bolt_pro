@@ -33,16 +33,29 @@ function toNotificacion(n: ApiNotificacion): Notificacion {
   };
 }
 
-async function fetchNotificaciones(): Promise<Notificacion[]> {
-  const { data } = await api.get<ApiNotificacion[]>("/notificaciones");
-  return data.map(toNotificacion);
+interface ApiNotificacionesFeed {
+  items: ApiNotificacion[];
+  unreadCount: number;
+}
+
+async function fetchNotificaciones(): Promise<{ items: Notificacion[]; unreadCount: number }> {
+  const { data } = await api.get<ApiNotificacionesFeed>("/notificaciones");
+  return { items: data.items.map(toNotificacion), unreadCount: data.unreadCount };
 }
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notificacion[]>([]);
+  // Tracked separately from the (capped) list so the badge stays correct
+  // even when there are more unread notifications than the feed returns.
+  const [unread, setUnread] = useState(0);
 
   const reload = useCallback(() => {
-    fetchNotificaciones().then(setNotifications).catch((err) => console.error(apiErrorMessage(err)));
+    fetchNotificaciones()
+      .then(({ items, unreadCount }) => {
+        setNotifications(items);
+        setUnread(unreadCount);
+      })
+      .catch((err) => console.error(apiErrorMessage(err)));
   }, []);
 
   useEffect(() => {
@@ -50,14 +63,19 @@ export function useNotifications() {
   }, [reload]);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, leida: true } : n)));
+    setNotifications((prev) => {
+      const target = prev.find((n) => n.id === id);
+      if (target && !target.leida) setUnread((u) => Math.max(0, u - 1));
+      return prev.map((n) => (n.id === id ? { ...n, leida: true } : n));
+    });
     api.post(`/notificaciones/${id}/leer`).catch(() => reload());
   }, [reload]);
 
   const markAllAsRead = useCallback(() => {
     setNotifications((prev) => prev.map((n) => ({ ...n, leida: true })));
+    setUnread(0);
     api.post("/notificaciones/leer-todas").catch(() => reload());
   }, [reload]);
 
-  return { notifications, markAsRead, markAllAsRead };
+  return { notifications, unread, markAsRead, markAllAsRead };
 }
