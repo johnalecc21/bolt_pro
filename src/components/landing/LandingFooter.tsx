@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Mail } from "lucide-react";
+import { LogoIcon } from "@/components/shared/Logo";
 
 const columns = [
   {
@@ -36,7 +37,7 @@ export function LandingFooter() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-5">
           <div className="lg:col-span-2">
             <div className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-brand font-bold text-white">P</div>
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white p-1.5"><LogoIcon className="h-full w-full" /></div>
               <span className="text-lg font-bold text-white">Procurex</span>
             </div>
             <p className="mt-4 max-w-xs text-sm text-white/50">

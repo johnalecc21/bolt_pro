@@ -9,6 +9,7 @@ import { Lock, Loader2, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase/client";
 import { apiMe } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
+import { LogoFull } from "@/components/shared/Logo";
 
 type Status = "checking" | "ready" | "invalid" | "saving" | "done";
 
@@ -61,9 +62,8 @@ export function SetPassword() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted/30 p-6">
       <Card className="w-full max-w-sm p-8">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl gradient-brand text-white font-bold">P</div>
-          <span className="text-xl font-bold text-gradient">Procurex</span>
+        <div className="mb-6">
+          <LogoFull className="h-8" />
         </div>
 
         {status === "checking" && (

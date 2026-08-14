@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Building2, Truck, Users2, ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { LogoIcon } from "@/components/shared/Logo";
 
 const navLinks = [
   { label: "Cómo funciona", href: "#como-funciona" },
@@ -42,7 +43,7 @@ export function LandingNavbar() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <a href="#top" className="flex items-center gap-2">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-brand font-bold text-white">P</div>
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white p-1.5"><LogoIcon className="h-full w-full" /></div>
           <span className="text-lg font-bold text-white">Procurex</span>
         </a>
 

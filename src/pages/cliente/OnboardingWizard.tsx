@@ -8,6 +8,7 @@ import { Card } from "@/components/ui/card";
 import { Building2, Package, UploadCloud, Users, ShieldCheck, Check, ArrowRight, ArrowLeft, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { simulateProcess } from "@/lib/mock/simulate";
+import { LogoIcon } from "@/components/shared/Logo";
 
 const steps = [
   { id: 1, label: "Empresa", icon: Building2 },
@@ -85,7 +86,7 @@ export function OnboardingWizard() {
     <div className="min-h-screen bg-gradient-to-b from-muted/30 to-background">
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="mb-8 text-center">
-          <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-xl gradient-brand text-white font-bold text-lg">P</div>
+          <LogoIcon className="mx-auto mb-3 h-12 w-12" />
           <h1 className="text-2xl font-bold">Configura tu cuenta en minutos</h1>
           <p className="mt-1 text-sm text-muted-foreground">Te acompañaremos en cada paso</p>
         </div>

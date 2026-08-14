@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Users2, ShieldAlert, LineChart } from "lucide-react";
 import { PortalLoginForm } from "@/components/shared/PortalLoginForm";
+import { LogoIcon } from "@/components/shared/Logo";
 
 export function LoginInterno() {
   return (
@@ -10,7 +11,7 @@ export function LoginInterno() {
         <div className="absolute -bottom-20 -left-20 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
         <div className="relative z-10">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 backdrop-blur-sm font-bold">P</div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white p-1.5"><LogoIcon className="h-full w-full" /></div>
             <span className="text-2xl font-bold">Procurex</span>
           </Link>
         </div>

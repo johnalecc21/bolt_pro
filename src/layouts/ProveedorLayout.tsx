@@ -8,6 +8,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
+import { LogoFull, LogoIcon } from "@/components/shared/Logo";
 
 const navItems = [
   { to: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -38,8 +39,7 @@ export function ProveedorLayout() {
     <div className="flex h-screen overflow-hidden bg-background">
       <aside className={cn("flex shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200", collapsed ? "w-16" : "w-64")}>
         <div className={cn("flex h-16 items-center gap-2", collapsed ? "justify-center px-2" : "px-6")}>
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg gradient-brand text-white font-bold text-sm">P</div>
-          {!collapsed && <span className="text-lg font-bold text-gradient">Procurex</span>}
+          {collapsed ? <LogoIcon className="h-8 w-8" /> : <LogoFull className="h-7" />}
         </div>
         {!collapsed && (
           <div className="px-6 py-2">
