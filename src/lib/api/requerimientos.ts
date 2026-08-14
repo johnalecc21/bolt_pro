@@ -51,6 +51,7 @@ interface ApiDocumentoRequerimiento {
 
 interface ApiRequerimiento {
   id: string;
+  numero: number;
   companyId: string;
   titulo: string;
   descripcion: string | null;
@@ -79,6 +80,7 @@ function toDocumento(d: ApiDocumentoRequerimiento): DocumentoRequerimiento {
 function toRequerimiento(r: ApiRequerimiento): Requerimiento {
   return {
     id: r.id,
+    codigo: `REQ-${r.numero.toString().padStart(4, "0")}`,
     titulo: r.titulo,
     categoria: r.categoria,
     estado: r.estado.toLowerCase() as EstadoReq,

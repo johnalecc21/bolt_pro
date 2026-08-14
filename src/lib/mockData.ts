@@ -9,6 +9,8 @@ export type EstadoReq =
 
 export interface Requerimiento {
   id: string;
+  /** Human-readable sequential code (REQ-0001, ...) — show this, not `id`. */
+  codigo: string;
   titulo: string;
   categoria: string;
   estado: EstadoReq;
@@ -23,17 +25,17 @@ export interface Requerimiento {
 }
 
 export const requerimientos: Requerimiento[] = [
-  { id: "RFP-2024-0032", titulo: "Servicios de nube y migración AWS", categoria: "TI", estado: "en_licitacion", montoEstimado: 185000, fechaLimite: "2024-08-12", progreso: 45, proveedoresInvitados: 8, ofertasRecibidas: 5, solicitante: "Carlos Méndez" },
-  { id: "RFP-2024-0031", titulo: "Insumos de embalaje industrial", categoria: "Materia Prima", estado: "en_negociacion", montoEstimado: 92000, fechaLimite: "2024-08-08", progreso: 70, proveedoresInvitados: 6, ofertasRecibidas: 6, solicitante: "Laura Torres" },
-  { id: "RFP-2024-0030", titulo: "Servicios de limpieza corporativa", categoria: "Servicios Generales", estado: "adjudicado", montoEstimado: 64000, fechaLimite: "2024-07-30", progreso: 85, proveedoresInvitados: 5, ofertasRecibidas: 4, solicitante: "Carlos Méndez" },
-  { id: "RFP-2024-0029", titulo: "Flota vehicular logística", categoria: "Logística", estado: "en_cumplimiento", montoEstimado: 320000, fechaLimite: "2024-07-15", progreso: 95, proveedoresInvitados: 7, ofertasRecibidas: 7, solicitante: "Ana Ruiz" },
-  { id: "RFP-2024-0028", titulo: "Campaña de marketing digital Q4", categoria: "Marketing", estado: "pendiente_aprobacion", montoEstimado: 78000, fechaLimite: "2024-08-20", progreso: 15, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "Laura Torres" },
-  { id: "RFP-2024-0027", titulo: "Plataforma de capacitación RR.HH.", categoria: "RR.HH.", estado: "borrador", montoEstimado: 45000, fechaLimite: "2024-08-25", progreso: 5, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "Carlos Méndez" },
-  { id: "RFP-2024-0026", titulo: "Auditoría externa anual", categoria: "Servicios Generales", estado: "cerrado", montoEstimado: 58000, fechaLimite: "2024-06-30", progreso: 100, proveedoresInvitados: 4, ofertasRecibidas: 4, solicitante: "Ana Ruiz" },
-  { id: "RFP-2024-0025", titulo: "Licencias software de diseño", categoria: "TI", estado: "cerrado", montoEstimado: 38000, fechaLimite: "2024-06-15", progreso: 100, proveedoresInvitados: 5, ofertasRecibidas: 5, solicitante: "Carlos Méndez" },
-  { id: "RFP-2024-0044", titulo: "Renovación de licencias Microsoft 365", categoria: "TI", estado: "en_licitacion", montoEstimado: 96000, fechaLimite: "2024-08-28", progreso: 30, proveedoresInvitados: 4, ofertasRecibidas: 2, solicitante: "María Gómez", companyId: "techcorp" },
-  { id: "RFP-2024-0043", titulo: "Servicios de seguridad perimetral", categoria: "Servicios Generales", estado: "pendiente_aprobacion", montoEstimado: 54000, fechaLimite: "2024-09-05", progreso: 10, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "María Gómez", companyId: "techcorp" },
-  { id: "RFP-2024-0045", titulo: "Consultoría de transformación digital", categoria: "TI", estado: "adjudicado", montoEstimado: 210000, fechaLimite: "2024-06-20", progreso: 100, proveedoresInvitados: 6, ofertasRecibidas: 5, solicitante: "María Gómez", companyId: "techcorp" },
+  { id: "RFP-2024-0032", codigo: "RFP-2024-0032", titulo: "Servicios de nube y migración AWS", categoria: "TI", estado: "en_licitacion", montoEstimado: 185000, fechaLimite: "2024-08-12", progreso: 45, proveedoresInvitados: 8, ofertasRecibidas: 5, solicitante: "Carlos Méndez" },
+  { id: "RFP-2024-0031", codigo: "RFP-2024-0031", titulo: "Insumos de embalaje industrial", categoria: "Materia Prima", estado: "en_negociacion", montoEstimado: 92000, fechaLimite: "2024-08-08", progreso: 70, proveedoresInvitados: 6, ofertasRecibidas: 6, solicitante: "Laura Torres" },
+  { id: "RFP-2024-0030", codigo: "RFP-2024-0030", titulo: "Servicios de limpieza corporativa", categoria: "Servicios Generales", estado: "adjudicado", montoEstimado: 64000, fechaLimite: "2024-07-30", progreso: 85, proveedoresInvitados: 5, ofertasRecibidas: 4, solicitante: "Carlos Méndez" },
+  { id: "RFP-2024-0029", codigo: "RFP-2024-0029", titulo: "Flota vehicular logística", categoria: "Logística", estado: "en_cumplimiento", montoEstimado: 320000, fechaLimite: "2024-07-15", progreso: 95, proveedoresInvitados: 7, ofertasRecibidas: 7, solicitante: "Ana Ruiz" },
+  { id: "RFP-2024-0028", codigo: "RFP-2024-0028", titulo: "Campaña de marketing digital Q4", categoria: "Marketing", estado: "pendiente_aprobacion", montoEstimado: 78000, fechaLimite: "2024-08-20", progreso: 15, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "Laura Torres" },
+  { id: "RFP-2024-0027", codigo: "RFP-2024-0027", titulo: "Plataforma de capacitación RR.HH.", categoria: "RR.HH.", estado: "borrador", montoEstimado: 45000, fechaLimite: "2024-08-25", progreso: 5, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "Carlos Méndez" },
+  { id: "RFP-2024-0026", codigo: "RFP-2024-0026", titulo: "Auditoría externa anual", categoria: "Servicios Generales", estado: "cerrado", montoEstimado: 58000, fechaLimite: "2024-06-30", progreso: 100, proveedoresInvitados: 4, ofertasRecibidas: 4, solicitante: "Ana Ruiz" },
+  { id: "RFP-2024-0025", codigo: "RFP-2024-0025", titulo: "Licencias software de diseño", categoria: "TI", estado: "cerrado", montoEstimado: 38000, fechaLimite: "2024-06-15", progreso: 100, proveedoresInvitados: 5, ofertasRecibidas: 5, solicitante: "Carlos Méndez" },
+  { id: "RFP-2024-0044", codigo: "RFP-2024-0044", titulo: "Renovación de licencias Microsoft 365", categoria: "TI", estado: "en_licitacion", montoEstimado: 96000, fechaLimite: "2024-08-28", progreso: 30, proveedoresInvitados: 4, ofertasRecibidas: 2, solicitante: "María Gómez", companyId: "techcorp" },
+  { id: "RFP-2024-0043", codigo: "RFP-2024-0043", titulo: "Servicios de seguridad perimetral", categoria: "Servicios Generales", estado: "pendiente_aprobacion", montoEstimado: 54000, fechaLimite: "2024-09-05", progreso: 10, proveedoresInvitados: 0, ofertasRecibidas: 0, solicitante: "María Gómez", companyId: "techcorp" },
+  { id: "RFP-2024-0045", codigo: "RFP-2024-0045", titulo: "Consultoría de transformación digital", categoria: "TI", estado: "adjudicado", montoEstimado: 210000, fechaLimite: "2024-06-20", progreso: 100, proveedoresInvitados: 6, ofertasRecibidas: 5, solicitante: "María Gómez", companyId: "techcorp" },
 ];
 
 export interface Proveedor {

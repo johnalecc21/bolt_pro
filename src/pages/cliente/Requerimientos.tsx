@@ -34,7 +34,7 @@ export function Requerimientos() {
     : (requerimientos ?? []);
 
   const filtrados = base.filter((r) => {
-    const matchQuery = `${r.id} ${r.titulo}`.toLowerCase().includes(query.toLowerCase());
+    const matchQuery = `${r.codigo} ${r.titulo}`.toLowerCase().includes(query.toLowerCase());
     const matchEstado = estado === "todos" || r.estado === estado;
     return matchQuery && matchEstado;
   });
@@ -75,7 +75,7 @@ export function Requerimientos() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">{r.id}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{r.codigo}</span>
                     <StatusBadge estado={r.estado} />
                   </div>
                   <p className="mt-1 truncate text-sm font-medium">{r.titulo}</p>

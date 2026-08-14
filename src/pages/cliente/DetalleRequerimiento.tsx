@@ -163,7 +163,7 @@ export function DetalleRequerimiento() {
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold">{req.id}</h1>
+            <h1 className="text-xl font-bold">{req.codigo}</h1>
             <StatusBadge estado={req.estado} />
           </div>
           <p className="text-sm text-muted-foreground">{req.titulo}</p>

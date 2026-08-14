@@ -14,7 +14,7 @@ export function Licitaciones() {
   const [query, setQuery] = useState("");
 
   const abiertas = (requerimientos ?? []).filter((r) => r.estado === "en_licitacion");
-  const filtradas = abiertas.filter((r) => `${r.id} ${r.titulo}`.toLowerCase().includes(query.toLowerCase()));
+  const filtradas = abiertas.filter((r) => `${r.codigo} ${r.titulo}`.toLowerCase().includes(query.toLowerCase()));
 
   return (
     <div className="space-y-6 p-6">
@@ -43,7 +43,7 @@ export function Licitaciones() {
               >
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-mono text-muted-foreground">{r.id}</span>
+                    <span className="text-xs font-mono text-muted-foreground">{r.codigo}</span>
                     <StatusBadge estado={r.estado} />
                   </div>
                   <p className="mt-1 truncate text-sm font-medium">{r.titulo}</p>

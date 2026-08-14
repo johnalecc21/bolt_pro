@@ -101,7 +101,7 @@ export function Dashboard() {
                 >
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">{req.id}</span>
+                      <span className="text-xs font-mono text-muted-foreground">{req.codigo}</span>
                       <StatusBadge estado={req.estado} />
                     </div>
                     <p className="mt-1 truncate text-sm font-medium">{req.titulo}</p>
