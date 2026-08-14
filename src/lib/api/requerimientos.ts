@@ -1,5 +1,9 @@
 import { api } from "@/lib/api/http";
+import { supabase } from "@/lib/supabase/client";
 import type { EstadoReq, Requerimiento } from "@/lib/mockData";
+
+const BUCKET = "requerimientos-documentos";
+const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export interface Especificacion {
   name: string;
@@ -33,6 +37,18 @@ export interface InvitacionRequerimiento {
   proveedor: { id: string; nombre: string; iniciales: string; color: string };
 }
 
+export interface DocumentoRequerimiento {
+  id: string;
+  nombre: string;
+  estado: "pendiente" | "subido";
+}
+
+interface ApiDocumentoRequerimiento {
+  id: string;
+  nombre: string;
+  estado: "PENDIENTE" | "SUBIDO";
+}
+
 interface ApiRequerimiento {
   id: string;
   companyId: string;
@@ -49,11 +65,15 @@ interface ApiRequerimiento {
   especificaciones: Especificacion[] | null;
   solicitante?: { nombre: string };
   comentarios?: { id: string; autor: string; texto: string; createdAt: string }[];
-  documentos?: { id: string; nombre: string }[];
+  documentos?: ApiDocumentoRequerimiento[];
   adjudicacion?: unknown;
   ofertas?: unknown[];
   aprobaciones?: AprobacionRequerimiento[];
   invitaciones?: InvitacionRequerimiento[];
+}
+
+function toDocumento(d: ApiDocumentoRequerimiento): DocumentoRequerimiento {
+  return { id: d.id, nombre: d.nombre, estado: d.estado.toLowerCase() as DocumentoRequerimiento["estado"] };
 }
 
 function toRequerimiento(r: ApiRequerimiento): Requerimiento {
@@ -77,7 +97,7 @@ export interface RequerimientoDetalle extends Requerimiento {
   criteriosPeso: Record<string, number> | null;
   especificaciones: Especificacion[];
   comentarios: { id: string; autor: string; texto: string; createdAt: string }[];
-  documentos: { id: string; nombre: string }[];
+  documentos: DocumentoRequerimiento[];
   aprobaciones: AprobacionRequerimiento[];
   invitaciones: InvitacionRequerimiento[];
 }
@@ -89,7 +109,7 @@ function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
     criteriosPeso: r.criteriosPeso ?? null,
     especificaciones: r.especificaciones ?? [],
     comentarios: r.comentarios ?? [],
-    documentos: r.documentos ?? [],
+    documentos: (r.documentos ?? []).map(toDocumento),
     aprobaciones: r.aprobaciones ?? [],
     invitaciones: r.invitaciones ?? [],
   };
@@ -155,4 +175,34 @@ export async function invitarProveedores(id: string, proveedorIds: string[]): Pr
     { proveedorIds },
   );
   return { requerimiento: toRequerimiento(data), excluidos: data.excluidosPorHomologacion ?? [] };
+}
+
+// Creates the document row, uploads straight to Supabase Storage with a
+// signed URL scoped to that row, then confirms — same 3-step pattern as
+// contratos.ts / homologacion.ts.
+export async function subirDocumentoRequerimiento(id: string, file: File) {
+  if (file.size > MAX_FILE_BYTES) {
+    throw new Error("El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo.");
+  }
+
+  const { data: uploadUrlData } = await api.post<{ docId: string; path: string; token: string }>(
+    `/requerimientos/${id}/documentos/upload-url`,
+    { filename: file.name },
+  );
+
+  const { error: uploadError } = await supabase.storage
+    .from(BUCKET)
+    .uploadToSignedUrl(uploadUrlData.path, uploadUrlData.token, file);
+  if (uploadError) throw uploadError;
+
+  const { data } = await api.post(
+    `/requerimientos/${id}/documentos/${uploadUrlData.docId}/confirmar`,
+    { path: uploadUrlData.path },
+  );
+  return data;
+}
+
+export async function obtenerUrlDescargaDocumento(id: string, docId: string): Promise<{ url: string; nombre: string }> {
+  const { data } = await api.get<{ url: string; nombre: string }>(`/requerimientos/${id}/documentos/${docId}/url`);
+  return data;
 }

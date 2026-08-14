@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -6,11 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download, ChevronDown, ShieldCheck, X } from "lucide-react";
+import { Check, Clock, Circle, ArrowLeft, MessageSquare, Paperclip, Download, ChevronDown, ShieldCheck, X, Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimiento, addComentario, type AprobacionRequerimiento } from "@/lib/api/requerimientos";
+import {
+  fetchRequerimiento, addComentario, subirDocumentoRequerimiento, obtenerUrlDescargaDocumento,
+  type AprobacionRequerimiento, type DocumentoRequerimiento,
+} from "@/lib/api/requerimientos";
 import { aprobarSolicitud, rechazarSolicitud } from "@/lib/api/aprobaciones";
 import { ROLE_LABELS, type RoleCode } from "@/lib/api/matrizAprobacion";
 import { apiErrorMessage } from "@/lib/api/http";
@@ -52,6 +55,9 @@ export function DetalleRequerimiento() {
   const [sending, setSending] = useState(false);
   const [detalleAbierto, setDetalleAbierto] = useState(true);
   const [resolviendo, setResolviendo] = useState(false);
+  const [subiendo, setSubiendo] = useState(false);
+  const [descargando, setDescargando] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleAprobar(aprobacionId: string) {
     setResolviendo(true);
@@ -93,8 +99,42 @@ export function DetalleRequerimiento() {
     }
   }
 
-  function descargar(doc: string) {
-    toast.success("Descarga iniciada", { description: doc });
+  async function descargar(doc: DocumentoRequerimiento) {
+    if (!id || doc.estado !== "subido") return;
+    setDescargando(doc.id);
+    // Open the tab synchronously (still inside the click's user-activation
+    // window) and navigate it once the signed URL resolves — opening after
+    // the await gets silently popup-blocked in most browsers.
+    const pendingTab = window.open("", "_blank");
+    try {
+      const { url } = await obtenerUrlDescargaDocumento(id, doc.id);
+      if (pendingTab) pendingTab.location.href = url;
+    } catch (err) {
+      pendingTab?.close();
+      toast.error(apiErrorMessage(err, "No se pudo descargar el documento."));
+    } finally {
+      setDescargando(null);
+    }
+  }
+
+  function abrirSelectorArchivo() {
+    fileInputRef.current?.click();
+  }
+
+  async function onFileSelected(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || !id) return;
+    setSubiendo(true);
+    try {
+      await subirDocumentoRequerimiento(id, file);
+      toast.success("Documento adjuntado", { description: file.name });
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo adjuntar el documento."));
+    } finally {
+      setSubiendo(false);
+    }
   }
 
   if (loading) {
@@ -327,13 +367,29 @@ export function DetalleRequerimiento() {
                 <p className="text-sm text-muted-foreground">Sin documentos adjuntos.</p>
               )}
               {req.documentos.map((doc) => (
-                <button key={doc.id} onClick={() => descargar(doc.nombre)} className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm hover:bg-muted/30 cursor-pointer">
+                <button
+                  key={doc.id}
+                  onClick={() => descargar(doc)}
+                  disabled={doc.estado !== "subido" || descargando === doc.id}
+                  className="flex w-full items-center gap-2 rounded-lg border border-border p-2 text-left text-sm hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-60"
+                >
                   <Paperclip className="h-3.5 w-3.5 text-muted-foreground" />
                   <span className="flex-1 truncate">{doc.nombre}</span>
-                  <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                  {doc.estado !== "subido" ? (
+                    <span className="text-xs text-muted-foreground">Subiendo...</span>
+                  ) : descargando === doc.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
                 </button>
               ))}
             </div>
+            <input ref={fileInputRef} type="file" className="hidden" onChange={onFileSelected} />
+            <Button variant="outline" size="sm" className="mt-3 w-full gap-1.5" onClick={abrirSelectorArchivo} disabled={subiendo}>
+              {subiendo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+              {subiendo ? "Subiendo..." : "Adjuntar documento"}
+            </Button>
           </Card>
         </div>
       </div>

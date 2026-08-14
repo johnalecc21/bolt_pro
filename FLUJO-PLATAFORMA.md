@@ -97,6 +97,6 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 - **OCR / verificación OFAC simulados**: en Homologación, el archivo que sube el proveedor es real, pero la extracción de texto y el chequeo contra listas OFAC son simulados.
 - **"Actividad reciente"** (Dashboard) es un widget decorativo.
 - **"Recordatorios de vencimiento"** (Contratos) ya es real: un cron diario (`VencimientosService`, `@nestjs/schedule`) revisa todos los contratos/POs activos, los pasa a "Por vencer"/"Vencido" según su `vigenciaFin`, y notifica una sola vez por umbral (60/30/15 días) a compradores y admins de la empresa.
-- **Documentos adjuntos a un Requerimiento** (paso "Detalle del Requerimiento") son solo metadatos (nombre de archivo) — a diferencia de Homologación y Contratos, no tienen almacenamiento real detrás todavía; "descargar" ahí sigue siendo un placeholder.
+- **Documentos adjuntos a un Requerimiento** ya usan almacenamiento real (bucket `requerimientos-documentos` en Supabase Storage), mismo patrón de URL firmada que Homologación y Contratos.
 - **Selector de idioma** es cosmético (no hay i18n real conectado).
 - **Pagos/Pronto Pago** es un simulador de descuento, no una integración financiera real.
