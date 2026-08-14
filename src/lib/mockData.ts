@@ -165,14 +165,6 @@ export const topProveedoresGasto = [
   { proveedor: "CleanPro", gasto: 64000 },
 ];
 
-export const actividadReciente = [
-  { id: 1, tipo: "oferta", texto: "CloudSphere envió su oferta para RFP-2024-0032", tiempo: "Hace 15 min" },
-  { id: 2, tipo: "aprobacion", texto: "Aprobación requerida para adjudicación RFP-2024-0030", tiempo: "Hace 1 h" },
-  { id: 3, tipo: "contrato", texto: "Contrato CTO-2024-0039 vence en 20 días", tiempo: "Hace 3 h" },
-  { id: 4, tipo: "negociacion", texto: "Ronda de negociación cerrada en RFP-2024-0031", tiempo: "Hace 5 h" },
-  { id: 5, tipo: "proveedor", texto: "NovaTech Consulting completó homologación", tiempo: "Ayer" },
-];
-
 export const ofertasComparativo = [
   { proveedor: "CloudSphere", precio: 172000, plazo: 45, calidad: 92, pago: 30, score: 88 },
   { proveedor: "NovaTech", precio: 168000, plazo: 38, calidad: 95, pago: 45, score: 92 },

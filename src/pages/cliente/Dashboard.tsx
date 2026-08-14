@@ -4,8 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { KPICard } from "@/components/shared/KPICard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle } from "lucide-react";
-import { actividadReciente, ahorroMensual } from "@/lib/mockData";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle, History } from "lucide-react";
+import { ahorroMensual } from "@/lib/mockData";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -14,6 +15,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchRequerimientos } from "@/lib/api/requerimientos";
 import { fetchAprobaciones } from "@/lib/api/aprobaciones";
 import { fetchProveedores } from "@/lib/api/proveedores";
+import { fetchAuditLog } from "@/lib/api/auditLog";
 
 const chartConfig = {
   auditado: { label: "Auditado", color: "var(--chart-1)" },
@@ -29,6 +31,7 @@ export function Dashboard() {
     [esAprobador],
   );
   const { data: proveedores } = useApiData(fetchProveedores);
+  const { data: auditLog, loading: loadingActividad } = useApiData(() => fetchAuditLog(1, 5));
   const loading = loadingReq;
   const misRequerimientos = currentUser?.role === "comprador"
     ? (requerimientos ?? []).filter((r) => r.solicitante === currentUser.nombre)
@@ -127,17 +130,21 @@ export function Dashboard() {
         <div className="space-y-6">
           <Card className="p-5">
             <h2 className="mb-4 font-semibold">Actividad reciente</h2>
-            <div className="space-y-3">
-              {actividadReciente.map((act) => (
-                <div key={act.id} className="flex gap-3">
-                  <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
-                  <div>
-                    <p className="text-sm">{act.texto}</p>
-                    <p className="text-xs text-muted-foreground">{act.tiempo}</p>
+            {loadingActividad ? <TableSkeleton rows={3} /> : (auditLog?.items.length ?? 0) === 0 ? (
+              <EmptyState icon={History} title="Sin actividad reciente" description="Las acciones sensibles de tu empresa aparecerán aquí." />
+            ) : (
+              <div className="space-y-3">
+                {auditLog!.items.map((e) => (
+                  <div key={e.id} className="flex gap-3">
+                    <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />
+                    <div>
+                      <p className="text-sm">{e.accion} — {e.detalle}</p>
+                      <p className="text-xs text-muted-foreground">{e.fecha}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </Card>
 
           <Card className="p-5">
