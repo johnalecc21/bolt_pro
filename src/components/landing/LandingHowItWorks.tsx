@@ -1,7 +1,6 @@
 import { FileText, ShieldCheck, Gavel, FileSignature } from "lucide-react";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
 import { motion } from "framer-motion";
-import { SectionGlow } from "./SectionGlow";
 
 const steps = [
   {
@@ -29,7 +28,6 @@ const steps = [
 export function LandingHowItWorks() {
   return (
     <section id="como-funciona" className="relative overflow-hidden py-28">
-      <SectionGlow />
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Cómo funciona</span>

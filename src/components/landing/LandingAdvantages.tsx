@@ -3,13 +3,11 @@ import { motion, useInView, useReducedMotion } from "framer-motion";
 import { TrendingUp, ShieldCheck, Users2, Rocket, Lock, Eye, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "./Reveal";
-import { SectionGlow } from "./SectionGlow";
 import { cn } from "@/lib/utils";
 
 export function LandingAdvantages() {
   return (
     <section id="ventajas" className="relative overflow-hidden py-28">
-      <SectionGlow variant="reverse" />
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Por qué los equipos de compras eligen Procurex</h2>

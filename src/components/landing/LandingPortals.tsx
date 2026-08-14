@@ -3,7 +3,6 @@ import { Building2, Truck, Users2, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
 import { motion } from "framer-motion";
-import { SectionGlow } from "./SectionGlow";
 
 const portals = [
   {
@@ -29,7 +28,6 @@ const portals = [
 export function LandingPortals() {
   return (
     <section className="relative overflow-hidden py-28">
-      <SectionGlow />
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Acceso a la plataforma</span>
