@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Mail, Lock, Loader2, ShieldCheck } from "lucide-react";
+import { Mail, Lock, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Portal } from "@/lib/mock/users";
 import { sleep } from "@/lib/mock/simulate";
@@ -26,6 +26,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
   const step = loginStep === "2fa" ? "2fa" : loginStep === "select-company" ? "company" : "credentials";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [otp, setOtp] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -173,7 +174,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           <Label htmlFor="email">Correo electrónico</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="email" type="email" placeholder="nombre@empresa.com" className="pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="email" type="email" className="pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
         </div>
         <div className="space-y-2">
@@ -183,7 +184,16 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="password" type="password" placeholder="••••••••" className="pl-9" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input id="password" type={showPassword ? "text" : "password"} className="pl-9 pr-9" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              tabIndex={-1}
+              title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-2">
