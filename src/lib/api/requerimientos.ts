@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
+import { formatRequerimientoCodigo } from "@/lib/codigo";
 import type { EstadoReq, Requerimiento } from "@/lib/mockData";
 
 const BUCKET = "requerimientos-documentos";
@@ -80,7 +81,7 @@ function toDocumento(d: ApiDocumentoRequerimiento): DocumentoRequerimiento {
 function toRequerimiento(r: ApiRequerimiento): Requerimiento {
   return {
     id: r.id,
-    codigo: `REQ-${r.numero.toString().padStart(4, "0")}`,
+    codigo: formatRequerimientoCodigo(r.numero),
     titulo: r.titulo,
     categoria: r.categoria,
     estado: r.estado.toLowerCase() as EstadoReq,

@@ -69,6 +69,8 @@ export const proveedores: Proveedor[] = [
 
 export interface Contrato {
   id: string;
+  /** Human-readable sequential code (CTO-0001 / PO-0001 / ADD-0001) — show this, not `id`. */
+  codigo: string;
   tipo: "Contrato" | "PO" | "Addendum";
   proveedor: string;
   categoria: string;

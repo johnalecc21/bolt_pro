@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
+import { formatContratoCodigo } from "@/lib/codigo";
 import type { Contrato } from "@/lib/mockData";
 import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
 
@@ -8,6 +9,7 @@ const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 interface ApiContrato {
   id: string;
+  numero: number;
   tipo: "CONTRATO" | "PO" | "ADDENDUM";
   proveedorNombre: string;
   categoria: string;
@@ -37,6 +39,7 @@ const ESTADO_LABEL: Record<ApiContrato["estado"], Contrato["estado"]> = {
 function toContrato(c: ApiContrato): Contrato {
   return {
     id: c.id,
+    codigo: formatContratoCodigo(c.tipo, c.numero),
     tipo: TIPO_LABEL[c.tipo],
     proveedor: c.proveedorNombre,
     categoria: c.categoria,

@@ -31,7 +31,7 @@ export function Contratos() {
   const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
 
   const filtrados = (contratos ?? []).filter((c: Contrato) => {
-    const matchQuery = `${c.id} ${c.proveedor}`.toLowerCase().includes(query.toLowerCase());
+    const matchQuery = `${c.codigo} ${c.proveedor}`.toLowerCase().includes(query.toLowerCase());
     const matchCat = categoria === "Todas" || c.categoria === categoria;
     return matchQuery && matchCat;
   });
@@ -61,7 +61,7 @@ export function Contratos() {
       } else {
         const detalle = await fetchContrato(c.id);
         generateContratoPdf(detalle);
-        toast.success("PDF generado", { description: `${c.id}.pdf` });
+        toast.success("PDF generado", { description: `${c.codigo}.pdf` });
       }
     } catch (err) {
       pendingTab?.close();
@@ -105,7 +105,7 @@ export function Contratos() {
     setEmitiendo(true);
     try {
       const po = await emitirPo(emitiendoPoId, { monto, vigenciaInicio: nuevaPo.vigenciaInicio, vigenciaFin: nuevaPo.vigenciaFin });
-      toast.success("PO emitida", { description: `${po.id} — $${monto.toLocaleString()}` });
+      toast.success("PO emitida", { description: `${po.codigo} — $${monto.toLocaleString()}` });
       setEmitiendoPoId(null);
       reload();
     } catch (err) {
@@ -157,7 +157,7 @@ export function Contratos() {
                   <Fragment key={c.id}>
                     <tr className="border-b border-border last:border-0 hover:bg-muted/30">
                       <td className="p-4">
-                        <p className="text-sm font-medium">{c.id}</p>
+                        <p className="text-sm font-medium">{c.codigo}</p>
                         <p className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
                           {c.tipo}
                           {c.archivoNombre && (
@@ -254,7 +254,7 @@ export function Contratos() {
           <ul className="mt-3 space-y-1 text-xs text-muted-foreground">
             {proximosAVencer[2].contratos.map((c) => (
               <li key={c.id}>
-                <span className="font-medium text-foreground">{c.id}</span> ({c.proveedor}) vence en {diasHastaVencer(c.vigenciaFin)} días — {c.vigenciaFin}
+                <span className="font-medium text-foreground">{c.codigo}</span> ({c.proveedor}) vence en {diasHastaVencer(c.vigenciaFin)} días — {c.vigenciaFin}
               </li>
             ))}
           </ul>

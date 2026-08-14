@@ -62,7 +62,7 @@ export function PagosFactoring() {
             <tbody>
               {(pagosPOs ?? []).map((p) => (
                 <tr key={p.id} className="border-b border-border last:border-0">
-                  <td className="p-4 text-sm font-medium">{p.id}</td>
+                  <td className="p-4 text-sm font-medium">{p.contratoCodigo}</td>
                   <td className="p-4 text-sm text-muted-foreground">{p.cliente}</td>
                   <td className="p-4 text-sm font-semibold">${p.monto.toLocaleString()}</td>
                   <td className="p-4 text-sm text-muted-foreground">{p.fechaPagoPactada}</td>
@@ -88,7 +88,7 @@ export function PagosFactoring() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Wallet className="h-4 w-4" /> Simulador de pronto pago</DialogTitle>
-            <DialogDescription>{seleccion?.id} · Monto original ${seleccion?.monto.toLocaleString()}</DialogDescription>
+            <DialogDescription>{seleccion?.contratoCodigo} · Monto original ${seleccion?.monto.toLocaleString()}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">

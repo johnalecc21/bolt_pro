@@ -1,7 +1,9 @@
 import { api } from "@/lib/api/http";
+import { formatContratoCodigo } from "@/lib/codigo";
 
 export interface PagoPO {
   id: string;
+  contratoCodigo: string;
   cliente: string;
   monto: number;
   fechaPagoPactada: string;
@@ -15,12 +17,13 @@ interface ApiPagoPO {
   fechaPagoPactada: string;
   estado: "PENDIENTE" | "PAGADO" | "VENCIDO";
   disputaAbierta: boolean;
-  contrato: { company: { nombre: string } };
+  contrato: { numero: number; tipo: "CONTRATO" | "PO" | "ADDENDUM"; company: { nombre: string } };
 }
 
 function toPagoPO(p: ApiPagoPO): PagoPO {
   return {
     id: p.id,
+    contratoCodigo: formatContratoCodigo(p.contrato.tipo, p.contrato.numero),
     cliente: p.contrato.company.nombre,
     monto: p.monto,
     fechaPagoPactada: p.fechaPagoPactada.slice(0, 10),

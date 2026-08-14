@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import { formatContratoCodigo } from "@/lib/codigo";
 
 export type EstadoHito = "completado" | "en_riesgo" | "atrasado" | "pendiente";
 
@@ -13,7 +14,7 @@ export interface Hito {
 }
 
 export interface SeguimientoContrato {
-  poId: string;
+  codigo: string;
   proveedor: string;
   categoria: string;
   monto: number;
@@ -32,6 +33,8 @@ interface ApiHito {
 
 interface ApiContratoConHitos {
   id: string;
+  numero: number;
+  tipo: "CONTRATO" | "PO" | "ADDENDUM";
   proveedorNombre: string;
   categoria: string;
   monto: number;
@@ -41,7 +44,7 @@ interface ApiContratoConHitos {
 export async function fetchSeguimiento(): Promise<SeguimientoContrato[]> {
   const { data } = await api.get<ApiContratoConHitos[]>("/seguimiento");
   return data.map((c) => ({
-    poId: c.id,
+    codigo: formatContratoCodigo(c.tipo, c.numero),
     proveedor: c.proveedorNombre,
     categoria: c.categoria,
     monto: c.monto,

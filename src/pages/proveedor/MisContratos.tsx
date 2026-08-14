@@ -33,7 +33,7 @@ export function MisContratos() {
         toast.success("Documento del cliente abierto", { description: c.archivoNombre });
       } else {
         generateContratoPdf(c);
-        toast.success("PDF generado", { description: `${c.id}.pdf` });
+        toast.success("PDF generado", { description: `${c.codigo}.pdf` });
       }
     } catch (err) {
       pendingTab?.close();
@@ -61,7 +61,7 @@ export function MisContratos() {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-semibold">{c.id}</h2>
+                    <h2 className="font-semibold">{c.codigo}</h2>
                     <Badge variant="secondary" className="text-xs">{c.categoria}</Badge>
                     {c.archivoNombre && (
                       <span className="flex items-center gap-0.5 text-xs text-info" title={c.archivoNombre}>

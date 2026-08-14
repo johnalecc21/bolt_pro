@@ -98,11 +98,11 @@ export function Seguimiento() {
             ? "pendiente"
             : s.hitos.some((h) => h.estado === "atrasado") ? "atrasado" : s.hitos.some((h) => h.estado === "en_riesgo") ? "en_riesgo" : "completado";
           return (
-            <Card key={s.poId} className="p-5">
+            <Card key={s.codigo} className="p-5">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-semibold">{s.poId}</h2>
+                    <h2 className="font-semibold">{s.codigo}</h2>
                     <Badge variant="secondary" className="text-xs">{s.categoria}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{s.proveedor}</p>
