@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, ChevronRight, Settings, LogOut, Building2, Check } from "lucide-react";
+import { Search, ChevronRight, Settings, LogOut, Building2, Check, FileText, ShieldCheck } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -131,6 +131,17 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
                 ))}
               </>
             )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild className="text-xs text-muted-foreground">
+              <Link to="/terminos" target="_blank" rel="noopener noreferrer">
+                <FileText className="h-3.5 w-3.5" /> Términos y condiciones
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="text-xs text-muted-foreground">
+              <Link to="/privacidad" target="_blank" rel="noopener noreferrer">
+                <ShieldCheck className="h-3.5 w-3.5" /> Aviso de privacidad
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={handleLogout}>
               <LogOut className="h-4 w-4" /> Cerrar sesión

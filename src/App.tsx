@@ -7,6 +7,8 @@ import { InternoLayout } from "@/layouts/InternoLayout";
 
 import { Landing } from "@/pages/Landing";
 import { SetPassword } from "@/pages/SetPassword";
+import { TerminosCondiciones } from "@/pages/legal/TerminosCondiciones";
+import { AvisoPrivacidad } from "@/pages/legal/AvisoPrivacidad";
 
 import { LoginCliente } from "@/pages/cliente/LoginCliente";
 import { OnboardingWizard } from "@/pages/cliente/OnboardingWizard";
@@ -59,6 +61,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/set-password" element={<SetPassword />} />
+        <Route path="/terminos" element={<TerminosCondiciones />} />
+        <Route path="/privacidad" element={<AvisoPrivacidad />} />
 
         {/* Portal Cliente */}
         <Route path="/cliente/login" element={<LoginCliente />} />

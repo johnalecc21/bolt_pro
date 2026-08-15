@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle2, Building2 } from "lucide-react";
 import { simulateProcess } from "@/lib/mock/simulate";
 import { apiRegisterProveedor } from "@/lib/api/auth";
@@ -17,6 +18,7 @@ export function RegistroProveedor() {
   const [categoria, setCategoria] = useState("Tecnología");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -75,8 +77,27 @@ export function RegistroProveedor() {
               <Label>Contraseña</Label>
               <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
             </div>
+            <div className="flex items-start gap-2">
+              <Checkbox
+                id="acepta-terminos"
+                checked={aceptaTerminos}
+                onCheckedChange={(v) => setAceptaTerminos(v === true)}
+                className="mt-0.5"
+              />
+              <Label htmlFor="acepta-terminos" className="text-xs font-normal leading-relaxed text-muted-foreground">
+                Acepto los{" "}
+                <Link to="/terminos" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                  Términos y Condiciones
+                </Link>{" "}
+                y el{" "}
+                <Link to="/privacidad" target="_blank" rel="noopener noreferrer" className="font-medium text-primary hover:underline">
+                  Aviso de Privacidad
+                </Link>{" "}
+                de Procurex.
+              </Label>
+            </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <Button type="submit" className="w-full">Crear cuenta</Button>
+            <Button type="submit" className="w-full" disabled={!aceptaTerminos}>Crear cuenta</Button>
             <p className="text-center text-sm text-muted-foreground">
               ¿Ya tienes cuenta? <Link to="/proveedor/login" className="font-medium text-primary hover:underline">Inicia sesión</Link>
             </p>

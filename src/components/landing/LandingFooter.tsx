@@ -72,7 +72,11 @@ export function LandingFooter() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-border py-6 text-xs text-muted-foreground sm:flex-row">
           <span>© {new Date().getFullYear()} Procurex. Todos los derechos reservados.</span>
-          <span>Hecho para equipos de compras en Latinoamérica.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/terminos" className="hover:text-foreground">Términos y condiciones</Link>
+            <Link to="/privacidad" className="hover:text-foreground">Aviso de privacidad</Link>
+            <span className="hidden sm:inline">Hecho para equipos de compras en Latinoamérica.</span>
+          </div>
         </div>
       </div>
     </footer>
