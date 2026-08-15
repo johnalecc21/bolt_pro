@@ -13,6 +13,11 @@ interface ApiProveedor {
   entregasATiempo: number;
   disputasCount: number;
   color: string;
+  onboardingCompletado?: boolean;
+}
+
+export interface MiPerfilProveedor extends Proveedor {
+  onboardingCompletado: boolean;
 }
 
 function toProveedor(p: ApiProveedor): Proveedor {
@@ -46,7 +51,16 @@ export async function createProveedorExterno(nombre: string): Promise<Proveedor>
   return toProveedor(data);
 }
 
-export async function fetchMiPerfil(): Promise<Proveedor> {
+export async function fetchMiPerfil(): Promise<MiPerfilProveedor> {
   const { data } = await api.get<ApiProveedor>("/proveedores/mine");
-  return toProveedor(data);
+  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
+}
+
+export async function actualizarMiPerfil(payload: { nombre?: string; categorias?: string[]; ubicacion?: string }): Promise<MiPerfilProveedor> {
+  const { data } = await api.patch<ApiProveedor>("/proveedores/mine", payload);
+  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
+}
+
+export async function completarOnboardingProveedor(): Promise<void> {
+  await api.post("/proveedores/mine/onboarding/completar");
 }

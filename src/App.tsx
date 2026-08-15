@@ -33,6 +33,7 @@ import { ConfiguracionCuenta } from "@/pages/cliente/ConfiguracionCuenta";
 
 import { LoginProveedor } from "@/pages/proveedor/LoginProveedor";
 import { RegistroProveedor } from "@/pages/proveedor/RegistroProveedor";
+import { OnboardingProveedor } from "@/pages/proveedor/OnboardingProveedor";
 import { HomologacionForm } from "@/pages/proveedor/HomologacionForm";
 import { EstadoHomologacion } from "@/pages/proveedor/EstadoHomologacion";
 import { InvitacionesProveedor } from "@/pages/proveedor/InvitacionesProveedor";
@@ -106,6 +107,7 @@ export default function App() {
           }
         >
           <Route path="dashboard" element={<EstadoHomologacion />} />
+          <Route path="onboarding" element={<OnboardingProveedor />} />
           <Route path="homologacion" element={<HomologacionForm />} />
           <Route path="invitaciones" element={<InvitacionesProveedor />} />
           <Route path="ofertas" element={<CargaOferta />} />

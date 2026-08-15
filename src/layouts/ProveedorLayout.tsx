@@ -1,4 +1,4 @@
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/layout/AppHeader";
 import {
   LayoutDashboard, ShieldCheck, Inbox, FileText,
@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { LogoFull, LogoIcon } from "@/components/shared/Logo";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchMiPerfil } from "@/lib/api/proveedores";
 
 const navItems = [
   { to: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -27,12 +29,17 @@ export function ProveedorLayout() {
   const navigate = useNavigate();
   const { currentUser, activeCompany, logout } = useAuth();
   const { collapsed, toggle } = useSidebarCollapsed();
+  const { data: perfil } = useApiData(fetchMiPerfil);
   const segments = location.pathname.split("/").filter(Boolean);
   const crumbs = segments.slice(2).map((s) => s.charAt(0).toUpperCase() + s.slice(1));
 
   function handleLogout() {
     logout();
     navigate("/proveedor/login", { replace: true });
+  }
+
+  if (perfil && !perfil.onboardingCompletado && location.pathname !== "/proveedor/onboarding") {
+    return <Navigate to="/proveedor/onboarding" replace />;
   }
 
   return (
