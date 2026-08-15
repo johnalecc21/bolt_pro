@@ -92,7 +92,7 @@ export default function App() {
           <Route path="usuarios" element={<RequireRole allow={["admin_cliente"]}><GestionUsuarios /></RequireRole>} />
           <Route path="matriz-aprobacion" element={<RequireRole allow={["admin_cliente"]}><ConfiguracionMatrizAprobacion /></RequireRole>} />
           <Route path="notificaciones" element={<CentroNotificaciones />} />
-          <Route path="configuracion" element={<ConfiguracionCuenta />} />
+          <Route path="configuracion" element={<ConfiguracionCuenta portal="cliente" />} />
         </Route>
 
         {/* Portal Proveedor */}
@@ -119,6 +119,7 @@ export default function App() {
           <Route path="pagos" element={<PagosFactoring />} />
           <Route path="perfil" element={<PerfilEmpresa />} />
           <Route path="notificaciones" element={<CentroNotificaciones />} />
+          <Route path="configuracion" element={<ConfiguracionCuenta portal="proveedor" />} />
         </Route>
 
         {/* Panel Interno */}
@@ -139,6 +140,7 @@ export default function App() {
           <Route path="clientes" element={<RequireRole allow={["compliance_ops"]}><AdminClientes /></RequireRole>} />
           <Route path="benchmark" element={<BenchmarkMercado />} />
           <Route path="notificaciones" element={<CentroNotificaciones />} />
+          <Route path="configuracion" element={<ConfiguracionCuenta portal="interno" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

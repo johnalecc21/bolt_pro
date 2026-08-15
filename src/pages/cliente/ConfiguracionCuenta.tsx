@@ -13,7 +13,7 @@ import { TwoFactorSettingsCard } from "@/components/shared/TwoFactorSettingsCard
 import { supabase } from "@/lib/supabase/client";
 import { apiErrorMessage } from "@/lib/api/http";
 
-export function ConfiguracionCuenta() {
+export function ConfiguracionCuenta({ portal = "cliente" }: { portal?: "cliente" | "proveedor" | "interno" }) {
   const { currentUser, activeCompany } = useAuth();
   const [nombre, setNombre] = useState(currentUser?.nombre ?? "");
   const [idioma, setIdioma] = useState("es");
@@ -61,7 +61,9 @@ export function ConfiguracionCuenta() {
           </Avatar>
           <div>
             <p className="font-medium">{currentUser?.nombre}</p>
-            <p className="text-sm text-muted-foreground">{roleLabels[currentUser?.role ?? "comprador"]} · {activeCompany?.nombre}</p>
+            <p className="text-sm text-muted-foreground">
+              {roleLabels[currentUser?.role ?? "comprador"]}{activeCompany ? ` · ${activeCompany.nombre}` : ""}
+            </p>
           </div>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -112,7 +114,7 @@ export function ConfiguracionCuenta() {
           <p className="text-sm text-muted-foreground">Elige qué alertas quieres recibir y por qué canal</p>
         </div>
         <Button asChild variant="outline" size="sm">
-          <Link to="/cliente/notificaciones">Configurar <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
+          <Link to={`/${portal}/notificaciones`}>Configurar <ArrowRight className="ml-1.5 h-3.5 w-3.5" /></Link>
         </Button>
       </Card>
     </div>
