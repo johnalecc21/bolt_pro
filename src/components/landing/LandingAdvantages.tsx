@@ -3,6 +3,7 @@ import { motion, useInView, useReducedMotion } from "framer-motion";
 import { TrendingUp, ShieldCheck, Users2, Rocket, Lock, Eye, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "./Reveal";
+import { SpotlightCard } from "./SpotlightCard";
 import { cn } from "@/lib/utils";
 
 export function LandingAdvantages() {
@@ -26,7 +27,15 @@ export function LandingAdvantages() {
   );
 }
 
-function CellShell({ children, className }: { children: React.ReactNode; className?: string }) {
+function CellShell({
+  children,
+  className,
+  spotlightColor = "var(--primary)",
+}: {
+  children: React.ReactNode;
+  className?: string;
+  spotlightColor?: string;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 24 }}
@@ -34,11 +43,13 @@ function CellShell({ children, className }: { children: React.ReactNode; classNa
       viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/15",
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/15",
         className,
       )}
     >
-      {children}
+      <SpotlightCard spotlightColor={spotlightColor} className="flex h-full flex-col p-7">
+        {children}
+      </SpotlightCard>
     </motion.div>
   );
 }
@@ -75,7 +86,7 @@ function SavingsCell() {
   }, [inView]);
 
   return (
-    <CellShell className="gradient-brand md:col-span-2 md:row-span-2 border-none text-white">
+    <CellShell spotlightColor="white" className="gradient-brand md:col-span-2 md:row-span-2 border-none text-white">
       <div ref={ref} className="flex h-full flex-col justify-between">
         <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
           <TrendingUp className="h-5 w-5" />

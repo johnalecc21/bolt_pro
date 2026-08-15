@@ -4,6 +4,7 @@ import { ArrowRight, PlayCircle } from "lucide-react";
 import { Magnetic } from "./Magnetic";
 import { LandingHeroShowcase } from "./LandingHeroShowcase";
 import { FloatingOrbs } from "./FloatingOrbs";
+import { BlurText } from "./BlurText";
 
 export function LandingHero() {
   return (
@@ -21,14 +22,14 @@ export function LandingHero() {
             Procurement-as-a-Service para empresas
           </motion.div>
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.1 }}
-            className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-6xl"
-          >
-            El sistema operativo de tus <span className="text-primary">compras corporativas</span>
-          </motion.h1>
+          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-6xl">
+            <BlurText
+              text="El sistema operativo de tus compras corporativas"
+              highlightFrom={5}
+              delay={35}
+              className="justify-center lg:justify-start"
+            />
+          </h1>
 
           <motion.p
             initial={{ opacity: 0, y: 20 }}

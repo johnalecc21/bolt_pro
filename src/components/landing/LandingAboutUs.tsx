@@ -1,4 +1,5 @@
 import { Reveal, StaggerGroup, staggerItem, AnimatedCounter } from "./Reveal";
+import { BlurText } from "./BlurText";
 import { motion } from "framer-motion";
 
 const timeline = [
@@ -32,8 +33,10 @@ export function LandingAboutUs() {
         <Reveal>
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Nosotros</span>
           <p className="mt-4 text-3xl font-bold leading-tight tracking-tight text-foreground sm:text-4xl">
-            Que ningún equipo de compras vuelva a depender de hojas de cálculo para tomar
-            decisiones de millones de dólares.
+            <BlurText
+              text="Que ningún equipo de compras vuelva a depender de hojas de cálculo para tomar decisiones de millones de dólares."
+              delay={18}
+            />
           </p>
           <p className="mt-6 max-w-2xl text-muted-foreground">
             Somos el equipo detrás de Procurex: creemos que la tecnología debería hacer las compras

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { FileText, ShieldCheck, Gavel, FileSignature } from "lucide-react";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
+import { BlurText } from "./BlurText";
 import { motion, useReducedMotion } from "framer-motion";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -64,7 +65,9 @@ export function LandingHowItWorks() {
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Cómo funciona</span>
-          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">De la necesidad al contrato firmado</h2>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            <BlurText text="De la necesidad al contrato firmado" className="justify-center" />
+          </h2>
           <p className="mt-4 text-muted-foreground">Un flujo continuo, sin hojas de cálculo ni cadenas de correos perdidas.</p>
         </Reveal>
 

@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom";
 import { Check } from "lucide-react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
+import { SpotlightCard } from "./SpotlightCard";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -65,9 +65,10 @@ export function LandingPricing() {
         <StaggerGroup className="mt-16 grid gap-6 lg:grid-cols-3 lg:items-start">
           {plans.map((p) => (
             <motion.div key={p.name} variants={staggerItem}>
-              <Card
+              <SpotlightCard
+                spotlightColor={p.highlighted ? "white" : "var(--primary)"}
                 className={cn(
-                  "relative flex h-full flex-col gap-6 p-8 shadow-sm transition-all duration-300",
+                  "relative flex h-full flex-col gap-6 rounded-xl border bg-card p-8 text-card-foreground shadow-sm transition-all duration-300",
                   p.highlighted
                     ? "gradient-brand border-none text-white shadow-2xl shadow-primary/30 lg:-translate-y-3"
                     : "hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/15",
@@ -101,7 +102,7 @@ export function LandingPricing() {
                 >
                   <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20Procurex">Hablar con ventas</a>
                 </Button>
-              </Card>
+              </SpotlightCard>
             </motion.div>
           ))}
         </StaggerGroup>
