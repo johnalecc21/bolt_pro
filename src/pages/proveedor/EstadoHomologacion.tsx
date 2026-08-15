@@ -8,6 +8,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchMiHomologacion } from "@/lib/api/homologacion";
 
 const estadoLabel: Record<string, string> = {
+  borrador: "Aún no enviada",
   en_revision: "En revisión",
   aprobado: "Aprobado",
   rechazado: "Rechazado",
@@ -21,18 +22,20 @@ export function EstadoHomologacion() {
     return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
   }
 
-  if (!registro) {
+  if (!registro || registro.estado === "borrador") {
     return (
       <div className="p-6">
         <Card className="p-6 text-center">
-          <p className="text-sm text-muted-foreground">Aún no has iniciado tu homologación.</p>
-          <Button asChild className="mt-3"><Link to="/proveedor/homologacion">Iniciar homologación</Link></Button>
+          <p className="text-sm text-muted-foreground">Aún no has enviado tu homologación.</p>
+          <Button asChild className="mt-3"><Link to="/proveedor/homologacion">{registro ? "Completar homologación" : "Iniciar homologación"}</Link></Button>
         </Card>
       </div>
     );
   }
 
   const pendientes = registro.documentos.filter((d) => d.estado === "pendiente" || d.estado === "vencido");
+  const vencidos = registro.documentos.filter((d) => d.estado === "vencido");
+  const aprobadaSinPendientes = registro.estado === "aprobado" && vencidos.length === 0;
   const Icon = registro.estado === "aprobado" ? CheckCircle2 : registro.estado === "rechazado" ? XCircle : registro.estado === "zona_gris" ? AlertTriangle : Clock;
   const color = registro.estado === "aprobado" ? "text-success bg-success/10" : registro.estado === "rechazado" ? "text-destructive bg-destructive/10" : "text-warning-foreground bg-warning/10";
 
@@ -64,20 +67,34 @@ export function EstadoHomologacion() {
         )}
       </Card>
 
-      <Card className="p-6">
-        <h2 className="mb-3 font-semibold">Checklist de documentos</h2>
-        <div className="space-y-2">
-          {registro.documentos.map((d) => (
-            <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
-              <span>{d.nombre}</span>
-              <StatusBadge estado={d.estado === "validado" ? "Activo" : d.estado === "vencido" ? "Vencido" : d.estado === "subido" ? "en_revision" : "Pendiente"} />
-            </div>
-          ))}
-        </div>
-        {pendientes.length > 0 && (
-          <Button asChild variant="outline" className="mt-4 gap-2"><Link to="/proveedor/homologacion"><FileWarning className="h-4 w-4" /> Actualizar documentos</Link></Button>
-        )}
-      </Card>
+      {aprobadaSinPendientes ? (
+        <Card className="flex items-center justify-between p-6">
+          <div className="flex items-center gap-2 text-sm">
+            <CheckCircle2 className="h-4 w-4 text-success" />
+            <span>Todos tus documentos ({registro.documentos.length}) están validados y vigentes.</span>
+          </div>
+        </Card>
+      ) : (
+        <Card className="p-6">
+          <h2 className="mb-3 font-semibold">Checklist de documentos</h2>
+          <div className="space-y-2">
+            {registro.documentos.map((d) => (
+              <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
+                <span>{d.nombre}</span>
+                <StatusBadge estado={d.estado === "validado" ? "Activo" : d.estado === "vencido" ? "Vencido" : d.estado === "subido" ? "en_revision" : "Pendiente"} />
+              </div>
+            ))}
+          </div>
+          {(pendientes.length > 0 || registro.estado === "rechazado") && (
+            <Button asChild variant="outline" className="mt-4 gap-2">
+              <Link to="/proveedor/homologacion">
+                <FileWarning className="h-4 w-4" />
+                {vencidos.length > 0 ? "Renovar documentos vencidos" : registro.estado === "rechazado" ? "Corregir y reenviar" : "Actualizar documentos"}
+              </Link>
+            </Button>
+          )}
+        </Card>
+      )}
 
       {registro.alertas.length > 0 && (
         <Card className="border-warning/30 bg-warning/5 p-4">

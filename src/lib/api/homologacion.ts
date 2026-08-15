@@ -4,13 +4,22 @@ import { supabase } from "@/lib/supabase/client";
 const BUCKET = "homologacion-documentos";
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
-export type EstadoHomologacion = "en_revision" | "aprobado" | "rechazado" | "zona_gris";
+export type EstadoHomologacion = "borrador" | "en_revision" | "aprobado" | "rechazado" | "zona_gris";
 export type EstadoDocumento = "pendiente" | "subido" | "validado" | "vencido";
+export type CategoriaDocumento = "legal" | "financiero" | "certificaciones" | "referencias";
 
 export interface DocumentoHomologacion {
   id: string;
   nombre: string;
+  categoria: CategoriaDocumento;
   estado: EstadoDocumento;
+}
+
+/** Mirrors the backend's HomologacionService guard: when a document can be (re)uploaded. */
+export function puedeSubirDocumento(homologacionEstado: EstadoHomologacion, doc: DocumentoHomologacion): boolean {
+  if (homologacionEstado === "en_revision" || homologacionEstado === "zona_gris") return false;
+  if (homologacionEstado === "aprobado") return doc.estado === "vencido";
+  return true;
 }
 
 export interface RegistroHomologacion {
@@ -26,13 +35,18 @@ export interface RegistroHomologacion {
 
 interface ApiHomologacion {
   id: string;
-  estado: "EN_REVISION" | "APROBADO" | "RECHAZADO" | "ZONA_GRIS";
+  estado: "BORRADOR" | "EN_REVISION" | "APROBADO" | "RECHAZADO" | "ZONA_GRIS";
   score: number;
   alertas: string[];
   fechaSolicitud: string;
   proximaRevalidacion: string | null;
   nitDetectado: string | null;
-  documentos: { id: string; nombre: string; estado: "PENDIENTE" | "SUBIDO" | "VALIDADO" | "VENCIDO" }[];
+  documentos: {
+    id: string;
+    nombre: string;
+    categoria: "LEGAL" | "FINANCIERO" | "CERTIFICACIONES" | "REFERENCIAS";
+    estado: "PENDIENTE" | "SUBIDO" | "VALIDADO" | "VENCIDO";
+  }[];
   proveedor?: { nombre: string; iniciales: string };
 }
 
@@ -45,7 +59,12 @@ function toRegistro(h: ApiHomologacion): RegistroHomologacion {
     fechaSolicitud: h.fechaSolicitud.slice(0, 10),
     proximaRevalidacion: h.proximaRevalidacion ? h.proximaRevalidacion.slice(0, 10) : "—",
     nitDetectado: h.nitDetectado,
-    documentos: h.documentos.map((d) => ({ id: d.id, nombre: d.nombre, estado: d.estado.toLowerCase() as EstadoDocumento })),
+    documentos: h.documentos.map((d) => ({
+      id: d.id,
+      nombre: d.nombre,
+      categoria: d.categoria.toLowerCase() as CategoriaDocumento,
+      estado: d.estado.toLowerCase() as EstadoDocumento,
+    })),
   };
 }
 
