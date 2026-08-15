@@ -116,7 +116,12 @@ export function HomologacionForm() {
           <h1 className="text-2xl font-bold">Formulario de Homologación</h1>
           <p className="text-sm text-muted-foreground">Completa tu perfil para ser considerado en licitaciones</p>
         </div>
-        {estado && <StatusBadge estado={estado === "zona_gris" ? "en_revision" : estado} />}
+        {estado && (
+          <StatusBadge
+            estado={estado === "zona_gris" ? "en_revision" : estado}
+            className={estado === "borrador" ? "bg-card border-border" : undefined}
+          />
+        )}
       </div>
 
       {bloqueadaEnRevision && (
@@ -133,7 +138,7 @@ export function HomologacionForm() {
       )}
 
       <div className="flex items-center gap-3">
-        <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+        <div className="h-2 flex-1 overflow-hidden rounded-full border border-border bg-card">
           <div className="h-full gradient-brand rounded-full transition-all" style={{ width: `${completitud}%` }} />
         </div>
         <span className="text-sm font-medium">{completitud}% completo</span>
