@@ -67,8 +67,10 @@ export function LandingPricing() {
             <motion.div key={p.name} variants={staggerItem}>
               <Card
                 className={cn(
-                  "relative flex h-full flex-col gap-6 p-8",
-                  p.highlighted && "gradient-brand border-none text-white shadow-2xl shadow-primary/30 lg:-translate-y-3",
+                  "relative flex h-full flex-col gap-6 p-8 shadow-sm transition-all duration-300",
+                  p.highlighted
+                    ? "gradient-brand border-none text-white shadow-2xl shadow-primary/30 lg:-translate-y-3"
+                    : "hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/15",
                 )}
               >
                 {p.highlighted && (

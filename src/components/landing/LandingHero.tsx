@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { Magnetic } from "./Magnetic";
 import { LandingHeroShowcase } from "./LandingHeroShowcase";
+import { FloatingOrbs } from "./FloatingOrbs";
 
 export function LandingHero() {
   return (
     <section id="top" className="relative overflow-hidden bg-background pb-24 pt-24">
+      <FloatingOrbs variant="hero" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="text-center lg:text-left">
           <motion.div

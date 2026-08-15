@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "./Reveal";
+import { FloatingOrbs } from "./FloatingOrbs";
 import { cn } from "@/lib/utils";
 
 const AUTO_ADVANCE_MS = 5200;
@@ -73,6 +74,7 @@ export function LandingServices() {
 
   return (
     <section id="servicios" className="relative overflow-hidden py-28">
+      <FloatingOrbs />
       <div className="relative mx-auto max-w-7xl px-6">
         <Reveal className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Todo el ciclo de compras, en un solo lugar</h2>

@@ -12,21 +12,25 @@ const steps = [
     icon: FileText,
     title: "Solicita",
     description: "Crea tu requerimiento en minutos. La matriz de aprobación lo enruta automáticamente al aprobador correcto según el monto y la categoría.",
+    bg: "var(--primary)",
   },
   {
     icon: ShieldCheck,
     title: "Homologa y cotiza",
     description: "Proveedores homologados con verificación real de documentos (OCR) y cruce contra listas de sanciones (OFAC/SDN) presentan ofertas estructuradas.",
+    bg: "var(--success)",
   },
   {
     icon: Gavel,
     title: "Negocia en vivo",
     description: "Subasta o negociación en tiempo real con leaderboard transparente para tu equipo, y visibilidad controlada para cada proveedor.",
+    bg: "var(--info)",
   },
   {
     icon: FileSignature,
     title: "Adjudica y firma",
     description: "Adjudicación con trazabilidad completa, firma electrónica y contrato generado automáticamente, listo para dar seguimiento.",
+    bg: "var(--brand-accent)",
   },
 ];
 
@@ -83,8 +87,21 @@ export function LandingHowItWorks() {
           <StaggerGroup className="relative grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {steps.map((s, i) => (
               <motion.div key={s.title} variants={staggerItem} className="relative flex flex-col items-start gap-4">
-                <div className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl gradient-brand text-white shadow-lg shadow-primary/20">
-                  <s.icon className="h-6 w-6" />
+                <div
+                  className="relative z-10 flex h-14 w-14 items-center justify-center rounded-2xl text-white shadow-lg"
+                  style={{ background: s.bg, boxShadow: `0 10px 24px -8px color-mix(in oklab, ${s.bg} 45%, transparent)` }}
+                >
+                  {reduceMotion ? (
+                    <s.icon className="h-6 w-6" />
+                  ) : (
+                    <motion.div
+                      initial={{ rotate: 0 }}
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 14 + i * 3, repeat: Infinity, ease: "linear", repeatType: "loop" }}
+                    >
+                      <s.icon className="h-6 w-6" />
+                    </motion.div>
+                  )}
                   <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-background bg-foreground text-xs font-bold text-background">
                     {i + 1}
                   </span>

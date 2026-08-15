@@ -34,12 +34,23 @@ function CellShell({ children, className }: { children: React.ReactNode; classNa
       viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "group relative flex flex-col overflow-hidden rounded-2xl border border-border p-7 transition-all hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/10",
+        "group relative flex flex-col overflow-hidden rounded-2xl border border-border p-7 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/15",
         className,
       )}
     >
       {children}
     </motion.div>
+  );
+}
+
+function CellIcon({ icon: Icon, color }: { icon: React.ElementType; color: string }) {
+  return (
+    <div
+      className="flex h-11 w-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110"
+      style={{ background: `color-mix(in oklab, ${color} 14%, transparent)`, color }}
+    >
+      <Icon className="h-5 w-5" />
+    </div>
   );
 }
 
@@ -96,9 +107,7 @@ function SavingsCell() {
 function ComplianceCell() {
   return (
     <CellShell className="bg-card">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-        <ShieldCheck className="h-5 w-5" />
-      </div>
+      <CellIcon icon={ShieldCheck} color="var(--success)" />
       <h3 className="mt-5 text-lg font-semibold">Compliance real, no simulado</h3>
       <p className="mt-2 text-sm text-muted-foreground">OCR y verificación OFAC/SDN contra datos reales.</p>
       <div className="mt-4 flex flex-wrap gap-2">
@@ -116,9 +125,7 @@ function ComplianceCell() {
 function ExpertsCell() {
   return (
     <CellShell className="bg-card">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-        <Users2 className="h-5 w-5" />
-      </div>
+      <CellIcon icon={Users2} color="var(--info)" />
       <h3 className="mt-5 text-lg font-semibold">Expertos humanos, human-in-the-loop</h3>
       <p className="mt-2 text-sm text-muted-foreground">Cada caso en zona gris pasa por revisión de nuestro equipo antes de avanzar.</p>
     </CellShell>
@@ -135,9 +142,7 @@ function SecurityCell() {
     <CellShell className="bg-card md:col-span-2">
       <div className="flex items-start justify-between gap-6">
         <div>
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-            <Lock className="h-5 w-5" />
-          </div>
+          <CellIcon icon={Lock} color="var(--primary)" />
           <h3 className="mt-5 text-lg font-semibold">Seguridad de nivel empresarial</h3>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">RBAC granular por rol y portal, 2FA real y bitácora de auditoría.</p>
         </div>
@@ -162,9 +167,7 @@ function SecurityCell() {
 function SpeedCell() {
   return (
     <CellShell className="bg-card">
-      <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-        <Rocket className="h-5 w-5" />
-      </div>
+      <CellIcon icon={Rocket} color="var(--warning)" />
       <h3 className="mt-5 text-lg font-semibold">Implementación en días</h3>
       <p className="mt-2 text-sm text-muted-foreground">Sin integraciones eternas: tu equipo opera en cuestión de días.</p>
     </CellShell>
@@ -181,9 +184,7 @@ function TraceabilityCell() {
     <CellShell className="bg-card md:col-span-3">
       <div className="flex items-start gap-6">
         <div className="shrink-0">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-            <Eye className="h-5 w-5" />
-          </div>
+          <CellIcon icon={Eye} color="var(--brand-accent)" />
           <h3 className="mt-5 text-lg font-semibold">Trazabilidad de punta a punta</h3>
           <p className="mt-2 max-w-xs text-sm text-muted-foreground">De la solicitud a la firma, cada acción queda registrada.</p>
         </div>
