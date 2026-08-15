@@ -36,4 +36,5 @@ export interface AuthContextValue {
   selectCompany: (companyId: string) => Promise<void>;
   switchCompany: (companyId: string) => Promise<void>;
   logout: () => Promise<void>;
+  acceptTerms: () => Promise<void>;
 }

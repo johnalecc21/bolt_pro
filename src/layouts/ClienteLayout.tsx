@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { LogoFull, LogoIcon } from "@/components/shared/Logo";
+import { AceptarTerminosGate } from "@/components/legal/AceptarTerminosGate";
 import type { Role } from "@/lib/mock/users";
 
 const navItems: { to: string; label: string; icon: typeof LayoutDashboard; roles?: Role[] }[] = [
@@ -45,6 +46,7 @@ export function ClienteLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      <AceptarTerminosGate />
       <aside className={cn("flex shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200", collapsed ? "w-16" : "w-64")}>
         <div className={cn("flex h-16 items-center gap-2", collapsed ? "justify-center px-2" : "px-6")}>
           {collapsed ? <LogoIcon className="h-8 w-8" /> : <LogoFull className="h-7" />}

@@ -24,6 +24,8 @@ export interface MockUser {
   companies: Company[];
   /** Whether the user has an enrolled, verified TOTP factor in Supabase Auth. */
   requires2FA: boolean;
+  /** Null until the user has accepted the Términos y Condiciones / Aviso de Privacidad. */
+  terminosAceptadosEn: string | null;
 }
 
 export const roleLabels: Record<Role, string> = {

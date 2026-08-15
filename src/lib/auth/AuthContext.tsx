@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Company, MockUser, Portal } from "@/lib/mock/users";
-import { apiMe, toCompany, toMockUser } from "@/lib/api/auth";
+import { apiAceptarTerminos, apiMe, toCompany, toMockUser } from "@/lib/api/auth";
 import { setActiveCompanyId, setUnauthorizedHandler } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
 import type { AuthContextValue, LoginResult, LoginStep, PendingUser } from "@/lib/auth/types";
@@ -198,9 +198,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOauthError(null);
   }
 
+  async function acceptTerms() {
+    const updated = await apiAceptarTerminos();
+    setCurrentUser((prev) => (prev ? { ...prev, terminosAceptadosEn: updated.terminosAceptadosEn } : prev));
+  }
+
   const value = useMemo<AuthContextValue>(() => ({
     currentUser, activeCompany, loginStep, pendingUser, sessionLoading, oauthError,
-    login, loginWithGoogle, verify2FA, selectCompany, switchCompany, logout, clearOauthError,
+    login, loginWithGoogle, verify2FA, selectCompany, switchCompany, logout, clearOauthError, acceptTerms,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [currentUser, activeCompany, loginStep, pendingUser, sessionLoading, oauthError]);
 

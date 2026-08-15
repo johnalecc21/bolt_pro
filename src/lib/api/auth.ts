@@ -9,6 +9,7 @@ interface ApiUser {
   role: string;
   iniciales: string;
   cargo: string | null;
+  terminosAceptadosEn: string | null;
 }
 
 interface ApiCompany {
@@ -31,6 +32,7 @@ export function toMockUser(user: ApiUser, companies: ApiCompany[], requires2FA: 
     cargo: user.cargo ?? "",
     companies: companies.map(toCompany),
     requires2FA,
+    terminosAceptadosEn: user.terminosAceptadosEn,
   };
 }
 
@@ -39,6 +41,11 @@ export async function apiMe() {
   const { data } = await api.get<{ user: ApiUser; activeCompany: ApiCompany; companies: ApiCompany[] }>(
     "/auth/me",
   );
+  return data;
+}
+
+export async function apiAceptarTerminos(): Promise<ApiUser> {
+  const { data } = await api.post<ApiUser>("/auth/aceptar-terminos");
   return data;
 }
 
