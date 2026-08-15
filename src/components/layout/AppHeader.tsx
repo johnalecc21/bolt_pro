@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, ChevronRight, User, Settings, LogOut, Building2, Check } from "lucide-react";
+import { Search, ChevronRight, Settings, LogOut, Building2, Check } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -115,12 +115,7 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link to={`${routeBase}/configuracion`}>
-                <User className="h-4 w-4" /> Mi perfil
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link to={`${routeBase}/configuracion`}>
-                <Settings className="h-4 w-4" /> Configuración
+                <Settings className="h-4 w-4" /> Mi perfil y configuración
               </Link>
             </DropdownMenuItem>
             {currentUser && currentUser.companies.length > 1 && (
