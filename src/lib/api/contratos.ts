@@ -1,11 +1,10 @@
 import { api } from "@/lib/api/http";
-import { supabase } from "@/lib/supabase/client";
+import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatContratoCodigo } from "@/lib/codigo";
-import type { Contrato } from "@/lib/mockData";
+import type { Contrato } from "@/lib/types";
 import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
 
 const BUCKET = "contratos-documentos";
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 interface ApiContrato {
   id: string;
@@ -73,6 +72,8 @@ interface ApiHito {
   comprometido: string;
   real: string | null;
   estado: "COMPLETADO" | "EN_RIESGO" | "ATRASADO" | "PENDIENTE";
+  porcentaje: number;
+  pagoGeneradoId: string | null;
 }
 
 function mapHitos(hitos: ApiHito[]): Hito[] {
@@ -82,6 +83,8 @@ function mapHitos(hitos: ApiHito[]): Hito[] {
     comprometido: h.comprometido.slice(0, 10),
     real: h.real ? h.real.slice(0, 10) : null,
     estado: h.estado.toLowerCase() as EstadoHito,
+    porcentaje: h.porcentaje,
+    pagoGeneradoId: h.pagoGeneradoId,
   }));
 }
 
@@ -135,19 +138,14 @@ export async function fetchMisContratos(): Promise<ContratoConHitos[]> {
 // Lets the company replace the Procurex-generated template with their own
 // signed PO/contract file — only the cliente portal can call this.
 export async function subirArchivoContrato(id: string, file: File) {
-  if (file.size > MAX_FILE_BYTES) {
-    throw new Error("El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo.");
-  }
+  assertFileSizeOk(file);
 
   const { data: uploadUrlData } = await api.post<{ path: string; token: string }>(
     `/contratos/${id}/upload-url`,
     { filename: file.name },
   );
 
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .uploadToSignedUrl(uploadUrlData.path, uploadUrlData.token, file);
-  if (uploadError) throw uploadError;
+  await uploadToSignedUrl(BUCKET, uploadUrlData.path, uploadUrlData.token, file);
 
   const { data } = await api.post(`/contratos/${id}/adjuntar`, { path: uploadUrlData.path, nombre: file.name });
   return data;

@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/http";
-import type { Disputa } from "@/lib/mockData";
+import type { Disputa } from "@/lib/types";
 
 interface ApiDisputa {
   id: string;

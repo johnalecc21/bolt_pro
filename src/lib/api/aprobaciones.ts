@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/http";
-import type { Aprobacion } from "@/lib/mockData";
+import type { Aprobacion } from "@/lib/types";
 
 interface ApiAprobacion {
   id: string;

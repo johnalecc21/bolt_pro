@@ -1,10 +1,9 @@
 import { api } from "@/lib/api/http";
-import { supabase } from "@/lib/supabase/client";
+import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatRequerimientoCodigo } from "@/lib/codigo";
-import type { EstadoReq, Requerimiento } from "@/lib/mockData";
+import type { EstadoReq, Requerimiento } from "@/lib/types";
 
 const BUCKET = "requerimientos-documentos";
-const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 export interface Especificacion {
   name: string;
@@ -184,19 +183,14 @@ export async function invitarProveedores(id: string, proveedorIds: string[]): Pr
 // signed URL scoped to that row, then confirms — same 3-step pattern as
 // contratos.ts / homologacion.ts.
 export async function subirDocumentoRequerimiento(id: string, file: File) {
-  if (file.size > MAX_FILE_BYTES) {
-    throw new Error("El archivo supera el tamaño máximo permitido (10 MB). Comprime el PDF e inténtalo de nuevo.");
-  }
+  assertFileSizeOk(file);
 
   const { data: uploadUrlData } = await api.post<{ docId: string; path: string; token: string }>(
     `/requerimientos/${id}/documentos/upload-url`,
     { filename: file.name },
   );
 
-  const { error: uploadError } = await supabase.storage
-    .from(BUCKET)
-    .uploadToSignedUrl(uploadUrlData.path, uploadUrlData.token, file);
-  if (uploadError) throw uploadError;
+  await uploadToSignedUrl(BUCKET, uploadUrlData.path, uploadUrlData.token, file);
 
   const { data } = await api.post(
     `/requerimientos/${id}/documentos/${uploadUrlData.docId}/confirmar`,

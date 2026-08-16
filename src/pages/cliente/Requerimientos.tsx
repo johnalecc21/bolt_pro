@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { type EstadoReq } from "@/lib/mockData";
+import { type EstadoReq } from "@/lib/types";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { Search, Plus, FileText, ArrowRight } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";

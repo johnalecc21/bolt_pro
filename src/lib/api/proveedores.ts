@@ -1,5 +1,5 @@
 import { api } from "@/lib/api/http";
-import type { Proveedor } from "@/lib/mockData";
+import type { Proveedor } from "@/lib/types";
 
 interface ApiProveedor {
   id: string;

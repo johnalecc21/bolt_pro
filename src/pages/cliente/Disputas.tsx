@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { type Disputa } from "@/lib/mockData";
+import { type Disputa } from "@/lib/types";
 import { fetchDisputas, fetchDisputa, crearDisputa, enviarMensajeDisputa } from "@/lib/api/disputas";
 import { apiErrorMessage } from "@/lib/api/http";
 import { Scale, Plus, Paperclip, Send } from "lucide-react";

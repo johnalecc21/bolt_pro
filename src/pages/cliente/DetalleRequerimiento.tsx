@@ -18,7 +18,7 @@ import { aprobarSolicitud, rechazarSolicitud } from "@/lib/api/aprobaciones";
 import { ROLE_LABELS, type RoleCode } from "@/lib/api/matrizAprobacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { useAuth } from "@/lib/auth/AuthContext";
-import type { EstadoReq } from "@/lib/mockData";
+import type { EstadoReq } from "@/lib/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FileText } from "lucide-react";
 

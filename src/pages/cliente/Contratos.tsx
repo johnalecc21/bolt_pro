@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
-import { type Contrato } from "@/lib/mockData";
+import { type Contrato } from "@/lib/types";
 import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato, emitirPo } from "@/lib/api/contratos";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";

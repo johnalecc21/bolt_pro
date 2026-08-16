@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { type Aprobacion } from "@/lib/mockData";
+import { type Aprobacion } from "@/lib/types";
 import { fetchAprobaciones, aprobarSolicitud, rechazarSolicitud } from "@/lib/api/aprobaciones";
 import { apiErrorMessage } from "@/lib/api/http";
 import { Check, X, Clock, AlertTriangle, FileText, ShieldCheck } from "lucide-react";

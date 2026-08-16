@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, MapPin, Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Proveedor } from "@/lib/mockData";
+import type { Proveedor } from "@/lib/types";
 
 export function ProviderCard({ proveedor, selectable, selected, onSelect }: {
   proveedor: Proveedor;

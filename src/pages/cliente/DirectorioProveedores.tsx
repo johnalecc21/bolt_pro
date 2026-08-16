@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProviderCard } from "@/components/shared/ProviderCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { type Proveedor } from "@/lib/mockData";
+import { type Proveedor } from "@/lib/types";
 import { fetchProveedores } from "@/lib/api/proveedores";
 import { Search, Building2, Star, ShieldCheck, Plus } from "lucide-react";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
