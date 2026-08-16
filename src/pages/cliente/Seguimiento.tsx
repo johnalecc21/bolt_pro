@@ -173,7 +173,7 @@ export function Seguimiento() {
                 </div>
               )}
 
-              {addingTo === s.poId ? (
+              {addingTo === s.id ? (
                 <div className="mt-4 flex flex-wrap items-end gap-2 rounded-lg border border-border p-3">
                   <div className="min-w-[180px] flex-1 space-y-1">
                     <label className="text-xs font-medium text-muted-foreground">Nombre del hito</label>
@@ -187,13 +187,13 @@ export function Seguimiento() {
                     <label className="text-xs font-medium text-muted-foreground">% de pago</label>
                     <Input type="number" min={0} max={100} value={nuevoPorcentaje} onChange={(e) => setNuevoPorcentaje(e.target.value)} placeholder="0" className="h-8 text-sm" />
                   </div>
-                  <Button size="sm" className="h-8" disabled={!nuevoLabel.trim() || !nuevaFecha || submitting} onClick={() => agregarHito(s.poId)}>
+                  <Button size="sm" className="h-8" disabled={!nuevoLabel.trim() || !nuevaFecha || submitting} onClick={() => agregarHito(s.id)}>
                     Agregar
                   </Button>
                   <Button size="sm" variant="ghost" className="h-8" onClick={() => { setAddingTo(null); setNuevoPorcentaje(""); }}>Cancelar</Button>
                 </div>
               ) : (
-                <Button variant="ghost" size="sm" className="mt-3 gap-1.5 text-xs" onClick={() => setAddingTo(s.poId)}>
+                <Button variant="ghost" size="sm" className="mt-3 gap-1.5 text-xs" onClick={() => setAddingTo(s.id)}>
                   <Plus className="h-3.5 w-3.5" /> Agregar hito
                 </Button>
               )}
@@ -206,9 +206,9 @@ export function Seguimiento() {
                     </Button>
                   }
                   title="Reportar incidencia"
-                  description={`Se abrirá un caso de disputa referenciando ${s.poId} con ${s.proveedor}.`}
+                  description={`Se abrirá un caso de disputa referenciando ${s.codigo} con ${s.proveedor}.`}
                   confirmLabel="Abrir caso"
-                  onConfirm={() => navigate(`/cliente/disputas?po=${s.poId}`)}
+                  onConfirm={() => navigate(`/cliente/disputas?po=${s.codigo}`)}
                 />
               </div>
             </Card>

@@ -29,7 +29,7 @@ export function AceptarTerminosGate() {
 
   return (
     <AlertDialog open>
-      <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}>
+      <AlertDialogContent onEscapeKeyDown={(e) => e.preventDefault()}>
         <AlertDialogHeader>
           <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <FileText className="h-5 w-5" />

@@ -14,6 +14,7 @@ export interface Hito {
 }
 
 export interface SeguimientoContrato {
+  id: string;
   codigo: string;
   proveedor: string;
   categoria: string;
@@ -44,6 +45,7 @@ interface ApiContratoConHitos {
 export async function fetchSeguimiento(): Promise<SeguimientoContrato[]> {
   const { data } = await api.get<ApiContratoConHitos[]>("/seguimiento");
   return data.map((c) => ({
+    id: c.id,
     codigo: formatContratoCodigo(c.tipo, c.numero),
     proveedor: c.proveedorNombre,
     categoria: c.categoria,
