@@ -75,7 +75,7 @@ export function RegistroProveedor() {
             </div>
             <div className="space-y-1.5">
               <Label>Contraseña</Label>
-              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} placeholder="••••••••" />
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} placeholder="••••••••" />
             </div>
             <div className="flex items-start gap-2">
               <Checkbox
