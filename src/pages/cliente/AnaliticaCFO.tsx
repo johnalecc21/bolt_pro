@@ -5,26 +5,32 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis, Pie, PieChart, Cell } from "recharts";
-import { ahorroMensual, tiempoCicloCategoria, concentracionGasto, topProveedoresGasto } from "@/lib/mockData";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchAnaliticaResumen } from "@/lib/api/analitica";
 import { Download, TrendingUp, Clock, PieChart as PieIcon, Building2, ArrowRight } from "lucide-react";
 
-const ahorroConfig = {
-  auditado: { label: "Auditado", color: "var(--chart-1)" },
-  reportado: { label: "Reportado", color: "var(--chart-3)" },
-} satisfies ChartConfig;
-
+const ahorroConfig = { ahorro: { label: "Ahorro", color: "var(--chart-1)" } } satisfies ChartConfig;
 const cicloConfig = { dias: { label: "Días promedio", color: "var(--chart-2)" } } satisfies ChartConfig;
 const gastoConfig = { gasto: { label: "Gasto", color: "var(--chart-1)" } } satisfies ChartConfig;
+const PALETA_CATEGORIAS = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)"];
 
 export function AnaliticaCFO() {
   const [periodo, setPeriodo] = useState("6m");
+  const { data: analitica } = useApiData(fetchAnaliticaResumen);
 
-  const totalAuditado = ahorroMensual.reduce((s, m) => s + m.auditado, 0);
-  const totalReportado = ahorroMensual.reduce((s, m) => s + m.reportado, 0);
-  const brecha = Math.round(((totalReportado - totalAuditado) / totalReportado) * 100);
+  const ahorroMensual = analitica?.ahorroMensual ?? [];
+  const tiempoCicloCategoria = analitica?.tiempoCicloCategoria ?? [];
+  const concentracionGasto = (analitica?.concentracionGasto ?? []).map((c, i) => ({
+    name: c.categoria,
+    value: c.porcentaje,
+    color: PALETA_CATEGORIAS[i % PALETA_CATEGORIAS.length],
+  }));
+  const topProveedoresGasto = analitica?.topProveedores ?? [];
+
+  const totalAhorro = ahorroMensual.reduce((s, m) => s + m.ahorro, 0);
 
   function exportar() {
-    const rows = [["Mes", "Reportado", "Auditado"], ...ahorroMensual.map((m) => [m.mes, m.reportado, m.auditado])];
+    const rows = [["Mes", "Ahorro"], ...ahorroMensual.map((m) => [m.mes, m.ahorro])];
     const csv = rows.map((r) => r.join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -54,34 +60,29 @@ export function AnaliticaCFO() {
       </div>
 
       <div className="rounded-lg border border-info/30 bg-info/10 p-4 text-sm text-info">
-        <strong>Ahorro reportado (${(totalReportado / 1000).toFixed(0)}K)</strong> vs. <strong>ahorro auditado (${(totalAuditado / 1000).toFixed(0)}K)</strong> — el auditado es {brecha}% menor y es la cifra certificada por el equipo de consultoría.
+        <strong>Ahorro certificado: ${(totalAhorro / 1000).toFixed(0)}K</strong> — diferencia real entre el monto estimado de cada requerimiento y el precio final adjudicado, en los últimos 6 meses.
       </div>
 
       <Card className="p-5">
         <div className="mb-4 flex items-center justify-between">
           <div>
             <h2 className="flex items-center gap-2 font-semibold"><TrendingUp className="h-4 w-4 text-success" /> Ahorro acumulado</h2>
-            <p className="text-sm text-muted-foreground">Reportado vs. auditado</p>
+            <p className="text-sm text-muted-foreground">Monto estimado vs. precio final adjudicado</p>
           </div>
         </div>
         <ChartContainer config={ahorroConfig} className="h-[260px] w-full">
           <AreaChart data={ahorroMensual}>
             <defs>
-              <linearGradient id="fillAuditado2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-auditado)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-auditado)" stopOpacity={0.1} />
-              </linearGradient>
-              <linearGradient id="fillReportado2" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-reportado)" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="var(--color-reportado)" stopOpacity={0.05} />
+              <linearGradient id="fillAhorro2" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="var(--color-ahorro)" stopOpacity={0.8} />
+                <stop offset="95%" stopColor="var(--color-ahorro)" stopOpacity={0.1} />
               </linearGradient>
             </defs>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis dataKey="mes" tickLine={false} axisLine={false} />
             <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Area dataKey="reportado" type="monotone" stroke="var(--color-reportado)" fill="url(#fillReportado2)" strokeWidth={2} />
-            <Area dataKey="auditado" type="monotone" stroke="var(--color-auditado)" fill="url(#fillAuditado2)" strokeWidth={2} />
+            <Area dataKey="ahorro" type="monotone" stroke="var(--color-ahorro)" fill="url(#fillAhorro2)" strokeWidth={2} />
           </AreaChart>
         </ChartContainer>
       </Card>
@@ -121,7 +122,7 @@ export function AnaliticaCFO() {
               ))}
             </div>
           </div>
-          {concentracionGasto[0].value > 35 && (
+          {(concentracionGasto[0]?.value ?? 0) > 35 && (
             <p className="mt-3 text-xs text-warning-foreground">⚠ Alta concentración en {concentracionGasto[0].name} — riesgo de dependencia de pocos proveedores.</p>
           )}
         </Card>

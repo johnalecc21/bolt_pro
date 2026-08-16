@@ -6,7 +6,6 @@ import { KPICard } from "@/components/shared/KPICard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle, History } from "lucide-react";
-import { ahorroMensual } from "@/lib/mockData";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -16,15 +15,18 @@ import { fetchRequerimientos } from "@/lib/api/requerimientos";
 import { fetchAprobaciones } from "@/lib/api/aprobaciones";
 import { fetchProveedores } from "@/lib/api/proveedores";
 import { fetchAuditLog } from "@/lib/api/auditLog";
+import { fetchAnaliticaResumen } from "@/lib/api/analitica";
 
 const chartConfig = {
-  auditado: { label: "Auditado", color: "var(--chart-1)" },
-  reportado: { label: "Reportado", color: "var(--chart-3)" },
+  ahorro: { label: "Ahorro", color: "var(--chart-1)" },
 } satisfies ChartConfig;
 
 export function Dashboard() {
   const { currentUser, activeCompany } = useAuth();
   const esAprobador = currentUser?.role === "aprobador_cfo";
+  // Matches the backend's @Roles(APROBADOR_CFO, ADMIN_CLIENTE) on /analitica —
+  // a comprador would get a 403, so the savings chart just isn't shown to them.
+  const puedeVerAnalitica = esAprobador || currentUser?.role === "admin_cliente";
   const { data: requerimientos, loading: loadingReq } = useApiData(fetchRequerimientos);
   const { data: aprobaciones } = useApiData(
     () => (esAprobador ? fetchAprobaciones() : Promise.resolve([])),
@@ -32,7 +34,13 @@ export function Dashboard() {
   );
   const { data: proveedores } = useApiData(fetchProveedores);
   const { data: auditLog, loading: loadingActividad } = useApiData(() => fetchAuditLog(1, 5));
+  const { data: analitica } = useApiData(
+    () => (puedeVerAnalitica ? fetchAnaliticaResumen() : Promise.resolve(null)),
+    [puedeVerAnalitica],
+  );
   const loading = loadingReq;
+  const hoyBase = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const hoyFormateado = hoyBase.charAt(0).toUpperCase() + hoyBase.slice(1);
   const misRequerimientos = currentUser?.role === "comprador"
     ? (requerimientos ?? []).filter((r) => r.solicitante === currentUser.nombre)
     : (requerimientos ?? []);
@@ -43,7 +51,7 @@ export function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Buenos días, {currentUser?.nombre?.split(" ")[0]}</h1>
-          <p className="text-sm text-muted-foreground">{activeCompany?.nombre} · Lunes, 5 de agosto de 2024</p>
+          <p className="text-sm text-muted-foreground">{activeCompany?.nombre} · {hoyFormateado}</p>
         </div>
         {currentUser?.role !== "aprobador_cfo" && (
           <Link to="/cliente/requerimientos/nuevo">
@@ -168,35 +176,32 @@ export function Dashboard() {
       </div>
 
       {/* Chart */}
-      <Card className="p-5">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="font-semibold">Ahorro mensual</h2>
-            <p className="text-sm text-muted-foreground">Reportado vs. auditado (últimos 6 meses)</p>
+      {puedeVerAnalitica && (
+        <Card className="p-5">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <h2 className="font-semibold">Ahorro mensual</h2>
+              <p className="text-sm text-muted-foreground">Monto estimado vs. precio final adjudicado (últimos 6 meses)</p>
+            </div>
+            <TrendingUp className="h-5 w-5 text-success" />
           </div>
-          <TrendingUp className="h-5 w-5 text-success" />
-        </div>
-        <ChartContainer config={chartConfig} className="h-[260px] w-full">
-          <AreaChart data={ahorroMensual}>
-            <defs>
-              <linearGradient id="fillAuditado" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-auditado)" stopOpacity={0.8} />
-                <stop offset="95%" stopColor="var(--color-auditado)" stopOpacity={0.1} />
-              </linearGradient>
-              <linearGradient id="fillReportado" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="var(--color-reportado)" stopOpacity={0.5} />
-                <stop offset="95%" stopColor="var(--color-reportado)" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <CartesianGrid vertical={false} strokeDasharray="3 3" />
-            <XAxis dataKey="mes" tickLine={false} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Area dataKey="reportado" type="monotone" stroke="var(--color-reportado)" fill="url(#fillReportado)" strokeWidth={2} />
-            <Area dataKey="auditado" type="monotone" stroke="var(--color-auditado)" fill="url(#fillAuditado)" strokeWidth={2} />
-          </AreaChart>
-        </ChartContainer>
-      </Card>
+          <ChartContainer config={chartConfig} className="h-[260px] w-full">
+            <AreaChart data={analitica?.ahorroMensual ?? []}>
+              <defs>
+                <linearGradient id="fillAhorro" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-ahorro)" stopOpacity={0.8} />
+                  <stop offset="95%" stopColor="var(--color-ahorro)" stopOpacity={0.1} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <XAxis dataKey="mes" tickLine={false} axisLine={false} />
+              <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <Area dataKey="ahorro" type="monotone" stroke="var(--color-ahorro)" fill="url(#fillAhorro)" strokeWidth={2} />
+            </AreaChart>
+          </ChartContainer>
+        </Card>
+      )}
     </div>
   );
 }

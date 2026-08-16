@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { NotificationDropdown } from "@/components/shared/NotificationDropdown";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { requerimientos, proveedores } from "@/lib/mockData";
+import { fetchRequerimientos } from "@/lib/api/requerimientos";
+import { fetchProveedores } from "@/lib/api/proveedores";
+import type { Requerimiento, Proveedor } from "@/lib/types";
 
 type Portal = "cliente" | "proveedor" | "interno";
 
@@ -57,6 +59,8 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
   const navigate = useNavigate();
   const { currentUser, activeCompany, switchCompany, logout } = useAuth();
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchRequerimientos, setSearchRequerimientos] = useState<Requerimiento[]>([]);
+  const [searchProveedores, setSearchProveedores] = useState<Proveedor[]>([]);
 
   useEffect(() => {
     function handler(e: KeyboardEvent) {
@@ -68,6 +72,15 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
+
+  // Loaded lazily on first open (not on every header mount) — cmdk filters
+  // this list client-side as the user types, so a real dataset actually
+  // makes search work instead of always showing the same 5 fixed items.
+  useEffect(() => {
+    if (!searchOpen || portal !== "cliente") return;
+    fetchRequerimientos().then(setSearchRequerimientos).catch(() => undefined);
+    fetchProveedores().then(setSearchProveedores).catch(() => undefined);
+  }, [searchOpen, portal]);
 
   function go(path: string) {
     setSearchOpen(false);
@@ -162,12 +175,12 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
           {portal === "cliente" && (
             <>
               <CommandGroup heading="Requerimientos">
-                {requerimientos.slice(0, 5).map((r) => (
+                {searchRequerimientos.slice(0, 20).map((r) => (
                   <CommandItem key={r.id} onSelect={() => go(`requerimientos/${r.id}`)}>{r.id} · {r.titulo}</CommandItem>
                 ))}
               </CommandGroup>
               <CommandGroup heading="Proveedores">
-                {proveedores.slice(0, 5).map((p) => (
+                {searchProveedores.slice(0, 20).map((p) => (
                   <CommandItem key={p.id} onSelect={() => go("directorio")}>{p.nombre}</CommandItem>
                 ))}
               </CommandGroup>
