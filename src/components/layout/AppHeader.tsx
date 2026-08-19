@@ -15,22 +15,26 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchRequerimientos } from "@/lib/api/requerimientos";
 import { fetchProveedores } from "@/lib/api/proveedores";
 import type { Requerimiento, Proveedor } from "@/lib/types";
+import type { Role } from "@/lib/mock/users";
 
 type Portal = "cliente" | "proveedor" | "interno";
 
-const destinationsByPortal: Record<Portal, { label: string; to: string }[]> = {
+// roles mirrors each portal's sidebar navItems (ClienteLayout/ProveedorLayout/
+// InternoLayout) so the command palette never offers a destination the
+// sidebar itself would hide — an item with no roles is open to the whole portal.
+const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: Role[] }[]> = {
   cliente: [
     { label: "Dashboard", to: "dashboard" },
     { label: "Nuevo requerimiento", to: "requerimientos/nuevo" },
-    { label: "Licitaciones", to: "licitaciones" },
-    { label: "Negociación", to: "negociacion" },
-    { label: "Adjudicación", to: "adjudicacion" },
+    { label: "Licitaciones", to: "licitaciones", roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
+    { label: "Negociación", to: "negociacion", roles: ["comprador", "admin_cliente"] },
+    { label: "Adjudicación", to: "adjudicacion", roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
     { label: "Contratos / POs", to: "contratos" },
-    { label: "Seguimiento", to: "seguimiento" },
-    { label: "Disputas", to: "disputas" },
-    { label: "Directorio de proveedores", to: "directorio" },
-    { label: "Analítica CFO", to: "analitica" },
-    { label: "Aprobaciones", to: "aprobaciones" },
+    { label: "Seguimiento", to: "seguimiento", roles: ["comprador", "admin_cliente"] },
+    { label: "Disputas", to: "disputas", roles: ["comprador", "admin_cliente"] },
+    { label: "Directorio de proveedores", to: "directorio", roles: ["comprador", "admin_cliente"] },
+    { label: "Analítica CFO", to: "analitica", roles: ["aprobador_cfo", "admin_cliente"] },
+    { label: "Aprobaciones", to: "aprobaciones", roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
   ],
   proveedor: [
     { label: "Dashboard", to: "dashboard" },
@@ -45,12 +49,12 @@ const destinationsByPortal: Record<Portal, { label: string; to: string }[]> = {
   ],
   interno: [
     { label: "Casos activos", to: "dashboard" },
-    { label: "Cola de homologación", to: "homologacion" },
+    { label: "Cola de homologación", to: "homologacion", roles: ["compliance_ops"] },
     { label: "Editor RFP", to: "editor-rfp" },
     { label: "Auditoría de ahorro", to: "auditoria" },
-    { label: "Mediación de disputas", to: "mediacion" },
-    { label: "Admin clientes", to: "clientes" },
-    { label: "Benchmark de mercado", to: "benchmark" },
+    { label: "Mediación de disputas", to: "mediacion", roles: ["compliance_ops"] },
+    { label: "Admin clientes", to: "clientes", roles: ["compliance_ops"] },
+    { label: "Benchmark de mercado", to: "benchmark", roles: ["compliance_ops"] },
   ],
 };
 
@@ -168,9 +172,11 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
         <CommandList>
           <CommandEmpty>Sin resultados.</CommandEmpty>
           <CommandGroup heading="Ir a">
-            {destinationsByPortal[portal].map((d) => (
-              <CommandItem key={d.to} onSelect={() => go(d.to)}>{d.label}</CommandItem>
-            ))}
+            {destinationsByPortal[portal]
+              .filter((d) => !d.roles || (currentUser && d.roles.includes(currentUser.role)))
+              .map((d) => (
+                <CommandItem key={d.to} onSelect={() => go(d.to)}>{d.label}</CommandItem>
+              ))}
           </CommandGroup>
           {portal === "cliente" && (
             <>

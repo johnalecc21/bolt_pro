@@ -10,9 +10,9 @@ const navItems: PortalNavItem[] = [
   { to: "homologacion", label: "Cola Homologación", icon: ClipboardCheck, roles: ["compliance_ops"] },
   { to: "editor-rfp", label: "Editor RFP", icon: FileEdit },
   { to: "auditoria", label: "Auditoría Ahorro", icon: TrendingUp },
-  { to: "mediacion", label: "Mediación Disputas", icon: Scale },
+  { to: "mediacion", label: "Mediación Disputas", icon: Scale, roles: ["compliance_ops"] },
   { to: "clientes", label: "Admin Clientes", icon: Building2, roles: ["compliance_ops"] },
-  { to: "benchmark", label: "Benchmark Datos", icon: Database },
+  { to: "benchmark", label: "Benchmark Datos", icon: Database, roles: ["compliance_ops"] },
 ];
 
 export function InternoLayout() {

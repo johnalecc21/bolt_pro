@@ -1,17 +1,22 @@
-import { api } from "@/lib/api/http";
+import { z } from "zod";
+import { api, parseApiResponse } from "@/lib/api/http";
 import type { Aprobacion } from "@/lib/types";
 
-interface ApiAprobacion {
-  id: string;
-  tipo: "SALIDA_LICITACION" | "ADJUDICACION" | "EXCEPCION_PRESUPUESTO";
-  monto: number;
-  urgente: boolean;
-  createdAt: string;
-  tipoRegla: "UNICA" | "SECUENCIAL";
-  pasoActual: number;
-  rolesRequeridos: string[];
-  requerimiento: { titulo: string; solicitante?: { nombre: string } };
-}
+const apiAprobacionSchema = z.object({
+  id: z.string(),
+  tipo: z.enum(["SALIDA_LICITACION", "ADJUDICACION", "EXCEPCION_PRESUPUESTO"]),
+  monto: z.number(),
+  urgente: z.boolean(),
+  createdAt: z.string(),
+  tipoRegla: z.enum(["UNICA", "SECUENCIAL"]),
+  pasoActual: z.number(),
+  rolesRequeridos: z.array(z.string()),
+  requerimiento: z.object({
+    titulo: z.string(),
+    solicitante: z.object({ nombre: z.string() }).optional(),
+  }),
+});
+type ApiAprobacion = z.infer<typeof apiAprobacionSchema>;
 
 const TIPO_LABEL: Record<ApiAprobacion["tipo"], Aprobacion["tipo"]> = {
   SALIDA_LICITACION: "Salida a licitación",
@@ -40,8 +45,8 @@ function toAprobacion(a: ApiAprobacion): Aprobacion {
 }
 
 export async function fetchAprobaciones(): Promise<Aprobacion[]> {
-  const { data } = await api.get<ApiAprobacion[]>("/aprobaciones");
-  return data.map(toAprobacion);
+  const { data } = await api.get<unknown>("/aprobaciones");
+  return parseApiResponse(z.array(apiAprobacionSchema), data, "aprobaciones").map(toAprobacion);
 }
 
 export async function aprobarSolicitud(id: string) {
