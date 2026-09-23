@@ -60,7 +60,11 @@ export function PortalShellLayout({
   const { currentUser, logout } = useAuth();
   const { collapsed, toggle } = useSidebarCollapsed();
   const segments = location.pathname.split("/").filter(Boolean);
-  const crumbs = segments.slice(2).map((s) => s.charAt(0).toUpperCase() + s.slice(1));
+  // Record ids (cuids like "cmuel…", seed codes like "P-001") read as noise in
+  // the breadcrumb — show them as "Detalle" instead.
+  const crumbs = segments
+    .slice(2)
+    .map((s) => (/^c[a-z0-9]{20,}$/.test(s) || /^[A-Z]+-\d+$/.test(s) ? "Detalle" : s.charAt(0).toUpperCase() + s.slice(1)));
   const visibleItems = navItems.filter((item) => !item.roles || (currentUser && item.roles.includes(currentUser.role)));
 
   function handleLogout() {

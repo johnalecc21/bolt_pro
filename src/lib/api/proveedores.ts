@@ -45,7 +45,9 @@ function toProveedor(p: ApiProveedor): Proveedor {
 }
 
 export async function fetchProveedores(params?: { categoria?: string; minScore?: number; query?: string }): Promise<Proveedor[]> {
-  const { data } = await api.get<ApiProveedor[]>("/proveedores", { params });
+  // The API names the text filter `q` (it matches name, description and catalog items).
+  const { query, ...rest } = params ?? {};
+  const { data } = await api.get<ApiProveedor[]>("/proveedores", { params: { ...rest, ...(query ? { q: query } : {}) } });
   return data.map(toProveedor);
 }
 

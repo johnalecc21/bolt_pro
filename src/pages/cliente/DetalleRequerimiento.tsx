@@ -48,9 +48,11 @@ export function DetalleRequerimiento() {
           </div>
           <p className="text-sm text-muted-foreground">{req.titulo}</p>
         </div>
-        <Link to={`/cliente/requerimientos/${id}/shortlist`}>
-          <Button variant="outline">Agregar proveedores</Button>
-        </Link>
+        {req.estado === "en_licitacion" && (
+          <Link to={`/cliente/requerimientos/${id}/shortlist`}>
+            <Button variant="outline">Agregar proveedores</Button>
+          </Link>
+        )}
         <Link to={`/cliente/licitaciones/${id}/comparativo`}>
           <Button>Ver Comparativo</Button>
         </Link>
