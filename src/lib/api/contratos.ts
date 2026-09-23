@@ -2,6 +2,7 @@ import { api } from "@/lib/api/http";
 import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatContratoCodigo } from "@/lib/codigo";
 import type { Contrato } from "@/lib/types";
+import type { Moneda } from "@/lib/moneda";
 import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
 
 const BUCKET = "contratos-documentos";
@@ -13,6 +14,7 @@ interface ApiContrato {
   proveedorNombre: string;
   categoria: string;
   monto: number;
+  moneda: Moneda;
   vigenciaInicio: string;
   vigenciaFin: string;
   estado: "ACTIVO" | "POR_VENCER" | "VENCIDO" | "EN_RENOVACION";
@@ -43,6 +45,7 @@ function toContrato(c: ApiContrato): Contrato {
     proveedor: c.proveedorNombre,
     categoria: c.categoria,
     monto: c.monto,
+    moneda: c.moneda,
     vigenciaInicio: c.vigenciaInicio.slice(0, 10),
     vigenciaFin: c.vigenciaFin.slice(0, 10),
     estado: ESTADO_LABEL[c.estado],

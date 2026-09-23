@@ -12,6 +12,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchRequerimiento } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 
+import { formatMoney } from "@/lib/moneda";
 const formatos = [
   { id: "subasta", title: "Subasta Inversa", icon: Gavel, desc: "Los proveedores ven su posición relativa en tiempo real y mejoran su oferta.", pros: "Mejor precio", cons: "Guerra de precios" },
   { id: "ciegas", title: "Ofertas Ciegas", icon: Eye, desc: "Cada proveedor presenta una única mejora sin ver el ranking.", pros: "Protege márgenes", cons: "Menor presión" },
@@ -188,12 +189,12 @@ export function Negociacion() {
                       </div>
                       <div className="flex-1">
                         <p className="font-semibold">{item.proveedor}</p>
-                        <p className="text-sm text-muted-foreground">Oferta actual: ${item.monto.toLocaleString()}</p>
+                        <p className="text-sm text-muted-foreground">Oferta actual: {formatMoney(item.monto, requerimiento.moneda)}</p>
                       </div>
                       <div className="text-right">
                         <p className={cn("flex items-center gap-1 text-sm font-semibold", cambio > 0 ? "text-success" : "text-muted-foreground")}>
                           {cambio > 0 && <TrendingUp className="h-3.5 w-3.5 rotate-180" />}
-                          {cambio > 0 ? `-$${cambio.toLocaleString()}` : "Sin cambios"}
+                          {cambio > 0 ? `-${formatMoney(cambio, requerimiento.moneda)}` : "Sin cambios"}
                         </p>
                         <p className="text-xs text-muted-foreground">vs. ronda 1</p>
                       </div>
@@ -210,7 +211,7 @@ export function Negociacion() {
               <div className="flex-1">
                 <p className="text-sm font-medium">Recomendación de la consultora</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {ranking[0]?.proveedor} lidera con una mejora de ${(ranking[0]?.montoInicial - ranking[0]?.monto).toLocaleString()}. El margen de mejora restante suele ser marginal después de la primera hora — evalúa cerrar pronto para no dañar la relación con el proveedor.
+                  {ranking[0]?.proveedor} lidera con una mejora de {formatMoney(ranking[0]?.montoInicial - ranking[0]?.monto, requerimiento.moneda)}. El margen de mejora restante suele ser marginal después de la primera hora — evalúa cerrar pronto para no dañar la relación con el proveedor.
                 </p>
               </div>
               <ConfirmDialog

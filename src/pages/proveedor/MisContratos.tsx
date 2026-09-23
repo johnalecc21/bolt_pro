@@ -12,6 +12,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar, Download, Loader2, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+import { formatMoney } from "@/lib/moneda";
 const semaforoConfig = {
   completado: { label: "Completado", color: "text-success", bg: "bg-success/15" },
   en_riesgo: { label: "En riesgo", color: "text-warning-foreground", bg: "bg-warning/15" },
@@ -72,7 +73,7 @@ export function MisContratos() {
                   <p className="text-sm text-muted-foreground">{c.cliente}</p>
                 </div>
                 <div className="flex items-center gap-4">
-                  <span className="text-sm font-medium">${c.monto.toLocaleString()}</span>
+                  <span className="text-sm font-medium">{formatMoney(c.monto, c.moneda)}</span>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" /> {c.vigenciaInicio} — {c.vigenciaFin}
                   </div>

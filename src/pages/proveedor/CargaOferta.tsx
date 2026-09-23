@@ -16,6 +16,7 @@ import { fetchMiOferta, fetchMisOfertas, guardarMiOferta, enviarMiOferta, type M
 import { fetchPreguntas, preguntar as apiPreguntar } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
+import { formatMoney } from "@/lib/moneda";
 export function CargaOferta() {
   const { requerimientoId } = useParams();
   return requerimientoId ? <OfertaDetalle requerimientoId={requerimientoId} /> : <MisOfertasList />;
@@ -72,7 +73,7 @@ function MisOfertasList() {
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Vence {o.fechaLimite}</span>
                   </div>
                 </div>
-                {o.precioTotal != null && <p className="text-sm font-semibold">${o.precioTotal.toLocaleString()}</p>}
+                {o.precioTotal != null && <p className="text-sm font-semibold">{formatMoney(o.precioTotal, o.moneda)}</p>}
                 <StatusBadge estado={o.enviada ? "Activo" : "pendiente_aprobacion"} className="capitalize" />
               </div>
             </Card>
@@ -192,11 +193,11 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
           <>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Precio unitario (USD)</Label>
+                <Label>Precio unitario ({invitacion?.moneda ?? "USD"})</Label>
                 <Input type="number" value={oferta.precioUnitario || ""} onChange={(e) => update({ precioUnitario: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">
-                <Label>Precio total (USD)</Label>
+                <Label>Precio total ({invitacion?.moneda ?? "USD"})</Label>
                 <Input type="number" value={oferta.precioTotal || ""} onChange={(e) => update({ precioTotal: Number(e.target.value) })} />
               </div>
               <div className="space-y-1.5">

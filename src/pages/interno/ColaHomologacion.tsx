@@ -4,17 +4,120 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle, Copy, ExternalLink } from "lucide-react";
-import { fetchColaHomologacion, resolverHomologacion as apiResolver, obtenerUrlDescarga } from "@/lib/api/homologacion";
+import { ClipboardCheck, Check, X, HelpCircle, AlertTriangle, Copy, ExternalLink, ShieldAlert, ShieldCheck, FileCheck } from "lucide-react";
+import {
+  fetchColaHomologacion,
+  resolverHomologacion as apiResolver,
+  obtenerUrlDescarga,
+  registrarVerificacion,
+  validarDocumento,
+  CATEGORIA_LABEL,
+  LISTA_LABEL,
+  type ColaHomologacionItem,
+  type VerificacionLista,
+} from "@/lib/api/homologacion";
+import { cn } from "@/lib/utils";
 import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
 const estadoDocMap: Record<string, string> = { validado: "Activo", subido: "pendiente_aprobacion", pendiente: "pendiente_aprobacion", vencido: "Vencido" };
 
+const RESULTADO_LABEL: Record<VerificacionLista["resultado"], string> = {
+  sin_coincidencia: "Sin coincidencia",
+  coincidencia: "Posible coincidencia",
+  no_disponible: "Lista no disponible",
+  pendiente_manual: "Consulta manual pendiente",
+};
+
+/** Manual lists carry "Consultar en <url>" as their detalle — pull the link out for a button. */
+function urlConsulta(v: VerificacionLista): string | null {
+  const m = v.detalle?.match(/https?:\/\/\S+/);
+  return m ? m[0] : null;
+}
+
+function VerificacionesListas({ item, onChange }: { item: ColaHomologacionItem; onChange: () => void }) {
+  async function registrar(lista: string, resultado: "SIN_COINCIDENCIA" | "COINCIDENCIA", nota?: string) {
+    try {
+      await registrarVerificacion(item.proveedorId, lista, resultado, nota);
+      toast.success("Verificación registrada", { description: `${LISTA_LABEL[lista] ?? lista}: ${resultado === "COINCIDENCIA" ? "coincidencia" : "sin coincidencia"}` });
+      onChange();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
+  }
+
+  if (item.verificaciones.length === 0) {
+    return <p className="text-sm text-muted-foreground">Sin verificaciones en listas registradas para este envío.</p>;
+  }
+  return (
+    <div className="space-y-1.5">
+      {item.verificaciones.map((v) => {
+        const url = urlConsulta(v);
+        const requiereAccion = v.resultado !== "sin_coincidencia";
+        return (
+          <div key={v.lista} className={cn("rounded-lg border p-2 text-sm", requiereAccion ? "border-warning/40 bg-warning/5" : "border-border")}>
+            <div className="flex items-center justify-between gap-2">
+              <span className="flex items-center gap-1.5 font-medium">
+                {requiereAccion ? <ShieldAlert className="h-4 w-4 text-warning-foreground" /> : <ShieldCheck className="h-4 w-4 text-success" />}
+                {LISTA_LABEL[v.lista] ?? v.lista}
+              </span>
+              <span className="text-xs text-muted-foreground">{RESULTADO_LABEL[v.resultado]}</span>
+            </div>
+            {v.detalle && !url && <p className="mt-1 text-xs text-muted-foreground">{v.detalle}</p>}
+            {v.verificadoPor && <p className="mt-1 text-xs text-muted-foreground">Registrado por {v.verificadoPor}</p>}
+            {requiereAccion && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {url && (
+                  <a href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-xs text-primary hover:underline">
+                    <ExternalLink className="h-3 w-3" /> Consultar en el sitio oficial
+                  </a>
+                )}
+                <ConfirmDialog
+                  trigger={<Button size="sm" variant="outline" className="h-7 text-xs">Sin coincidencia</Button>}
+                  title={`Registrar ${LISTA_LABEL[v.lista] ?? v.lista}: sin coincidencia`}
+                  description="Queda en el log de auditoría con tu usuario. Si era una coincidencia automática, explica por qué es un homónimo."
+                  requireReason
+                  reasonLabel="Soporte de la consulta (número de certificado, homónimo, etc.)"
+                  confirmLabel="Registrar"
+                  onConfirm={(nota) => registrar(v.lista, "SIN_COINCIDENCIA", nota)}
+                />
+                <ConfirmDialog
+                  trigger={<Button size="sm" variant="outline" className="h-7 border-destructive/30 text-xs text-destructive">Coincidencia confirmada</Button>}
+                  title={`Registrar ${LISTA_LABEL[v.lista] ?? v.lista}: coincidencia`}
+                  description="La homologación no podrá aprobarse mientras esta coincidencia siga registrada."
+                  requireReason
+                  confirmLabel="Registrar"
+                  destructive
+                  onConfirm={(nota) => registrar(v.lista, "COINCIDENCIA", nota)}
+                />
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function ColaHomologacion() {
   const { data, loading, reload } = useApiData(fetchColaHomologacion);
   const cola = (data ?? []).filter((r) => r.estado === "zona_gris" || r.estado === "en_revision");
+  // Approved proveedores that uploaded an optional document afterwards —
+  // reviewed one document at a time, without reopening the homologación.
+  const documentosSueltos = (data ?? [])
+    .filter((r) => r.estado === "aprobado")
+    .flatMap((r) => r.documentos.filter((d) => d.estado === "subido").map((d) => ({ ...d, proveedor: r.proveedorNombre })));
+
+  async function resolverDocumento(docId: string, valido: boolean, motivo?: string) {
+    try {
+      await validarDocumento(docId, valido, motivo);
+      toast.success(valido ? "Documento validado" : "Documento rechazado");
+      reload();
+    } catch (err) {
+      toast.error(apiErrorMessage(err));
+    }
+  }
 
   async function aprobar(proveedorId: string, proveedor: string) {
     try {
@@ -67,6 +170,35 @@ export function ColaHomologacion() {
         <p className="text-sm text-muted-foreground">Revisión manual de proveedores en zona gris de scoring automático</p>
       </div>
 
+      {!loading && documentosSueltos.length > 0 && (
+        <Card className="p-5">
+          <h2 className="mb-1 flex items-center gap-2 font-semibold"><FileCheck className="h-4 w-4" /> Documentos por validar de proveedores ya homologados</h2>
+          <p className="mb-3 text-sm text-muted-foreground">Documentos opcionales (HSE, sostenibilidad, centrales de riesgo, SARLAFT) cargados después de la aprobación. Algunos clientes los exigen para invitar.</p>
+          <div className="space-y-2">
+            {documentosSueltos.map((d) => (
+              <div key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border p-3 text-sm">
+                <div>
+                  <p className="font-medium">{d.nombre}</p>
+                  <p className="text-xs text-muted-foreground">{d.proveedor} · {CATEGORIA_LABEL[d.categoria]}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button size="sm" variant="ghost" onClick={() => verDocumento(d.id)}>Ver</Button>
+                  <Button size="sm" className="gap-1.5" onClick={() => resolverDocumento(d.id, true)}><Check className="h-4 w-4" /> Validar</Button>
+                  <ConfirmDialog
+                    trigger={<Button size="sm" variant="outline" className="gap-1.5 border-destructive/30 text-destructive"><X className="h-4 w-4" /> Rechazar</Button>}
+                    title="Rechazar documento"
+                    requireReason
+                    confirmLabel="Rechazar"
+                    destructive
+                    onConfirm={(motivo) => resolverDocumento(d.id, false, motivo)}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
       {loading ? <TableSkeleton /> : cola.length === 0 ? (
         <EmptyState icon={ClipboardCheck} title="Sin casos pendientes de revisión" />
       ) : (
@@ -94,7 +226,10 @@ export function ColaHomologacion() {
                   <div className="space-y-1.5">
                     {r.documentos.map((d) => (
                       <div key={d.id} className="flex items-center justify-between rounded-lg border border-border p-2 text-sm">
-                        <span>{d.nombre}</span>
+                        <span>
+                          {d.nombre}
+                          {!d.obligatorio && <span className="ml-1 text-xs text-muted-foreground">(opcional)</span>}
+                        </span>
                         <div className="flex items-center gap-2">
                           {d.estado !== "pendiente" && (
                             <button onClick={() => verDocumento(d.id)} className="text-xs text-primary hover:underline">Ver</button>
@@ -106,10 +241,9 @@ export function ColaHomologacion() {
                   </div>
                 </div>
                 <div>
-                  <p className="mb-2 text-xs font-medium text-muted-foreground">Resultado de validación automática (OCR + OFAC)</p>
+                  <p className="mb-2 text-xs font-medium text-muted-foreground">Resultado de validación automática (OCR)</p>
                   <div className="space-y-1.5 text-sm text-muted-foreground">
                     <p>{r.alertas.some((a) => a.includes("NIT/RUT")) ? "⚠" : "✓"} {r.nitDetectado ? `NIT/RUT detectado: ${r.nitDetectado}` : "NIT/RUT no detectado en el documento"}</p>
-                    <p>{r.alertas.some((a) => a.includes("OFAC")) ? "⚠" : "✓"} {r.alertas.some((a) => a.includes("OFAC")) ? "Posible coincidencia en lista OFAC/SDN" : "Sin coincidencias en lista OFAC/SDN"}</p>
                     <p>{r.score >= 70 ? "✓" : "⚠"} Score automático: {r.score || "pendiente"}/100</p>
                   </div>
                   {r.nitDetectado && (
@@ -124,6 +258,11 @@ export function ColaHomologacion() {
                     </div>
                   )}
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">Listas restrictivas (razón social y representante legal)</p>
+                <VerificacionesListas item={r} onChange={reload} />
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">

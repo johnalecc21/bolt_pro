@@ -19,6 +19,7 @@ import {
 import { apiErrorMessage } from "@/lib/api/http";
 import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 
+import { formatMoney } from "@/lib/moneda";
 const UMBRAL_LEGAL = 50000;
 
 export function Adjudicacion() {
@@ -72,6 +73,7 @@ export function Adjudicacion() {
       proveedor: adjudicacion.proveedor,
       tituloProceso: requerimiento.titulo,
       precioFinal: adjudicacion.precioFinal,
+      moneda: requerimiento.moneda,
       plazoDias: adjudicacion.plazoDias,
       condicionesPagoDias: adjudicacion.condicionesPagoDias,
       garantiaMeses: adjudicacion.garantiaMeses,
@@ -144,7 +146,7 @@ export function Adjudicacion() {
         <div className="p-6">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {[
-              ["Precio final", `$${adjudicacion.precioFinal.toLocaleString()}`],
+              ["Precio final", formatMoney(adjudicacion.precioFinal, requerimiento.moneda)],
               ["Plazo de entrega", `${adjudicacion.plazoDias} días`],
               ["Condiciones de pago", `${adjudicacion.condicionesPagoDias} días`],
               ["Garantía", `${adjudicacion.garantiaMeses} meses`],
@@ -183,8 +185,8 @@ export function Adjudicacion() {
           </div>
           <div className="flex-1">
             <p className="text-sm text-muted-foreground">Ahorro logrado</p>
-            <p className="text-2xl font-bold text-success">${ahorro.toLocaleString()}</p>
-            <p className="text-sm text-muted-foreground">{ahorroPct}% del presupuesto inicial (${presupuestoInicial.toLocaleString()})</p>
+            <p className="text-2xl font-bold text-success">{formatMoney(ahorro, requerimiento.moneda)}</p>
+            <p className="text-sm text-muted-foreground">{ahorroPct}% del presupuesto inicial ({formatMoney(presupuestoInicial, requerimiento.moneda)})</p>
           </div>
         </div>
       </Card>
@@ -206,7 +208,7 @@ export function Adjudicacion() {
           <div className="space-y-2">
             <div className="flex justify-between"><span>Proveedor:</span><span className="font-medium">{adjudicacion.proveedor}</span></div>
             <div className="flex justify-between"><span>Servicio:</span><span className="font-medium">{requerimiento.titulo}</span></div>
-            <div className="flex justify-between"><span>Monto total:</span><span className="font-bold">${adjudicacion.precioFinal.toLocaleString()} USD</span></div>
+            <div className="flex justify-between"><span>Monto total:</span><span className="font-bold">{formatMoney(adjudicacion.precioFinal, requerimiento.moneda)}</span></div>
             <div className="flex justify-between"><span>Plazo:</span><span className="font-medium">{adjudicacion.plazoDias} días</span></div>
             <div className="flex justify-between"><span>Pago:</span><span className="font-medium">{adjudicacion.condicionesPagoDias} días netos</span></div>
           </div>

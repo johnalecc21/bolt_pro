@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import type { Company, MockUser, Portal, Role } from "@/lib/mock/users";
+import type { Moneda } from "@/lib/moneda";
 
 interface ApiUser {
   id: string;
@@ -15,10 +16,12 @@ interface ApiUser {
 interface ApiCompany {
   id: string;
   nombre: string;
+  pais?: string;
+  monedaBase?: Moneda;
 }
 
 export function toCompany(c: ApiCompany): Company {
-  return { id: c.id, nombre: c.nombre };
+  return { id: c.id, nombre: c.nombre, pais: c.pais, monedaBase: c.monedaBase };
 }
 
 export function toMockUser(user: ApiUser, companies: ApiCompany[], requires2FA: boolean): MockUser {

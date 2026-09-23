@@ -8,7 +8,7 @@ import { ProviderCard } from "@/components/shared/ProviderCard";
 import { ArrowLeft, UserPlus, Check, AlertCircle } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchProveedores, createProveedorExterno } from "@/lib/api/proveedores";
-import { fetchRequerimiento, invitarProveedores } from "@/lib/api/requerimientos";
+import { fetchRequerimiento, invitarProveedores, describirExcluidos } from "@/lib/api/requerimientos";
 import { apiErrorMessage } from "@/lib/api/http";
 
 export function ShortlistProveedores() {
@@ -49,7 +49,7 @@ export function ShortlistProveedores() {
       const invitados = selected.length - excluidos.length;
       if (excluidos.length > 0) {
         toast.warning(`${invitados} proveedor(es) invitados`, {
-          description: `${excluidos.length} no se invitaron por no tener homologación aprobada: ${excluidos.map((e) => e.nombre).join(", ")}.`,
+          description: `${excluidos.length} no se invitaron por no cumplir los requisitos de homologación: ${describirExcluidos(excluidos)}.`,
         });
       } else {
         toast.success("Invitaciones enviadas", { description: `${invitados} proveedores invitados a licitar.` });

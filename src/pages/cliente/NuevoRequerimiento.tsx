@@ -13,8 +13,11 @@ import { Sparkles, ArrowLeft, ArrowRight, Plus, X, Check, AlertCircle, Users } f
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchProveedores } from "@/lib/api/proveedores";
-import { createRequerimiento } from "@/lib/api/requerimientos";
+import { createRequerimiento, describirExcluidos } from "@/lib/api/requerimientos";
 import { apiErrorMessage } from "@/lib/api/http";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { useMonedaBase } from "@/hooks/useMonedaBase";
+import { formatMoney, MONEDAS, type Moneda } from "@/lib/moneda";
 
 const categoriasCatalogo = ["Servicios Generales", "Materia Prima"];
 const TOTAL_STEPS = 6;
@@ -26,6 +29,8 @@ export function NuevoRequerimiento() {
   const [descripcion, setDescripcion] = useState("");
   const [categoria, setCategoria] = useState("Tecnología");
   const [presupuesto, setPresupuesto] = useState("");
+  const monedaBase = useMonedaBase();
+  const [moneda, setMoneda] = useState<Moneda>(monedaBase);
   const [fechaLimite, setFechaLimite] = useState("");
   const [criterios, setCriterios] = useState({ precio: 50, tiempo: 25, calidad: 15, pago: 10 });
   const [requisitosTecnicos, setRequisitosTecnicos] = useState("");
@@ -72,6 +77,7 @@ export function NuevoRequerimiento() {
         descripcion: descripcionCompleta || undefined,
         categoria,
         montoEstimado: Number(presupuesto),
+        moneda,
         fechaLimite,
         criteriosPeso: criterios,
         especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
@@ -79,7 +85,7 @@ export function NuevoRequerimiento() {
       });
       if (excluidos.length > 0) {
         toast.warning("Requerimiento enviado a aprobación", {
-          description: `${excluidos.length} proveedor(es) no se preseleccionaron por no tener homologación aprobada: ${excluidos.map((e) => e.nombre).join(", ")}.`,
+          description: `${excluidos.length} proveedor(es) no se preseleccionaron por no cumplir los requisitos de homologación: ${describirExcluidos(excluidos)}.`,
         });
       } else {
         toast.success("Requerimiento enviado a aprobación", { description: requerimiento.id });
@@ -223,7 +229,12 @@ export function NuevoRequerimiento() {
               </div>
               <div className="space-y-2">
                 <Label>Presupuesto estimado</Label>
-                <Input type="number" placeholder="185000" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value)} />
+                <div className="flex gap-2">
+                  <Input type="number" placeholder="185000" value={presupuesto} onChange={(e) => setPresupuesto(e.target.value)} />
+                  <NativeSelect aria-label="Moneda" value={moneda} onChange={(e) => setMoneda(e.target.value as Moneda)}>
+                    {MONEDAS.map((m) => <NativeSelectOption key={m.value} value={m.value}>{m.value}</NativeSelectOption>)}
+                  </NativeSelect>
+                </div>
               </div>
               <div className="space-y-2">
                 <Label>Fecha requerida</Label>
@@ -313,7 +324,7 @@ export function NuevoRequerimiento() {
                 ["Descripción", descripcion || "(sin definir)"],
                 ["Categoría", categoria],
                 ["Prioridad", "Normal"],
-                ["Presupuesto", presupuesto ? `$${Number(presupuesto).toLocaleString()}` : "(sin definir)"],
+                ["Presupuesto", presupuesto ? formatMoney(Number(presupuesto), moneda) : "(sin definir)"],
                 ["Fecha requerida", fechaLimite || "(sin definir)"],
                 ["Criterios", `Precio ${criterios.precio}% · Tiempo ${criterios.tiempo}% · Calidad ${criterios.calidad}% · Pago ${criterios.pago}%`],
                 ["Proveedores preseleccionados", String(proveedoresSeleccionados.length)],

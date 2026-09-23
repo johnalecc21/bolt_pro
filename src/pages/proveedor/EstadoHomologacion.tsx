@@ -36,6 +36,7 @@ export function EstadoHomologacion() {
   const pendientes = registro.documentos.filter((d) => d.estado === "pendiente" || d.estado === "vencido");
   const vencidos = registro.documentos.filter((d) => d.estado === "vencido");
   const aprobadaSinPendientes = registro.estado === "aprobado" && vencidos.length === 0;
+  const opcionalesPendientes = registro.documentos.filter((d) => !d.obligatorio && d.estado === "pendiente");
   const Icon = registro.estado === "aprobado" ? CheckCircle2 : registro.estado === "rechazado" ? XCircle : registro.estado === "zona_gris" ? AlertTriangle : Clock;
   const color = registro.estado === "aprobado" ? "text-success bg-success/10" : registro.estado === "rechazado" ? "text-destructive bg-destructive/10" : "text-warning-foreground bg-warning/10";
 
@@ -71,8 +72,17 @@ export function EstadoHomologacion() {
         <Card className="flex items-center justify-between p-6">
           <div className="flex items-center gap-2 text-sm">
             <CheckCircle2 className="h-4 w-4 text-success" />
-            <span>Todos tus documentos ({registro.documentos.length}) están validados y vigentes.</span>
+            <span>
+              Tus documentos obligatorios están validados y vigentes.
+              {opcionalesPendientes.length > 0 &&
+                ` Te faltan ${opcionalesPendientes.length} opcionales (HSE, sostenibilidad, centrales de riesgo, SARLAFT) que algunos clientes exigen para invitarte.`}
+            </span>
           </div>
+          {opcionalesPendientes.length > 0 && (
+            <Button asChild variant="outline" size="sm">
+              <Link to="/proveedor/homologacion">Agregar documentos opcionales</Link>
+            </Button>
+          )}
         </Card>
       ) : (
         <Card className="p-6">
@@ -80,7 +90,10 @@ export function EstadoHomologacion() {
           <div className="space-y-2">
             {registro.documentos.map((d) => (
               <div key={d.nombre} className="flex items-center justify-between rounded-lg border border-border p-3 text-sm">
-                <span>{d.nombre}</span>
+                <span>
+                  {d.nombre}
+                  {!d.obligatorio && <span className="ml-1 text-xs text-muted-foreground">(opcional)</span>}
+                </span>
                 <StatusBadge estado={d.estado === "validado" ? "Activo" : d.estado === "vencido" ? "Vencido" : d.estado === "subido" ? "en_revision" : "Pendiente"} />
               </div>
             ))}

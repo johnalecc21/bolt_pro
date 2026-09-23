@@ -15,6 +15,7 @@ import { Search, Download, FileCheck, Calendar, Loader2, Upload, FileUp, FilePlu
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
+import { formatMoney } from "@/lib/moneda";
 const hoy = new Date().toISOString().slice(0, 10);
 
 export function Contratos() {
@@ -105,7 +106,7 @@ export function Contratos() {
     setEmitiendo(true);
     try {
       const po = await emitirPo(emitiendoPoId, { monto, vigenciaInicio: nuevaPo.vigenciaInicio, vigenciaFin: nuevaPo.vigenciaFin });
-      toast.success("PO emitida", { description: `${po.codigo} — $${monto.toLocaleString()}` });
+      toast.success("PO emitida", { description: `${po.codigo} — ${formatMoney(monto, po.moneda)}` });
       setEmitiendoPoId(null);
       reload();
     } catch (err) {
@@ -172,7 +173,7 @@ export function Contratos() {
                       </td>
                       <td className="p-4 text-sm">{c.proveedor}</td>
                       <td className="p-4 text-sm text-muted-foreground">{c.categoria}</td>
-                      <td className="p-4 text-sm font-medium">${c.monto.toLocaleString()}</td>
+                      <td className="p-4 text-sm font-medium">{formatMoney(c.monto, c.moneda)}</td>
                       <td className="p-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <Calendar className="h-3.5 w-3.5" />

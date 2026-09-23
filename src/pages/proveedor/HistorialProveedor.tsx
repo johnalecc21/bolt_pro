@@ -9,6 +9,8 @@ import { fetchMiHistorial, type ProcesoHistorial } from "@/lib/api/ofertas";
 import { fetchMiPerfil } from "@/lib/api/proveedores";
 import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 
+import { formatMoney } from "@/lib/moneda";
+import { MisEvaluacionesCard } from "@/components/proveedor/MisEvaluacionesCard";
 const resultadoConfig: Record<ProcesoHistorial["resultado"], { label: string; icon: typeof Trophy; className: string; badgeVariant: "default" | "secondary" }> = {
   ganado: { label: "Ganado", icon: Trophy, className: "bg-success/10 text-success", badgeVariant: "default" },
   seleccionado: { label: "Seleccionado — pendiente de firma", icon: Trophy, className: "bg-info/10 text-info", badgeVariant: "default" },
@@ -29,6 +31,7 @@ export function HistorialProveedor() {
       proveedor: miPerfil.nombre,
       tituloProceso: p.titulo,
       precioFinal: p.precioFinal,
+      moneda: p.moneda,
       plazoDias: p.plazoDias ?? 0,
       condicionesPagoDias: p.condicionesPagoDias ?? 0,
       garantiaMeses: p.garantiaMeses ?? 0,
@@ -59,6 +62,8 @@ export function HistorialProveedor() {
         </p>
       </Card>
 
+      <MisEvaluacionesCard />
+
       {loading ? <TableSkeleton /> : <div className="space-y-3">
         {historialProcesos.map((p) => {
           const cfg = resultadoConfig[p.resultado];
@@ -74,7 +79,7 @@ export function HistorialProveedor() {
                     <p className="text-sm font-medium">{p.titulo}</p>
                     <Badge variant={cfg.badgeVariant} className="text-[10px]">{cfg.label}</Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">{p.id} · {p.cliente} · {p.fecha} · ${p.monto.toLocaleString()}</p>
+                  <p className="text-xs text-muted-foreground">{p.id} · {p.cliente} · {p.fecha} · {formatMoney(p.monto, p.moneda)}</p>
                   {p.feedback && (
                     <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-muted/50 p-2 text-xs text-muted-foreground">
                       <TrendingUp className="mt-0.5 h-3 w-3 shrink-0" /> {p.feedback}

@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import type { Moneda } from "@/lib/moneda";
 
 export type RoleCode = "COMPRADOR" | "APROBADOR_CFO" | "ADMIN_CLIENTE";
 
@@ -60,12 +61,18 @@ export async function guardarMatrizAprobacion(reglas: Regla[]): Promise<Regla[]>
   return data.map(toRegla);
 }
 
-export async function fetchUmbralContratoMarco(): Promise<number> {
-  const { data } = await api.get<{ umbralContratoMarco: number }>("/matriz-aprobacion/config");
-  return data.umbralContratoMarco;
+export interface ConfigEmpresa {
+  umbralContratoMarco: number;
+  monedaBase: Moneda;
+  pais: string;
 }
 
-export async function guardarUmbralContratoMarco(umbral: number): Promise<number> {
-  const { data } = await api.put<{ umbralContratoMarco: number }>("/matriz-aprobacion/config", { umbralContratoMarco: umbral });
-  return data.umbralContratoMarco;
+export async function fetchConfigEmpresa(): Promise<ConfigEmpresa> {
+  const { data } = await api.get<ConfigEmpresa>("/matriz-aprobacion/config");
+  return data;
+}
+
+export async function guardarConfigEmpresa(config: ConfigEmpresa): Promise<ConfigEmpresa> {
+  const { data } = await api.put<ConfigEmpresa>("/matriz-aprobacion/config", config);
+  return data;
 }

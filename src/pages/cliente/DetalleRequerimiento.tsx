@@ -22,6 +22,7 @@ import type { EstadoReq } from "@/lib/types";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { FileText } from "lucide-react";
 
+import { formatMoney } from "@/lib/moneda";
 function esElegible(aprobacion: AprobacionRequerimiento, role: RoleCode) {
   if (aprobacion.tipoRegla === "SECUENCIAL") {
     return aprobacion.rolesRequeridos[aprobacion.pasoActual] === role;
@@ -332,7 +333,7 @@ export function DetalleRequerimiento() {
             <div className="space-y-2 text-sm">
               {([
                 ["Categoría", req.categoria],
-                ["Presupuesto", `$${req.montoEstimado.toLocaleString()}`],
+                ["Presupuesto", formatMoney(req.montoEstimado, req.moneda)],
                 ["Fecha límite", req.fechaLimite],
                 ["Proveedores", `${req.proveedoresInvitados} invitados`],
                 ["Ofertas recibidas", String(req.ofertasRecibidas)],

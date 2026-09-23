@@ -19,6 +19,7 @@ import {
   type EstadoHito,
 } from "@/lib/api/seguimiento";
 import { apiErrorMessage } from "@/lib/api/http";
+import { EvaluarDesempenoDialog } from "@/components/cliente/EvaluarDesempenoDialog";
 
 const semaforoConfig: Record<EstadoHito, { label: string; color: string; bg: string }> = {
   completado: { label: "A tiempo", color: "text-success", bg: "bg-success/15" },
@@ -198,7 +199,8 @@ export function Seguimiento() {
                 </Button>
               )}
 
-              <div className="mt-4 border-t pt-4">
+              <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
+                <EvaluarDesempenoDialog contratoId={s.id} codigo={s.codigo} proveedor={s.proveedor} />
                 <ConfirmDialog
                   trigger={
                     <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10">

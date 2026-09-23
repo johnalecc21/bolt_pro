@@ -1,3 +1,4 @@
+import { formatMoney, type Moneda } from "@/lib/moneda";
 import { jsPDF } from "jspdf";
 
 export interface ContratoPdfHito {
@@ -14,6 +15,7 @@ export interface ContratoPdfData {
   cliente?: string;
   categoria: string;
   monto: number;
+  moneda?: Moneda;
   vigenciaInicio: string;
   vigenciaFin: string;
   estado: string;
@@ -58,7 +60,7 @@ export function generateContratoPdf(data: ContratoPdfData) {
     ["Proveedor", data.proveedor],
     ...(data.cliente ? ([["Cliente", data.cliente]] as [string, string][]) : []),
     ["Categoría", data.categoria],
-    ["Monto", `$${data.monto.toLocaleString()}`],
+    ["Monto", formatMoney(data.monto, data.moneda)],
     ["Vigencia", `${data.vigenciaInicio} — ${data.vigenciaFin}`],
     ["Estado", data.estado],
   ];

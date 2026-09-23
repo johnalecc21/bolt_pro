@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import type { Moneda } from "@/lib/moneda";
 
 export interface AhorroMes {
   mes: string;
@@ -22,6 +23,8 @@ export interface GastoProveedor {
 }
 
 export interface AnaliticaResumen {
+  /** Company's monedaBase — money aggregates only include amounts in it. */
+  moneda: Moneda;
   ahorroMensual: AhorroMes[];
   tiempoCicloCategoria: CicloCategoria[];
   concentracionGasto: GastoCategoria[];

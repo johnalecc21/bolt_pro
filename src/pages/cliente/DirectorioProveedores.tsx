@@ -7,8 +7,9 @@ import { ProviderCard } from "@/components/shared/ProviderCard";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { type Proveedor } from "@/lib/types";
-import { fetchProveedores } from "@/lib/api/proveedores";
-import { Search, Building2, Star, ShieldCheck, Plus } from "lucide-react";
+import { fetchProveedores, urlVitrina } from "@/lib/api/proveedores";
+import { Search, Building2, Star, ShieldCheck, Plus, ExternalLink } from "lucide-react";
+import { ResumenDesempenoProveedor } from "@/components/cliente/ResumenDesempenoProveedor";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
@@ -63,7 +64,7 @@ export function DirectorioProveedores() {
       )}
 
       <Dialog open={!!perfil} onOpenChange={(v) => !v && setPerfil(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-h-[90vh] max-w-lg overflow-y-auto">
           {perfil && (
             <>
               <DialogHeader>
@@ -105,6 +106,15 @@ export function DirectorioProveedores() {
                   {perfil.categorias.map((c) => <Badge key={c} variant="secondary">{c}</Badge>)}
                 </div>
               </div>
+              <ResumenDesempenoProveedor proveedorId={perfil.id} />
+              <a
+                href={urlVitrina(perfil.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-primary hover:underline"
+              >
+                <ExternalLink className="h-3 w-3" /> Ver vitrina pública
+              </a>
               <div className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
                 Disputas históricas: {perfil.disputas} · Solo se muestran datos agregados y reputacionales — nunca condiciones comerciales dadas a otros clientes.
               </div>

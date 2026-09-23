@@ -1,3 +1,4 @@
+import { formatMoney, type Moneda } from "@/lib/moneda";
 import { jsPDF } from "jspdf";
 
 export interface CartaAdjudicacionData {
@@ -6,6 +7,7 @@ export interface CartaAdjudicacionData {
   proveedor: string;
   tituloProceso: string;
   precioFinal: number;
+  moneda?: Moneda;
   plazoDias: number;
   condicionesPagoDias: number;
   garantiaMeses: number;
@@ -84,7 +86,7 @@ export function generateCartaAdjudicacionPdf(data: CartaAdjudicacionData) {
   y += 24;
 
   const rows: [string, string][] = [
-    ["Precio final", `$${data.precioFinal.toLocaleString()}`],
+    ["Precio final", formatMoney(data.precioFinal, data.moneda)],
     ["Plazo de entrega", `${data.plazoDias} días`],
     ["Condiciones de pago", `${data.condicionesPagoDias} días`],
     ["Garantía", `${data.garantiaMeses} meses`],

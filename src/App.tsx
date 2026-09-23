@@ -17,6 +17,7 @@ import { LoginProveedor } from "@/pages/proveedor/LoginProveedor";
 import { LoginInterno } from "@/pages/interno/LoginInterno";
 import { RegistroProveedor } from "@/pages/proveedor/RegistroProveedor";
 
+const VitrinaProveedor = lazy(() => import("@/pages/publico/VitrinaProveedor").then((m) => ({ default: m.VitrinaProveedor })));
 const OnboardingWizard = lazy(() => import("@/pages/cliente/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
 const Dashboard = lazy(() => import("@/pages/cliente/Dashboard").then((m) => ({ default: m.Dashboard })));
 const Requerimientos = lazy(() => import("@/pages/cliente/Requerimientos").then((m) => ({ default: m.Requerimientos })));
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/set-password" element={<SetPassword />} />
           <Route path="/terminos" element={<TerminosCondiciones />} />
           <Route path="/privacidad" element={<AvisoPrivacidad />} />
+          <Route path="/vitrina/:id" element={<VitrinaProveedor />} />
 
           {/* Portal Cliente */}
           <Route path="/cliente/login" element={<LoginCliente />} />

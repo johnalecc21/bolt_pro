@@ -7,6 +7,8 @@ export type EstadoReq =
   | "en_cumplimiento"
   | "cerrado";
 
+import type { Moneda } from "@/lib/moneda";
+
 export interface Requerimiento {
   id: string;
   /** Human-readable sequential code (REQ-0001, ...) — show this, not `id`. */
@@ -15,6 +17,7 @@ export interface Requerimiento {
   categoria: string;
   estado: EstadoReq;
   montoEstimado: number;
+  moneda: Moneda;
   fechaLimite: string;
   progreso: number;
   proveedoresInvitados: number;
@@ -36,6 +39,9 @@ export interface Proveedor {
   entregasATiempo: number;
   disputas: number;
   color: string;
+  /** 0-100 average of every client's performance evaluations; null until the first one. */
+  desempenoPromedio: number | null;
+  evaluacionesCount: number;
 }
 
 export interface Contrato {
@@ -46,6 +52,7 @@ export interface Contrato {
   proveedor: string;
   categoria: string;
   monto: number;
+  moneda: Moneda;
   vigenciaInicio: string;
   vigenciaFin: string;
   estado: "Activo" | "Por vencer" | "Vencido" | "En renovación";
@@ -65,6 +72,7 @@ export interface Aprobacion {
   descripcion: string;
   solicitante: string;
   monto: number;
+  moneda: Moneda;
   fecha: string;
   urgente: boolean;
   pasoActual?: number;

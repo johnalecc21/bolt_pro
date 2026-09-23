@@ -54,14 +54,15 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 10. **Analítica CFO** — gráficas (ahorro reportado vs. auditado, ciclo de tiempo por categoría, concentración de gasto, top proveedores) con colores de marca Procurex.
 
 ### Otras pantallas de Cliente
-- **Usuarios y Roles** / **Matriz de Aprobación** — solo Admin Cliente; la Matriz es la que realmente decide quién debe aprobar cada requerimiento (no es solo informativa).
+- **Usuarios y Roles** / **Matriz de Aprobación** — solo Admin Cliente; la Matriz es la que realmente decide quién debe aprobar cada requerimiento (no es solo informativa). En la misma pantalla se configuran país y **moneda base** de la empresa (COP, USD, MXN, PEN, CLP, BRL) y los **requisitos de homologación**: qué categorías de documentos (p. ej. HSE, SARLAFT) debe tener validadas un proveedor para poder invitarlo.
+- **Evaluación de desempeño** (desde Seguimiento) — calidad, plazos, servicio y HSE de 1 a 5 por contrato; el promedio de toda la red se ve en el Directorio.
 - **Directorio de Proveedores** — explora toda la red, no solo los invitados.
 - **Centro de Notificaciones** — al hacer clic en una notificación te lleva directo a la pantalla del asunto (aprobación pendiente resaltada en la bandeja, pregunta sin responder, oferta, etc.), no solo la marca como leída.
 - **Configuración de Cuenta**.
 
 ## Portal Proveedores (el espejo del otro lado)
 
-1. **Registro/Login** (real, Supabase Auth) → completas **Homologación** (documentos subidos de verdad a Supabase Storage; OCR y verificación OFAC simulados sobre el archivo real) → queda "en revisión".
+1. **Registro/Login** (real, Supabase Auth) → completas **Homologación** (documentos subidos de verdad a Supabase Storage). Los 4 obligatorios (legal, financiero, certificaciones, referencias) habilitan el envío; HSE, sostenibilidad, centrales de riesgo y SARLAFT son opcionales, suman puntaje y algunos clientes los exigen. Al enviar: OCR real (tesseract) con detección de NIT y cruce real de la razón social y el representante legal contra OFAC/SDN y la lista consolidada de la ONU → queda "en revisión" o "zona gris".
 2. **Estado de Homologación** — el proveedor ve su propio score y checklist real (lo aprueba/rechaza el panel interno).
 3. **Invitaciones** — recibe la invitación real cuando su requerimiento queda aprobado; acepta o declina.
 4. **Mis Ofertas** — lista real de todo proceso que aceptó, con su estado (borrador / enviada) y monto; entra a cada uno para completar el formulario estandarizado y enviarlo. También puede preguntar en la sección de Q&A del proceso.
@@ -69,14 +70,15 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 6. **Historial** — procesos ganados/perdidos reales con feedback.
 7. **Mis Contratos** — igual que Contratos del lado cliente: ve sus contratos reales con hitos, y descarga el PDF (plantilla Procurex o el documento propio que haya adjuntado el cliente).
 8. **Pagos/Pronto Pago** — simulador de descuento por adelanto sobre sus POs.
-9. **Perfil de Empresa** — certificaciones, usuarios con acceso al portal.
+9. **Perfil de Empresa** — certificaciones, usuarios con acceso al portal y enlace a su **vitrina pública** (`/vitrina/:id`, sin login) para compartir con prospectos.
+10. **Evaluaciones de desempeño** (en Historial) — lo que sus clientes calificaron por contrato, con aviso de plan de mejora bajo 60/100.
 
 ## Panel Interno (quién opera todo por detrás)
 
 Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabajo, pero la arquitectura es la misma (NestJS + Prisma, sin mocks en la capa de datos):
 
 - **Casos Activos** — carga de trabajo del consultor/compliance del día.
-- **Cola de Homologación** — compliance aprueba/rechaza a los proveedores en "zona gris" (resuelve el paso 1 del proveedor), viendo los documentos reales que subió.
+- **Cola de Homologación** — compliance aprueba/rechaza a los proveedores en "zona gris" (resuelve el paso 1 del proveedor), viendo los documentos reales que subió y el resultado por lista restrictiva. Para proveedores colombianos registra la consulta manual en Procuraduría, Contraloría y Policía (no tienen API pública); no se puede aprobar con listas pendientes, caídas o con coincidencias sin resolver. También valida uno a uno los documentos opcionales que suba un proveedor ya homologado.
 - **Asistente de Redacción RFP** — apoyo para estructurar requerimientos complejos.
 - **Auditoría de Ahorro** — compara el ahorro reportado por el cliente contra el benchmark.
 - **Mediación de Disputas** — vista espejo de las disputas del cliente.
@@ -94,7 +96,8 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 ## Limitaciones conocidas (para tener en cuenta)
 
 - **Firma electrónica simulada**: "Enviar a firma" muestra una animación tipo DocuSign que falla a propósito en el primer intento — no hay integración real con ningún proveedor de e-signature. Lo que pasa *después* de esa animación (contrato, hitos, notificaciones) sí es real.
-- **OCR / verificación OFAC simulados**: en Homologación, el archivo que sube el proveedor es real, pero la extracción de texto y el chequeo contra listas OFAC son simulados.
+- **Listas colombianas manuales**: Procuraduría, Contraloría y Policía no tienen API pública; quedan como verificación manual que Compliance registra. OFAC y ONU sí se consultan automáticamente (si la lista no responde, el caso va a zona gris en vez de asumirse limpio).
+- **Moneda**: los montos son enteros en unidades completas y cada requerimiento/contrato/pago lleva su moneda. No hay conversión de tasas: la analítica solo agrega lo que está en la moneda base de la empresa.
 - **"Actividad reciente"** (Dashboard) es un widget decorativo.
 - **"Recordatorios de vencimiento"** (Contratos) ya es real: un cron diario (`VencimientosService`, `@nestjs/schedule`) revisa todos los contratos/POs activos, los pasa a "Por vencer"/"Vencido" según su `vigenciaFin`, y notifica una sola vez por umbral (60/30/15 días) a compradores y admins de la empresa.
 - **Documentos adjuntos a un Requerimiento** ya usan almacenamiento real (bucket `requerimientos-documentos` en Supabase Storage), mismo patrón de URL firmada que Homologación y Contratos.

@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
@@ -10,14 +11,17 @@ import {
   fetchMatrizAprobacion,
   guardarMatrizAprobacion,
   etiquetaAprobadores,
-  fetchUmbralContratoMarco,
-  guardarUmbralContratoMarco,
+  fetchConfigEmpresa,
+  guardarConfigEmpresa,
+  type ConfigEmpresa,
   ROLE_OPTIONS,
   ROLE_LABELS,
   type Regla,
   type RoleCode,
 } from "@/lib/api/matrizAprobacion";
 import { apiErrorMessage } from "@/lib/api/http";
+import { formatMoney, MONEDAS, PAISES, type Moneda } from "@/lib/moneda";
+import { RequisitosHomologacionCard } from "@/components/cliente/RequisitosHomologacionCard";
 
 let tempId = 0;
 function nextTempId() {
@@ -25,17 +29,17 @@ function nextTempId() {
   return `tmp-${tempId}`;
 }
 
-function validar(reglas: Regla[]): string | null {
+function validar(reglas: Regla[], moneda: Moneda): string | null {
   if (reglas.length === 0) return "Agrega al menos un rango.";
   if (reglas.some((r) => r.roles.length === 0)) return "Cada rango necesita al menos un aprobador.";
   const sorted = [...reglas].sort((a, b) => a.min - b.min);
-  if (sorted[0].min !== 0) return "El primer rango debe empezar en $0.";
+  if (sorted[0].min !== 0) return `El primer rango debe empezar en ${formatMoney(0, moneda)}.`;
   if (sorted[sorted.length - 1].max !== null) return "Debe existir una regla que cubra 'cualquier monto' (rango sin máximo).";
   for (let i = 0; i < sorted.length - 1; i++) {
     const cur = sorted[i];
     const next = sorted[i + 1];
     if (cur.max === null) return `La regla ${cur.id} no puede tener máximo abierto si no es la última.`;
-    if (cur.max + 1 < next.min) return `Hay un hueco entre $${cur.max.toLocaleString()} y $${next.min.toLocaleString()}.`;
+    if (cur.max + 1 < next.min) return `Hay un hueco entre ${formatMoney(cur.max, moneda)} y ${formatMoney(next.min, moneda)}.`;
     if (cur.max >= next.min) return `Los rangos ${cur.id} y ${next.id} se solapan.`;
   }
   return null;
@@ -43,30 +47,33 @@ function validar(reglas: Regla[]): string | null {
 
 export function ConfiguracionMatrizAprobacion() {
   const { data: fetched, reload } = useApiData(fetchMatrizAprobacion);
-  const { data: umbralFetched, reload: reloadUmbral } = useApiData(fetchUmbralContratoMarco);
+  const { data: configFetched, reload: reloadConfig } = useApiData(fetchConfigEmpresa);
   const [reglas, setReglas] = useState<Regla[]>([]);
   const [ejemplo, setEjemplo] = useState(75000);
   const [saving, setSaving] = useState(false);
-  const [umbral, setUmbral] = useState(50000);
+  const [config, setConfig] = useState<ConfigEmpresa>({ umbralContratoMarco: 50000, monedaBase: "USD", pais: "CO" });
   const [savingUmbral, setSavingUmbral] = useState(false);
-  const error = validar(reglas);
+  const moneda = configFetched?.monedaBase ?? "USD";
+  const error = validar(reglas, moneda);
 
   useEffect(() => {
     if (fetched) setReglas(fetched);
   }, [fetched]);
 
   useEffect(() => {
-    if (umbralFetched != null) setUmbral(umbralFetched);
-  }, [umbralFetched]);
+    if (configFetched) setConfig(configFetched);
+  }, [configFetched]);
 
   async function guardarUmbral() {
     setSavingUmbral(true);
     try {
-      await guardarUmbralContratoMarco(umbral);
-      toast.success("Umbral de Contrato Marco actualizado");
-      reloadUmbral();
+      await guardarConfigEmpresa(config);
+      toast.success("Configuración de la empresa actualizada", {
+        description: "La moneda base se aplica a los nuevos requerimientos y a la analítica.",
+      });
+      reloadConfig();
     } catch (err) {
-      toast.error(apiErrorMessage(err, "No se pudo guardar el umbral."));
+      toast.error(apiErrorMessage(err, "No se pudo guardar la configuración."));
     } finally {
       setSavingUmbral(false);
     }
@@ -119,16 +126,32 @@ export function ConfiguracionMatrizAprobacion() {
       </div>
 
       <Card className="p-5">
-        <h2 className="mb-1 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Umbral: PO vs. Contrato Marco</h2>
+        <h2 className="mb-1 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Empresa: país, moneda y umbral PO vs. Contrato Marco</h2>
         <p className="mb-3 text-sm text-muted-foreground">
-          Adjudicaciones por debajo de este monto generan una Orden de Compra (PO) simple. Desde este monto en adelante, se genera un Contrato Marco — bajo el cual luego pueden emitirse POs hijas sin necesitar cada una su propia revisión legal. Es independiente del umbral de revisión legal.
+          La moneda base es la de los nuevos requerimientos y en la que se agrega la analítica. Adjudicaciones por debajo del umbral generan una Orden de Compra (PO) simple; desde el umbral en adelante, un Contrato Marco — bajo el cual luego pueden emitirse POs hijas sin necesitar cada una su propia revisión legal.
         </p>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">A partir de</span>
-          <Input type="number" className="w-40" value={umbral} onChange={(e) => setUmbral(Number(e.target.value))} />
-          <Button size="sm" onClick={guardarUmbral} disabled={savingUmbral}>{savingUmbral ? "Guardando..." : "Guardar umbral"}</Button>
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="space-y-1 text-sm">
+            <span className="block text-muted-foreground">País</span>
+            <NativeSelect value={config.pais} onChange={(e) => setConfig((c) => ({ ...c, pais: e.target.value }))}>
+              {PAISES.map((p) => <NativeSelectOption key={p.value} value={p.value}>{p.label}</NativeSelectOption>)}
+            </NativeSelect>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="block text-muted-foreground">Moneda base</span>
+            <NativeSelect value={config.monedaBase} onChange={(e) => setConfig((c) => ({ ...c, monedaBase: e.target.value as Moneda }))}>
+              {MONEDAS.map((m) => <NativeSelectOption key={m.value} value={m.value}>{m.label}</NativeSelectOption>)}
+            </NativeSelect>
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="block text-muted-foreground">Contrato Marco a partir de ({config.monedaBase})</span>
+            <Input type="number" className="w-40" value={config.umbralContratoMarco} onChange={(e) => setConfig((c) => ({ ...c, umbralContratoMarco: Number(e.target.value) }))} />
+          </label>
+          <Button size="sm" onClick={guardarUmbral} disabled={savingUmbral}>{savingUmbral ? "Guardando..." : "Guardar configuración"}</Button>
         </div>
       </Card>
+
+      <RequisitosHomologacionCard />
 
       <Card className="overflow-hidden">
         <div className="overflow-x-auto">
@@ -210,7 +233,7 @@ export function ConfiguracionMatrizAprobacion() {
           <Input type="number" className="w-40" value={ejemplo} onChange={(e) => setEjemplo(Number(e.target.value))} />
         </div>
         <p className="mt-3 rounded-lg bg-info/10 p-3 text-sm text-info">
-          Una compra de <strong>${ejemplo.toLocaleString()}</strong> requeriría aprobación de: <strong>{reglaEjemplo ? etiquetaAprobadores(reglaEjemplo.roles, reglaEjemplo.tipo) : "sin regla aplicable"}</strong>.
+          Una compra de <strong>{formatMoney(ejemplo, moneda)}</strong> requeriría aprobación de: <strong>{reglaEjemplo ? etiquetaAprobadores(reglaEjemplo.roles, reglaEjemplo.tipo) : "sin regla aplicable"}</strong>.
         </p>
       </Card>
 

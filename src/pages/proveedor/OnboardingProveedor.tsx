@@ -31,7 +31,7 @@ const explicacion = [
   {
     icon: ShieldCheck,
     title: "Verificación automática",
-    description: "Cada documento pasa por OCR y cruce contra la lista de sanciones OFAC/SDN apenas lo subes.",
+    description: "Al enviar, cada documento pasa por OCR y tu empresa y representante legal se cruzan contra las listas OFAC/SDN y ONU.",
   },
   {
     icon: Users2,

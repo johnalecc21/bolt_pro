@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import type { Moneda } from "@/lib/moneda";
 
 export type EstadoInvitacion = "nueva" | "vista" | "respondida" | "vencida" | "declinada";
 
@@ -10,6 +11,7 @@ export interface Invitacion {
   cliente: string;
   fechaLimite: string;
   estado: EstadoInvitacion;
+  moneda: Moneda;
 }
 
 interface ApiInvitacion {
@@ -19,7 +21,7 @@ interface ApiInvitacion {
   fechaLimite: string;
   estado: "NUEVA" | "VISTA" | "RESPONDIDA" | "VENCIDA" | "DECLINADA";
   company: { nombre: string };
-  requerimiento?: { titulo: string } | null;
+  requerimiento?: { titulo: string; moneda: Moneda } | null;
 }
 
 function toInvitacion(i: ApiInvitacion): Invitacion {
@@ -31,6 +33,7 @@ function toInvitacion(i: ApiInvitacion): Invitacion {
     cliente: i.company.nombre,
     fechaLimite: i.fechaLimite.slice(0, 10),
     estado: i.estado.toLowerCase() as EstadoInvitacion,
+    moneda: i.requerimiento?.moneda ?? "USD",
   };
 }
 

@@ -16,8 +16,9 @@ import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 import { fetchAdjudicacion, crearAdjudicacion } from "@/lib/api/adjudicacion";
 import { apiErrorMessage } from "@/lib/api/http";
 
+import { formatMoney } from "@/lib/moneda";
 const criterios = [
-  { key: "precio", label: "Precio total", prefix: "$", suffix: "", lowerIsBetter: true },
+  { key: "precio", label: "Precio total", prefix: "", suffix: "", lowerIsBetter: true },
   { key: "plazo", label: "Plazo de entrega", prefix: "", suffix: " días", lowerIsBetter: true },
   { key: "calidad", label: "Calidad / Score", prefix: "", suffix: "", lowerIsBetter: false },
   { key: "pago", label: "Condiciones de pago", prefix: "", suffix: " días", lowerIsBetter: false },
@@ -213,7 +214,7 @@ export function CuadroComparativo() {
               {i === 0 && <Trophy className="ml-auto h-5 w-5 text-warning" />}
             </div>
             <div className="mt-3 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Precio</span><span className="font-medium">${o.precio.toLocaleString()}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Precio</span><span className="font-medium">{formatMoney(o.precio, requerimiento.moneda)}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Plazo</span><span className="font-medium">{o.plazo} días</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Pago</span><span className="font-medium">{o.pago} días</span></div>
             </div>
@@ -250,7 +251,7 @@ export function CuadroComparativo() {
                       return (
                         <td key={o.proveedor} className={cn("p-4 text-sm", isBest && "bg-success/10 font-semibold text-success")}>
                           <span className="flex items-center gap-1">
-                            {c.prefix}{val.toLocaleString()}{c.suffix}
+                            {c.key === "precio" ? formatMoney(val, requerimiento.moneda) : `${c.prefix}${val.toLocaleString()}${c.suffix}`}
                             {isAnomaly && (
                               <span title="Oferta atípica — 20% sobre el mínimo">
                                 <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
@@ -278,7 +279,7 @@ export function CuadroComparativo() {
 
       {/* Benchmark */}
       <div className="rounded-lg bg-info/10 p-4 text-sm text-info">
-        <strong>Precio promedio de las ofertas recibidas:</strong> <strong>${benchmarkEstimado.toLocaleString()}</strong>. La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del promedio.
+        <strong>Precio promedio de las ofertas recibidas:</strong> <strong>{formatMoney(benchmarkEstimado, requerimiento.moneda)}</strong>. La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del promedio.
       </div>
 
       {/* Consultant Note */}

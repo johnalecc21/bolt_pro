@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
+import { formatMoney } from "@/lib/moneda";
 const tabs = ["Todos", "Urgentes", "Licitaciones", "Adjudicaciones", "Excepciones"] as const;
 
 function matchesTab(item: Aprobacion, tab: (typeof tabs)[number]) {
@@ -151,7 +152,7 @@ export function BandejaAprobaciones() {
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-lg font-bold">${item.monto.toLocaleString()}</p>
+                <p className="text-lg font-bold">{formatMoney(item.monto, item.moneda)}</p>
               </div>
               <div className="flex gap-2">
                 <ConfirmDialog

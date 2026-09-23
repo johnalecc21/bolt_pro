@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import type { Aprobacion } from "@/lib/types";
+import type { Moneda } from "@/lib/moneda";
 
 interface ApiAprobacion {
   id: string;
@@ -10,7 +11,7 @@ interface ApiAprobacion {
   tipoRegla: "UNICA" | "SECUENCIAL";
   pasoActual: number;
   rolesRequeridos: string[];
-  requerimiento: { titulo: string; solicitante?: { nombre: string } };
+  requerimiento: { titulo: string; moneda: Moneda; solicitante?: { nombre: string } };
 }
 
 const TIPO_LABEL: Record<ApiAprobacion["tipo"], Aprobacion["tipo"]> = {
@@ -32,6 +33,7 @@ function toAprobacion(a: ApiAprobacion): Aprobacion {
     descripcion: `${DESCRIPCION_PREFIX[a.tipo]} ${a.requerimiento.titulo}`,
     solicitante: a.requerimiento.solicitante?.nombre ?? "",
     monto: a.monto,
+    moneda: a.requerimiento.moneda,
     fecha: a.createdAt.slice(0, 10),
     urgente: a.urgente,
     pasoActual: a.tipoRegla === "SECUENCIAL" ? a.pasoActual + 1 : undefined,

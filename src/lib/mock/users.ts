@@ -1,3 +1,4 @@
+import type { Moneda } from "@/lib/moneda";
 export type Portal = "cliente" | "proveedor" | "interno";
 
 export type Role =
@@ -11,6 +12,10 @@ export type Role =
 export interface Company {
   id: string;
   nombre: string;
+  /** ISO-3166 alpha-2. Undefined only for sessions loaded before the API sent it. */
+  pais?: string;
+  /** Default currency for new requerimientos and the one analytics aggregate in. */
+  monedaBase?: Moneda;
 }
 
 export interface MockUser {

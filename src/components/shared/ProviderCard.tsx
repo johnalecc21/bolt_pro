@@ -49,6 +49,11 @@ export function ProviderCard({ proveedor, selectable, selected, onSelect }: {
             <Shield className="h-3 w-3" />
             {proveedor.entregasATiempo}% ok
           </div>
+          {proveedor.evaluacionesCount > 0 && proveedor.desempenoPromedio != null && (
+            <div className="text-[10px] text-muted-foreground" title={`${proveedor.evaluacionesCount} evaluación(es) de desempeño`}>
+              Desempeño {Math.round(proveedor.desempenoPromedio)}
+            </div>
+          )}
         </div>
       </div>
       <div className="mt-3 flex flex-wrap gap-1 border-t pt-2">

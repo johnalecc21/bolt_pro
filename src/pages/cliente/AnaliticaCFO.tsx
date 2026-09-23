@@ -9,6 +9,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchAnaliticaResumen } from "@/lib/api/analitica";
 import { Download, TrendingUp, Clock, PieChart as PieIcon, Building2, ArrowRight } from "lucide-react";
 
+import { formatMoneyCompact } from "@/lib/moneda";
 const ahorroConfig = { ahorro: { label: "Ahorro", color: "var(--chart-1)" } } satisfies ChartConfig;
 const cicloConfig = { dias: { label: "Días promedio", color: "var(--chart-2)" } } satisfies ChartConfig;
 const gastoConfig = { gasto: { label: "Gasto", color: "var(--chart-1)" } } satisfies ChartConfig;
@@ -80,7 +81,7 @@ export function AnaliticaCFO() {
             </defs>
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis dataKey="mes" tickLine={false} axisLine={false} />
-            <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+            <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => formatMoneyCompact(v, analitica?.moneda)} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Area dataKey="ahorro" type="monotone" stroke="var(--color-ahorro)" fill="url(#fillAhorro2)" strokeWidth={2} />
           </AreaChart>
@@ -133,7 +134,7 @@ export function AnaliticaCFO() {
         <ChartContainer config={gastoConfig} className="h-[220px] w-full">
           <BarChart data={topProveedoresGasto} layout="vertical">
             <CartesianGrid horizontal={false} strokeDasharray="3 3" />
-            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+            <XAxis type="number" tickLine={false} axisLine={false} tickFormatter={(v) => formatMoneyCompact(v, analitica?.moneda)} />
             <YAxis type="category" dataKey="proveedor" tickLine={false} axisLine={false} width={90} fontSize={12} />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Bar dataKey="gasto" fill="var(--color-gasto)" radius={4} isAnimationActive={false} />

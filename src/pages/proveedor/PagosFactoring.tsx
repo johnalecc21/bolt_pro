@@ -11,6 +11,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
+import { formatMoney } from "@/lib/moneda";
 const estadoMap: Record<PagoPO["estado"], string> = { pendiente: "pendiente_aprobacion", pagado: "Activo", vencido: "Vencido" };
 
 export function PagosFactoring() {
@@ -31,7 +32,7 @@ export function PagosFactoring() {
     if (!seleccion) return;
     setSolicitando(true);
     try {
-      toast.success("Solicitud de pronto pago enviada", { description: `Recibirás ~$${Math.round(montoAdelanto).toLocaleString()} en 24-48h.` });
+      toast.success("Solicitud de pronto pago enviada", { description: `Recibirás ~${formatMoney(Math.round(montoAdelanto), seleccion?.moneda)} en 24-48h.` });
       setSeleccion(null);
     } finally {
       setSolicitando(false);
@@ -64,7 +65,7 @@ export function PagosFactoring() {
                 <tr key={p.id} className="border-b border-border last:border-0">
                   <td className="p-4 text-sm font-medium">{p.contratoCodigo}</td>
                   <td className="p-4 text-sm text-muted-foreground">{p.cliente}</td>
-                  <td className="p-4 text-sm font-semibold">${p.monto.toLocaleString()}</td>
+                  <td className="p-4 text-sm font-semibold">{formatMoney(p.monto, p.moneda)}</td>
                   <td className="p-4 text-sm text-muted-foreground">{p.fechaPagoPactada}</td>
                   <td className="p-4"><StatusBadge estado={estadoMap[p.estado]} /></td>
                   <td className="p-4 text-right">
@@ -88,7 +89,7 @@ export function PagosFactoring() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Wallet className="h-4 w-4" /> Simulador de pronto pago</DialogTitle>
-            <DialogDescription>{seleccion?.contratoCodigo} · Monto original ${seleccion?.monto.toLocaleString()}</DialogDescription>
+            <DialogDescription>{seleccion?.contratoCodigo} · Monto original {formatMoney(seleccion?.monto ?? 0, seleccion?.moneda)}</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
@@ -97,8 +98,8 @@ export function PagosFactoring() {
             </div>
             <div className="rounded-lg bg-muted/50 p-4 text-center">
               <p className="text-xs text-muted-foreground">Recibirías hoy</p>
-              <p className="text-2xl font-bold text-success">${Math.round(montoAdelanto).toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground">Descuento por adelanto: ${Math.round((seleccion?.monto ?? 0) - montoAdelanto).toLocaleString()}</p>
+              <p className="text-2xl font-bold text-success">{formatMoney(Math.round(montoAdelanto), seleccion?.moneda)}</p>
+              <p className="text-xs text-muted-foreground">Descuento por adelanto: {formatMoney(Math.round((seleccion?.monto ?? 0) - montoAdelanto), seleccion?.moneda)}</p>
             </div>
           </div>
           <DialogFooter>

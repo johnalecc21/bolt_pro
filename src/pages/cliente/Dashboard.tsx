@@ -17,6 +17,7 @@ import { fetchProveedores } from "@/lib/api/proveedores";
 import { fetchAuditLog } from "@/lib/api/auditLog";
 import { fetchAnaliticaResumen } from "@/lib/api/analitica";
 
+import { formatMoney, formatMoneyCompact } from "@/lib/moneda";
 const chartConfig = {
   ahorro: { label: "Ahorro", color: "var(--chart-1)" },
 } satisfies ChartConfig;
@@ -75,7 +76,7 @@ export function Dashboard() {
                   <p className="font-medium">{a.descripcion}</p>
                   <p className="text-xs text-muted-foreground">{a.tipo} · Solicitado por {a.solicitante}</p>
                 </div>
-                <span className="font-semibold">${a.monto.toLocaleString()}</span>
+                <span className="font-semibold">{formatMoney(a.monto, a.moneda)}</span>
               </div>
             ))}
           </div>
@@ -116,7 +117,7 @@ export function Dashboard() {
                     <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                       <span>{req.categoria}</span>
                       <span>•</span>
-                      <span>${(req.montoEstimado / 1000).toFixed(0)}K</span>
+                      <span>{formatMoneyCompact(req.montoEstimado, req.moneda)}</span>
                       <span>•</span>
                       <span>Vence {req.fechaLimite}</span>
                     </div>
@@ -195,7 +196,7 @@ export function Dashboard() {
               </defs>
               <CartesianGrid vertical={false} strokeDasharray="3 3" />
               <XAxis dataKey="mes" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}K`} />
+              <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => formatMoneyCompact(v, analitica?.moneda)} />
               <ChartTooltip content={<ChartTooltipContent />} />
               <Area dataKey="ahorro" type="monotone" stroke="var(--color-ahorro)" fill="url(#fillAhorro)" strokeWidth={2} />
             </AreaChart>

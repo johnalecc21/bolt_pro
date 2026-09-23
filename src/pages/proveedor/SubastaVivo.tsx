@@ -8,6 +8,9 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Trophy, Gavel, TrendingDown } from "lucide-react";
 import { useSubasta } from "@/lib/api/subasta";
 
+import { formatMoney } from "@/lib/moneda";
+import { useApiData } from "@/hooks/useApiData";
+import { fetchInvitaciones } from "@/lib/api/invitaciones";
 function formatCountdown(deadlineMs: number) {
   const remaining = Math.max(0, deadlineMs - Date.now());
   const min = Math.floor(remaining / 60000);
@@ -18,6 +21,8 @@ function formatCountdown(deadlineMs: number) {
 export function SubastaVivo() {
   const { requerimientoId } = useParams();
   const { state: auction, pujar } = useSubasta(requerimientoId);
+  const { data: invitaciones } = useApiData(fetchInvitaciones);
+  const moneda = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId)?.moneda ?? "USD";
   const [, forceTick] = useState(0);
   const [mejora, setMejora] = useState("");
 
@@ -85,7 +90,7 @@ export function SubastaVivo() {
 
       <Card className="p-5">
         <p className="text-sm text-muted-foreground">Tu oferta actual</p>
-        <p className="text-2xl font-bold">${miPuja.monto.toLocaleString()}</p>
+        <p className="text-2xl font-bold">{formatMoney(miPuja.monto, moneda)}</p>
         {auction.status === "activa" && (
           <div className="mt-4 flex gap-2">
             <Input type="number" placeholder="Nueva oferta mejorada" value={mejora} onChange={(e) => setMejora(e.target.value)} />

@@ -2,6 +2,7 @@ import { api } from "@/lib/api/http";
 import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatRequerimientoCodigo } from "@/lib/codigo";
 import type { EstadoReq, Requerimiento } from "@/lib/types";
+import type { Moneda } from "@/lib/moneda";
 
 const BUCKET = "requerimientos-documentos";
 
@@ -58,6 +59,7 @@ interface ApiRequerimiento {
   categoria: string;
   estado: string;
   montoEstimado: number;
+  moneda: Moneda;
   fechaLimite: string;
   progreso: number;
   proveedoresInvitados: number;
@@ -85,6 +87,7 @@ function toRequerimiento(r: ApiRequerimiento): Requerimiento {
     categoria: r.categoria,
     estado: r.estado.toLowerCase() as EstadoReq,
     montoEstimado: r.montoEstimado,
+    moneda: r.moneda,
     fechaLimite: r.fechaLimite.slice(0, 10),
     progreso: r.progreso,
     proveedoresInvitados: r.proveedoresInvitados,
@@ -127,9 +130,21 @@ export async function fetchRequerimiento(id: string): Promise<RequerimientoDetal
   return toRequerimientoDetalle(data);
 }
 
+/** A proveedor left out of an invitation, with why (homologación or a missing required document). */
+export interface ProveedorExcluido {
+  id: string;
+  nombre: string;
+  motivo?: string;
+}
+
+/** "Acme (Faltan documentos validados: HSE), Beta (Homologación no aprobada)" — for toasts. */
+export function describirExcluidos(excluidos: ProveedorExcluido[]): string {
+  return excluidos.map((e) => (e.motivo ? `${e.nombre} (${e.motivo})` : e.nombre)).join(", ");
+}
+
 export interface CreateRequerimientoResultado {
   requerimiento: Requerimiento;
-  excluidos: { id: string; nombre: string }[];
+  excluidos: ProveedorExcluido[];
 }
 
 export async function createRequerimiento(payload: {
@@ -137,12 +152,13 @@ export async function createRequerimiento(payload: {
   descripcion?: string;
   categoria: string;
   montoEstimado: number;
+  moneda?: Moneda;
   fechaLimite: string;
   criteriosPeso?: Record<string, number>;
   especificaciones?: Especificacion[];
   proveedorIds?: string[];
 }): Promise<CreateRequerimientoResultado> {
-  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: { id: string; nombre: string }[] }>(
+  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[] }>(
     "/requerimientos",
     payload,
   );
@@ -168,11 +184,11 @@ export async function addComentario(id: string, texto: string) {
 
 export interface InvitarProveedoresResultado {
   requerimiento: Requerimiento;
-  excluidos: { id: string; nombre: string }[];
+  excluidos: ProveedorExcluido[];
 }
 
 export async function invitarProveedores(id: string, proveedorIds: string[]): Promise<InvitarProveedoresResultado> {
-  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: { id: string; nombre: string }[] }>(
+  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[] }>(
     `/requerimientos/${id}/invitaciones`,
     { proveedorIds },
   );

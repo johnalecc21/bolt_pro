@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { ShieldCheck, Plus, UserPlus, Trash2 } from "lucide-react";
+import { ShieldCheck, Plus, UserPlus, Trash2, Share2, Copy, ExternalLink } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMiPerfil } from "@/lib/api/proveedores";
+import { fetchMiPerfil, urlVitrina } from "@/lib/api/proveedores";
 import { useAuth } from "@/lib/auth/AuthContext";
 
 interface UsuarioEmpresa { nombre: string; email: string; rol: string; }
@@ -39,6 +39,33 @@ export function PerfilEmpresa() {
         <h1 className="text-2xl font-bold">Perfil de Empresa</h1>
         <p className="text-sm text-muted-foreground">Mantén actualizada la información de tu empresa</p>
       </div>
+
+      {perfil && (
+        <Card className="p-5">
+          <h2 className="mb-1 flex items-center gap-2 font-semibold"><Share2 className="h-4 w-4" /> Tu vitrina pública</h2>
+          <p className="mb-3 text-sm text-muted-foreground">
+            Un perfil verificado que puedes compartir con prospectos: score, desempeño y documentos validados, sin datos sensibles.
+            Solo es visible mientras tu homologación esté aprobada.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <code className="rounded-md bg-muted px-2 py-1 text-xs">{urlVitrina(perfil.id)}</code>
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={async () => {
+                await navigator.clipboard.writeText(urlVitrina(perfil.id));
+                toast.success("Enlace copiado");
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copiar
+            </Button>
+            <Button size="sm" variant="ghost" className="gap-1.5" asChild>
+              <a href={urlVitrina(perfil.id)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Abrir</a>
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card className="p-5">
         <h2 className="mb-4 font-semibold">Datos generales</h2>

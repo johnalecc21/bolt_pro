@@ -15,17 +15,44 @@ import {
   obtenerUrlDescarga,
   enviarHomologacion as apiEnviar,
   puedeSubirDocumento,
+  documentosObligatoriosFaltantes,
   type CategoriaDocumento,
 } from "@/lib/api/homologacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 
-const secciones = ["Datos legales", "Datos financieros", "Certificaciones", "Referencias comerciales"];
-const categoriaPorSeccion: CategoriaDocumento[] = ["legal", "financiero", "certificaciones", "referencias"];
+const secciones = [
+  "Datos legales",
+  "Datos financieros",
+  "Certificaciones",
+  "Referencias comerciales",
+  "HSE",
+  "Sostenibilidad",
+  "Centrales de riesgo",
+  "SARLAFT",
+];
+const categoriaPorSeccion: CategoriaDocumento[] = [
+  "legal",
+  "financiero",
+  "certificaciones",
+  "referencias",
+  "hse",
+  "sostenibilidad",
+  "riesgo_financiero",
+  "laft",
+];
+/** First index of the optional sections — the documents there don't block "enviar". */
+const PRIMERA_SECCION_OPCIONAL = 4;
+const descripcionSeccionOpcional: Record<number, string> = {
+  4: "Certificado del SG-SST o evaluación RUC. Lo exigen clientes de energía, petróleo, minería y construcción.",
+  5: "Política ambiental y social, o tu último reporte de sostenibilidad / ESG.",
+  6: "Reporte reciente de centrales de riesgo (DataCrédito, TransUnion o equivalente de tu país).",
+  7: "Formulario de conocimiento del proveedor para prevención de lavado de activos y financiación del terrorismo.",
+};
 const stepsValidacion = [
   { label: "Subiendo documentos para verificación..." },
-  { label: "Ejecutando OCR y verificación OFAC/PEP..." },
+  { label: "Ejecutando OCR y cruce con listas restrictivas (OFAC, ONU)..." },
 ];
 
 export function HomologacionForm() {
@@ -42,8 +69,14 @@ export function HomologacionForm() {
 
   const documentos = registro?.documentos ?? [];
   const documentosSeccion = documentos.filter((d) => d.categoria === categoriaPorSeccion[seccion]);
-  const subidos = documentos.filter((d) => d.estado === "subido" || d.estado === "validado").length;
-  const completitud = documentos.length ? Math.round((subidos / documentos.length) * 100) : 0;
+  // Progress and the "enviar" gate only count mandatory documents; optional
+  // ones add score and unlock clients that require them.
+  const obligatorios = documentos.filter((d) => d.obligatorio);
+  const faltantes = documentosObligatoriosFaltantes(documentos);
+  const completitud = obligatorios.length
+    ? Math.round(((obligatorios.length - faltantes.length) / obligatorios.length) * 100)
+    : 0;
+  const opcionalesSubidos = documentos.filter((d) => !d.obligatorio && d.estado !== "pendiente").length;
 
   const estado = registro?.estado;
   const bloqueadaEnRevision = estado === "en_revision" || estado === "zona_gris";
@@ -95,7 +128,7 @@ export function HomologacionForm() {
       const resultado = await apiEnviar();
       if (resultado.alertas.length > 0) {
         toast.warning("Homologación enviada con alertas", {
-          description: `${resultado.alertas.length} hallazgo(s) de la verificación OCR/OFAC requieren revisión manual.`,
+          description: `${resultado.alertas.length} hallazgo(s) de la verificación OCR / listas restrictivas requieren revisión manual.`,
         });
       } else {
         toast.success("Homologación enviada", { description: "Está en revisión. Te avisaremos del resultado." });
@@ -141,17 +174,22 @@ export function HomologacionForm() {
         <div className="h-2 flex-1 overflow-hidden rounded-full border border-border bg-card">
           <div className="h-full gradient-brand rounded-full transition-all" style={{ width: `${completitud}%` }} />
         </div>
-        <span className="text-sm font-medium">{completitud}% completo</span>
+        <span className="text-sm font-medium">{completitud}% de obligatorios</span>
       </div>
+      <p className="-mt-3 text-xs text-muted-foreground">
+        Documentos opcionales cargados: {opcionalesSubidos} de {documentos.length - obligatorios.length}. Suman puntaje y
+        algunos clientes los exigen para invitarte.
+      </p>
 
-      <div className="flex gap-2 border-b border-border">
+      <div className="flex gap-2 overflow-x-auto border-b border-border">
         {secciones.map((s, i) => (
           <button
             key={s}
             onClick={() => setSeccion(i)}
-            className={cn("border-b-2 px-4 py-2 text-sm font-medium transition-colors", seccion === i ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
+            className={cn("shrink-0 whitespace-nowrap border-b-2 px-4 py-2 text-sm font-medium transition-colors", seccion === i ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground")}
           >
             {s}
+            {i >= PRIMERA_SECCION_OPCIONAL && <span className="ml-1 text-xs font-normal text-muted-foreground">(opcional)</span>}
           </button>
         ))}
       </div>
@@ -178,6 +216,11 @@ export function HomologacionForm() {
         {(seccion === 2 || seccion === 3) && (
           <div className="space-y-3">
             <p className="text-sm text-muted-foreground">Carga los documentos requeridos para esta sección.</p>
+          </div>
+        )}
+        {seccion >= PRIMERA_SECCION_OPCIONAL && (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{descripcionSeccionOpcional[seccion]}</p>
           </div>
         )}
 
@@ -216,6 +259,9 @@ export function HomologacionForm() {
                       <Upload className="h-4 w-4 text-muted-foreground" />
                     )}
                     <span>{doc.nombre}</span>
+                    <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", doc.obligatorio ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
+                      {doc.obligatorio ? "Obligatorio" : "Opcional"}
+                    </span>
                   </div>
                   <div className="flex gap-2">
                     {tieneArchivo && (
@@ -243,13 +289,15 @@ export function HomologacionForm() {
               <Loader2 className="h-4 w-4 animate-spin" /> {pasoActual}
             </div>
           ) : (
-            <Button className="gap-2" onClick={enviarHomologacion} disabled={completitud < 100}>
+            <Button className="gap-2" onClick={enviarHomologacion} disabled={faltantes.length > 0}>
               <CheckCircle2 className="h-4 w-4" />
               {estado === "rechazado" ? "Reenviar a validación" : estado === "aprobado" ? "Enviar renovación" : "Enviar a validación"}
             </Button>
           )}
-          {!bloqueadaEnRevision && !yaAprobada && completitud < 100 && !enviando && (
-            <p className="mt-2 text-xs text-muted-foreground">Sube todos los documentos para poder enviar.</p>
+          {!bloqueadaEnRevision && !yaAprobada && faltantes.length > 0 && !enviando && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Sube los documentos obligatorios para poder enviar: {faltantes.map((d) => d.nombre).join(", ")}.
+            </p>
           )}
         </div>
       </Card>

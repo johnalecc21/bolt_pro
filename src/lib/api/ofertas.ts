@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import type { Moneda } from "@/lib/moneda";
 
 export interface OfertaProceso {
   id: string;
@@ -46,6 +47,7 @@ export interface MiOfertaResumen {
   cliente: string;
   categoria: string;
   fechaLimite: string;
+  moneda: Moneda;
   enviada: boolean;
   precioTotal: number | null;
 }
@@ -56,6 +58,7 @@ interface ApiMiOfertaResumen {
   cliente: string;
   categoria: string;
   fechaLimite: string;
+  moneda: Moneda;
   oferta: { enviada: boolean; precioTotal: number } | null;
 }
 
@@ -67,6 +70,7 @@ export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
     cliente: o.cliente,
     categoria: o.categoria,
     fechaLimite: o.fechaLimite.slice(0, 10),
+    moneda: o.moneda,
     enviada: o.oferta?.enviada ?? false,
     precioTotal: o.oferta?.precioTotal ?? null,
   }));
@@ -127,6 +131,7 @@ export interface ProcesoHistorial {
   cliente: string;
   fecha: string;
   monto: number;
+  moneda: Moneda;
   resultado: "ganado" | "perdido" | "pendiente" | "seleccionado";
   feedback?: string;
   poId?: string;
@@ -149,6 +154,7 @@ interface ApiHistorial {
     cliente: string;
     fecha: string;
     monto: number;
+    moneda: Moneda;
     resultado: "ganado" | "perdido" | "pendiente" | "seleccionado";
     feedback?: string;
     poId?: string;
