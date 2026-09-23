@@ -43,6 +43,8 @@ export interface Proveedor {
   /** 0-100 average of every client's performance evaluations; null until the first one. */
   desempenoPromedio: number | null;
   evaluacionesCount: number;
+  /** The proveedor's own pitch from its vitrina. */
+  descripcion?: string | null;
 }
 
 export interface Contrato {

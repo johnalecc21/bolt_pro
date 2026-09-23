@@ -50,6 +50,7 @@ const HistorialProveedor = lazy(() => import("@/pages/proveedor/HistorialProveed
 const MisContratos = lazy(() => import("@/pages/proveedor/MisContratos").then((m) => ({ default: m.MisContratos })));
 const PagosFactoring = lazy(() => import("@/pages/proveedor/PagosFactoring").then((m) => ({ default: m.PagosFactoring })));
 const PerfilEmpresa = lazy(() => import("@/pages/proveedor/PerfilEmpresa").then((m) => ({ default: m.PerfilEmpresa })));
+const MiVitrina = lazy(() => import("@/pages/proveedor/MiVitrina").then((m) => ({ default: m.MiVitrina })));
 
 const DashboardConsultor = lazy(() => import("@/pages/interno/DashboardConsultor").then((m) => ({ default: m.DashboardConsultor })));
 const ColaHomologacion = lazy(() => import("@/pages/interno/ColaHomologacion").then((m) => ({ default: m.ColaHomologacion })));
@@ -136,6 +137,7 @@ export default function App() {
             <Route path="contratos" element={<MisContratos />} />
             <Route path="pagos" element={<PagosFactoring />} />
             <Route path="perfil" element={<PerfilEmpresa />} />
+            <Route path="vitrina" element={<MiVitrina />} />
             <Route path="notificaciones" element={<CentroNotificaciones />} />
             <Route path="configuracion" element={<ConfiguracionCuenta portal="proveedor" />} />
           </Route>

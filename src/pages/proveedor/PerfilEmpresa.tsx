@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -7,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { ShieldCheck, Loader2, Plus, X, Share2, Copy, ExternalLink } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMiPerfil, actualizarMiPerfil, urlVitrina } from "@/lib/api/proveedores";
+import { fetchMiPerfil, actualizarMiPerfil } from "@/lib/api/proveedores";
+import { urlVitrina } from "@/lib/api/vitrina";
 import { apiErrorMessage } from "@/lib/api/http";
 
 function sameArray(a: string[], b: string[]) {
@@ -98,7 +100,7 @@ export function PerfilEmpresa() {
         <Card className="p-5">
           <h2 className="mb-1 flex items-center gap-2 font-semibold"><Share2 className="h-4 w-4" /> Tu vitrina pública</h2>
           <p className="mb-3 text-sm text-muted-foreground">
-            Un perfil verificado que puedes compartir con prospectos: score, desempeño y documentos validados, sin datos sensibles.
+            Un perfil verificado que puedes compartir con prospectos: tu presentación, fotos, brochures y catálogo junto a tu score, desempeño y documentos validados.
             Solo es visible mientras tu homologación esté aprobada.
           </p>
           <div className="flex flex-wrap items-center gap-2">
@@ -116,6 +118,9 @@ export function PerfilEmpresa() {
             </Button>
             <Button size="sm" variant="ghost" className="gap-1.5" asChild>
               <a href={urlVitrina(perfil.id)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Abrir</a>
+            </Button>
+            <Button size="sm" className="gap-1.5" asChild>
+              <Link to="/proveedor/vitrina">Editar mi vitrina</Link>
             </Button>
           </div>
         </Card>

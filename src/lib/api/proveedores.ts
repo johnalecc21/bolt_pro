@@ -16,6 +16,7 @@ interface ApiProveedor {
   color: string;
   desempenoPromedio: number | null;
   evaluacionesCount: number;
+  descripcion?: string | null;
   onboardingCompletado?: boolean;
 }
 
@@ -39,6 +40,7 @@ function toProveedor(p: ApiProveedor): Proveedor {
     color: p.color,
     desempenoPromedio: p.desempenoPromedio ?? null,
     evaluacionesCount: p.evaluacionesCount ?? 0,
+    descripcion: p.descripcion ?? null,
   };
 }
 
@@ -69,32 +71,4 @@ export async function actualizarMiPerfil(payload: { nombre?: string; categorias?
 
 export async function completarOnboardingProveedor(): Promise<void> {
   await api.post("/proveedores/mine/onboarding/completar");
-}
-
-/** Public, login-free profile of a homologated proveedor ("vitrina"). */
-export interface VitrinaProveedor {
-  id: string;
-  nombre: string;
-  iniciales: string;
-  color: string;
-  categorias: string[];
-  ubicacion: string;
-  certificaciones: string[];
-  score: number;
-  procesosGanados: number;
-  entregasATiempo: number;
-  desempenoPromedio: number | null;
-  evaluacionesCount: number;
-  homologadoHasta: string | null;
-  categoriasVerificadas: string[];
-  miembroDesde: string;
-}
-
-export async function fetchVitrina(id: string): Promise<VitrinaProveedor> {
-  const { data } = await api.get<VitrinaProveedor>(`/proveedores/vitrina/${id}`);
-  return data;
-}
-
-export function urlVitrina(id: string): string {
-  return `${window.location.origin}/vitrina/${id}`;
 }

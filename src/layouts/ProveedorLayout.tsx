@@ -1,8 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, ShieldCheck, Inbox, FileText,
-  Trophy, Wallet, User, Gavel, FileCheck2,
-} from "lucide-react";
+  Trophy, Wallet, User, Gavel, FileCheck2, Store } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchMiPerfil } from "@/lib/api/proveedores";
@@ -18,6 +17,7 @@ const navItems: PortalNavItem[] = [
   { to: "contratos", label: "Mis Contratos", icon: FileCheck2 },
   { to: "pagos", label: "Pagos", icon: Wallet },
   { to: "perfil", label: "Perfil Empresa", icon: User },
+  { to: "vitrina", label: "Mi Vitrina", icon: Store },
 ];
 
 export function ProveedorLayout() {

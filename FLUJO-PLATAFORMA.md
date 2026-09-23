@@ -71,6 +71,7 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 7. **Mis Contratos** — igual que Contratos del lado cliente: ve sus contratos reales con hitos, y descarga el PDF (plantilla Procurex o el documento propio que haya adjuntado el cliente).
 8. **Pagos/Pronto Pago** — simulador de descuento por adelanto sobre sus POs.
 9. **Perfil de Empresa** — certificaciones, usuarios con acceso al portal y enlace a su **vitrina pública** (`/vitrina/:id`, sin login) para compartir con prospectos.
+   - **Mi Vitrina** (`/proveedor/vitrina`) — el proveedor arma su vitrina: presentación, correo/teléfono comercial, video (YouTube/Vimeo), galería de hasta 20 imágenes, brochures y catálogos en PDF (hasta 5 de cada uno) y un catálogo de productos/servicios con foto y precio de referencia. Ve cuántas visitas tiene su vitrina. Los compradores la encuentran en el Directorio, que también busca por descripción y por productos del catálogo.
 10. **Evaluaciones de desempeño** (en Historial) — lo que sus clientes calificaron por contrato, con aviso de plan de mejora bajo 60/100.
 
 ## Panel Interno (quién opera todo por detrás)

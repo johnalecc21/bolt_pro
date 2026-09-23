@@ -29,9 +29,11 @@ export function PasoPresupuesto({ presupuesto, onPresupuestoChange, moneda, onMo
           <Label>Presupuesto estimado</Label>
           <div className="flex gap-2">
             <Input type="number" placeholder="185000" value={presupuesto} onChange={(e) => onPresupuestoChange(e.target.value)} />
-            <NativeSelect aria-label="Moneda" value={moneda} onChange={(e) => onMonedaChange(e.target.value as Moneda)}>
-              {MONEDAS.map((m) => <NativeSelectOption key={m.value} value={m.value}>{m.value}</NativeSelectOption>)}
-            </NativeSelect>
+            <div className="w-28 shrink-0">
+              <NativeSelect aria-label="Moneda" className="w-full" value={moneda} onChange={(e) => onMonedaChange(e.target.value as Moneda)}>
+                {MONEDAS.map((m) => <NativeSelectOption key={m.value} value={m.value}>{m.value}</NativeSelectOption>)}
+              </NativeSelect>
+            </div>
           </div>
         </div>
         <div className="space-y-2">

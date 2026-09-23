@@ -7,7 +7,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { type Proveedor } from "@/lib/types";
-import { fetchProveedores, urlVitrina } from "@/lib/api/proveedores";
+import { fetchProveedores } from "@/lib/api/proveedores";
+import { urlVitrina } from "@/lib/api/vitrina";
 import { Building2, Star, ShieldCheck, Plus, ExternalLink } from "lucide-react";
 import { ResumenDesempenoProveedor } from "@/components/cliente/ResumenDesempenoProveedor";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
@@ -75,6 +76,7 @@ export function DirectorioProveedores() {
                   </div>
                 </div>
               </DialogHeader>
+              {perfil.descripcion && <p className="line-clamp-4 whitespace-pre-line text-sm text-muted-foreground">{perfil.descripcion}</p>}
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div className="rounded-lg bg-muted/50 p-3">
                   <p className="flex items-center justify-center gap-1 text-lg font-bold"><Star className="h-4 w-4 fill-warning text-warning" /> {perfil.score}</p>
@@ -110,7 +112,7 @@ export function DirectorioProveedores() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-xs text-primary hover:underline"
               >
-                <ExternalLink className="h-3 w-3" /> Ver vitrina pública
+                <ExternalLink className="h-3 w-3" /> Ver vitrina: catálogo, fotos y brochures
               </a>
               <div className="rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
                 Disputas históricas: {perfil.disputas} · Solo se muestran datos agregados y reputacionales — nunca condiciones comerciales dadas a otros clientes.
