@@ -1,4 +1,5 @@
 import axios, { AxiosError } from "axios";
+import type { ZodType } from "zod";
 import { supabase } from "@/lib/supabase/client";
 
 export const api = axios.create({
@@ -66,6 +67,20 @@ api.interceptors.response.use(
     return Promise.reject(error);
   },
 );
+
+/**
+ * Parses a backend response against a zod schema instead of trusting axios's
+ * cast — for endpoints where a silently-wrong field shape is expensive
+ * (money, signatures, approvals) rather than just a broken render.
+ */
+export function parseApiResponse<T>(schema: ZodType<T>, data: unknown, context: string): T {
+  const result = schema.safeParse(data);
+  if (!result.success) {
+    console.error(`Respuesta inesperada del backend (${context}):`, result.error.flatten());
+    throw new Error(`Respuesta inesperada del servidor (${context}). Intenta de nuevo o contacta soporte.`);
+  }
+  return result.data;
+}
 
 export function apiErrorMessage(err: unknown, fallback = "Ocurrió un error. Intenta de nuevo."): string {
   if (axios.isAxiosError(err)) {

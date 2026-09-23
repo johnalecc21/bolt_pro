@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { LogoFull, LogoIcon } from "@/components/shared/Logo";
+import { AppErrorBoundary } from "@/components/shared/ErrorBoundary";
 import type { Role } from "@/lib/mock/users";
 
 export interface PortalNavItem {
@@ -134,7 +135,9 @@ export function PortalShellLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <AppHeader breadcrumbs={crumbs} portal={portal} />
         <main key={remountKey} className="flex-1 overflow-y-auto">
-          <Outlet />
+          <AppErrorBoundary fullScreen={false}>
+            <Outlet />
+          </AppErrorBoundary>
         </main>
       </div>
     </div>

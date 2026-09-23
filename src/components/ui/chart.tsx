@@ -81,12 +81,20 @@ function ChartContainer({
   )
 }
 
+// Every ChartConfig in this codebase today is a static, hardcoded object
+// (never built from backend-provided categories), so this isn't an active
+// XSS sink. But the moment someone wires a config's `key`/`color`/`id` from
+// dynamic data, dangerouslySetInnerHTML makes it one — the guards below keep
+// only CSS-identifier/color-safe characters so that stays true even then.
+const SAFE_IDENTIFIER = /^[a-zA-Z0-9_-]+$/
+const SAFE_COLOR_VALUE = /^[a-zA-Z0-9#%.,()\s_-]+$/
+
 const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   const colorConfig = Object.entries(config).filter(
     ([, config]) => config.theme ?? config.color
   )
 
-  if (!colorConfig.length) {
+  if (!colorConfig.length || !SAFE_IDENTIFIER.test(id)) {
     return null
   }
 
@@ -102,7 +110,10 @@ ${colorConfig
     const color =
       itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ??
       itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
+    if (!color || !SAFE_IDENTIFIER.test(key) || !SAFE_COLOR_VALUE.test(color)) {
+      return null
+    }
+    return `  --color-${key}: ${color};`
   })
   .join("\n")}
 }

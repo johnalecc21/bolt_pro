@@ -34,6 +34,7 @@ export interface Proveedor {
   categorias: string[];
   score: number;
   ubicacion: string;
+  sitioWeb: string | null;
   certificaciones: string[];
   procesosGanados: number;
   entregasATiempo: number;

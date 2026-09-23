@@ -1,4 +1,10 @@
-export type Moneda = "COP" | "USD" | "MXN" | "PEN" | "CLP" | "BRL";
+import { z } from "zod";
+
+export const MONEDA_VALUES = ["COP", "USD", "MXN", "PEN", "CLP", "BRL"] as const;
+export type Moneda = (typeof MONEDA_VALUES)[number];
+
+/** For API response schemas — an older API that doesn't send the field yet reads as USD. */
+export const monedaSchema = z.enum(MONEDA_VALUES).catch("USD");
 
 export const MONEDAS: { value: Moneda; label: string }[] = [
   { value: "COP", label: "COP — Peso colombiano" },

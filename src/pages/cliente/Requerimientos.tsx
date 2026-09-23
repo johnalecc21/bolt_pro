@@ -2,16 +2,17 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { type EstadoReq } from "@/lib/types";
 import { useAuth } from "@/lib/auth/AuthContext";
-import { Search, Plus, FileText, ArrowRight } from "lucide-react";
+import { Plus, FileText, ArrowRight } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchRequerimientos } from "@/lib/api/requerimientos";
 
+import { formatMoneyCompact } from "@/lib/moneda";
 const estados: { value: EstadoReq | "todos"; label: string }[] = [
   { value: "todos", label: "Todos" },
   { value: "borrador", label: "Borrador" },
@@ -52,10 +53,7 @@ export function Requerimientos() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por ID o título..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
+        <SearchInput placeholder="Buscar por ID o título..." value={query} onChange={setQuery} />
         <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReq | "todos")}>
           {estados.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
         </select>
@@ -82,7 +80,7 @@ export function Requerimientos() {
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>{r.categoria}</span>
                     <span>•</span>
-                    <span>${(r.montoEstimado / 1000).toFixed(0)}K</span>
+                    <span>{formatMoneyCompact(r.montoEstimado, r.moneda)}</span>
                     <span>•</span>
                     <span>Vence {r.fechaLimite}</span>
                     <span>•</span>

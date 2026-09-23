@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Search, Gavel, ArrowRight } from "lucide-react";
+import { SearchInput } from "@/components/shared/SearchInput";
+import { Gavel, ArrowRight } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchRequerimientos } from "@/lib/api/requerimientos";
 
+import { formatMoneyCompact } from "@/lib/moneda";
 export function Licitaciones() {
   const { data: requerimientos, loading } = useApiData(fetchRequerimientos);
   const [query, setQuery] = useState("");
@@ -23,10 +24,7 @@ export function Licitaciones() {
         <p className="text-sm text-muted-foreground">Procesos abiertos, recibiendo ofertas de proveedores</p>
       </div>
 
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="Buscar por ID o título..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
-      </div>
+      <SearchInput placeholder="Buscar por ID o título..." value={query} onChange={setQuery} className="max-w-md" />
 
       {loading ? (
         <TableSkeleton />
@@ -50,7 +48,7 @@ export function Licitaciones() {
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span>{r.categoria}</span>
                     <span>•</span>
-                    <span>${(r.montoEstimado / 1000).toFixed(0)}K</span>
+                    <span>{formatMoneyCompact(r.montoEstimado, r.moneda)}</span>
                     <span>•</span>
                     <span>{r.proveedoresInvitados} invitados · {r.ofertasRecibidas} ofertas</span>
                     <span>•</span>

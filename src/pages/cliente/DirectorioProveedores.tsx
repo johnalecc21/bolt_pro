@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProviderCard } from "@/components/shared/ProviderCard";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { type Proveedor } from "@/lib/types";
 import { fetchProveedores, urlVitrina } from "@/lib/api/proveedores";
-import { Search, Building2, Star, ShieldCheck, Plus, ExternalLink } from "lucide-react";
+import { Building2, Star, ShieldCheck, Plus, ExternalLink } from "lucide-react";
 import { ResumenDesempenoProveedor } from "@/components/cliente/ResumenDesempenoProveedor";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
@@ -37,10 +37,7 @@ export function DirectorioProveedores() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar proveedor..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
+        <SearchInput placeholder="Buscar proveedor..." value={query} onChange={setQuery} />
         <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {categorias.map((c) => <option key={c}>{c}</option>)}
         </select>

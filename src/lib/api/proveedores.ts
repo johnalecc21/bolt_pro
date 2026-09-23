@@ -8,6 +8,7 @@ interface ApiProveedor {
   categorias: string[];
   score: number;
   ubicacion: string;
+  sitioWeb?: string | null;
   certificaciones: string[];
   procesosGanados: number;
   entregasATiempo: number;
@@ -30,6 +31,7 @@ function toProveedor(p: ApiProveedor): Proveedor {
     categorias: p.categorias,
     score: p.score,
     ubicacion: p.ubicacion,
+    sitioWeb: p.sitioWeb ?? null,
     certificaciones: p.certificaciones,
     procesosGanados: p.procesosGanados,
     entregasATiempo: p.entregasATiempo,
@@ -60,7 +62,7 @@ export async function fetchMiPerfil(): Promise<MiPerfilProveedor> {
   return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
 }
 
-export async function actualizarMiPerfil(payload: { nombre?: string; categorias?: string[]; ubicacion?: string }): Promise<MiPerfilProveedor> {
+export async function actualizarMiPerfil(payload: { nombre?: string; categorias?: string[]; ubicacion?: string; sitioWeb?: string; certificaciones?: string[] }): Promise<MiPerfilProveedor> {
   const { data } = await api.patch<ApiProveedor>("/proveedores/mine", payload);
   return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
 }

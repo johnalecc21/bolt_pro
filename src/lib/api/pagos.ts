@@ -1,6 +1,7 @@
-import { api } from "@/lib/api/http";
+import { z } from "zod";
+import { api, parseApiResponse } from "@/lib/api/http";
 import { formatContratoCodigo } from "@/lib/codigo";
-import type { Moneda } from "@/lib/moneda";
+import { monedaSchema, type Moneda } from "@/lib/moneda";
 
 export interface PagoPO {
   id: string;
@@ -13,15 +14,20 @@ export interface PagoPO {
   disputaAbierta: boolean;
 }
 
-interface ApiPagoPO {
-  id: string;
-  monto: number;
-  moneda: Moneda;
-  fechaPagoPactada: string;
-  estado: "PENDIENTE" | "PAGADO" | "VENCIDO";
-  disputaAbierta: boolean;
-  contrato: { numero: number; tipo: "CONTRATO" | "PO" | "ADDENDUM"; company: { nombre: string } };
-}
+const apiPagoPOSchema = z.object({
+  id: z.string(),
+  monto: z.number(),
+  moneda: monedaSchema,
+  fechaPagoPactada: z.string(),
+  estado: z.enum(["PENDIENTE", "PAGADO", "VENCIDO"]),
+  disputaAbierta: z.boolean(),
+  contrato: z.object({
+    numero: z.number(),
+    tipo: z.enum(["CONTRATO", "PO", "ADDENDUM"]),
+    company: z.object({ nombre: z.string() }),
+  }),
+});
+type ApiPagoPO = z.infer<typeof apiPagoPOSchema>;
 
 function toPagoPO(p: ApiPagoPO): PagoPO {
   return {
@@ -37,11 +43,6 @@ function toPagoPO(p: ApiPagoPO): PagoPO {
 }
 
 export async function fetchMisPagos(): Promise<PagoPO[]> {
-  const { data } = await api.get<ApiPagoPO[]>("/pagos");
-  return data.map(toPagoPO);
-}
-
-export async function simularProntoPago(pagoId: string, diasAdelanto: number): Promise<{ montoOriginal: number; montoAdelanto: number; descuento: number }> {
-  const { data } = await api.post(`/pagos/${pagoId}/pronto-pago`, { diasAdelanto });
-  return data;
+  const { data } = await api.get<unknown>("/pagos");
+  return parseApiResponse(z.array(apiPagoPOSchema), data, "pagos").map(toPagoPO);
 }

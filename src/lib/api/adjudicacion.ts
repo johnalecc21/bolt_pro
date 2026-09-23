@@ -1,4 +1,5 @@
-import { api } from "@/lib/api/http";
+import { z } from "zod";
+import { api, parseApiResponse } from "@/lib/api/http";
 import { fetchProveedor } from "@/lib/api/proveedores";
 
 export interface Adjudicacion {
@@ -16,21 +17,24 @@ export interface Adjudicacion {
   yaFirmado: boolean;
 }
 
-interface ApiAdjudicacion {
-  proveedorId: string;
-  precioFinal: number;
-  plazoDias: number;
-  condicionesPagoDias: number;
-  garantiaMeses: number;
-  poId: string;
-  confirmada: boolean;
-  revisionLegal: boolean;
-  firmado: boolean;
-}
+const apiAdjudicacionSchema = z.object({
+  proveedorId: z.string(),
+  precioFinal: z.number(),
+  plazoDias: z.number(),
+  condicionesPagoDias: z.number(),
+  garantiaMeses: z.number(),
+  poId: z.string(),
+  confirmada: z.boolean(),
+  revisionLegal: z.boolean(),
+  firmado: z.boolean(),
+});
+
+const firmarResponseSchema = z.object({ ok: z.boolean(), poId: z.string() });
 
 export async function fetchAdjudicacion(requerimientoId: string): Promise<Adjudicacion | null> {
-  const { data } = await api.get<ApiAdjudicacion | null>(`/adjudicacion/${requerimientoId}`);
-  if (!data) return null;
+  const { data: raw } = await api.get<unknown>(`/adjudicacion/${requerimientoId}`);
+  if (!raw) return null;
+  const data = parseApiResponse(apiAdjudicacionSchema, raw, "adjudicación");
   const proveedor = await fetchProveedor(data.proveedorId);
   return {
     proveedorId: data.proveedorId,
@@ -71,6 +75,6 @@ export async function revisionLegalAdjudicacion(requerimientoId: string) {
 }
 
 export async function firmarAdjudicacion(requerimientoId: string, notificarPerdedores: boolean): Promise<{ ok: boolean; poId: string }> {
-  const { data } = await api.post(`/adjudicacion/${requerimientoId}/firmar`, { notificarPerdedores });
-  return data;
+  const { data } = await api.post<unknown>(`/adjudicacion/${requerimientoId}/firmar`, { notificarPerdedores });
+  return parseApiResponse(firmarResponseSchema, data, "firmar adjudicación");
 }

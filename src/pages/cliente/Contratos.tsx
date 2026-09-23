@@ -7,11 +7,12 @@ import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
+import { SearchInput } from "@/components/shared/SearchInput";
 import { type Contrato } from "@/lib/types";
 import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato, emitirPo } from "@/lib/api/contratos";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";
-import { Search, Download, FileCheck, Calendar, Loader2, Upload, FileUp, FilePlus2 } from "lucide-react";
+import { Download, FileCheck, Calendar, Loader2, Upload, FileUp, FilePlus2 } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 
@@ -126,10 +127,7 @@ export function Contratos() {
       <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,image/*" className="hidden" onChange={onFileSelected} />
 
       <div className="flex flex-wrap gap-3">
-        <div className="relative min-w-[240px] flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Buscar por ID o proveedor..." className="pl-9" value={query} onChange={(e) => setQuery(e.target.value)} />
-        </div>
+        <SearchInput placeholder="Buscar por ID o proveedor..." value={query} onChange={setQuery} />
         <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={categoria} onChange={(e) => setCategoria(e.target.value)}>
           {categorias.map((c) => <option key={c}>{c}</option>)}
         </select>
