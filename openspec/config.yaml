@@ -1,0 +1,190 @@
+schema: spec-driven
+
+# Project context — shown to AI when creating artifacts.
+context: |
+  # Procurex (a.k.a. ProcureOS en el backend) — plataforma de procurement B2B
+
+  Producto SaaS de compras corporativas con 3 portales independientes que comparten
+  router, backend y base de datos:
+    /            → Landing (elige portal)
+    /cliente/*   → Portal Cliente (comprador: requerimientos → licitación → adjudicación → contrato → seguimiento)
+    /proveedor/* → Portal Proveedores (homologación, invitaciones, ofertas, subasta, contratos, pagos)
+    /interno/*   → Panel Interno (consultores / compliance / ops)
+
+  El dominio y toda la UI están en ESPAÑOL (nombres de rutas, entidades, enums,
+  copys, mensajes de error). El código/comentarios técnicos van en inglés.
+  Referencia funcional completa: `FLUJO-PLATAFORMA.md` en la raíz del frontend.
+
+  ## Repositorios (proyectos hermanos, NO anidados)
+
+  - Frontend: `C:\Users\alejo\Documents\proyectos\bolt_procure`      (rama de trabajo: `integration`, base: `main`)
+  - Backend:  `C:\Users\alejo\Documents\proyectos\bolt_procure_backend` (rama: `main`)
+
+  Casi todo cambio funcional toca AMBOS repos: endpoint + DTO + servicio en el
+  backend, y cliente `src/lib/api/*.ts` + pantalla en el frontend. Al planear una
+  change, listar tareas separadas por repo.
+
+  ## Tech stack — Frontend (`bolt_procure`)
+
+  - React 19 + TypeScript 5.9 + Vite 7 (`type: module`), sin SSR.
+  - Tailwind CSS v4 (`@tailwindcss/vite`, sin `tailwind.config`) + shadcn/ui
+    estilo "new-york", baseColor neutral, CSS variables. Componentes en
+    `src/components/ui/` (radix-ui unificado, `lucide-react` para iconos).
+  - Router: `react-router-dom` v7 (`BrowserRouter`), rutas declaradas en `src/App.tsx`.
+  - Estado de servidor: axios + hook propio `useApiData` (no React Query).
+  - Formularios: `react-hook-form` + `@hookform/resolvers` + `zod` v4.
+  - Realtime: `socket.io-client` (namespace `/subasta`).
+  - Otros: `recharts` (gráficas), `framer-motion` + `gsap` (animación),
+    `sonner` (toasts), `date-fns`, `jspdf` (PDF de contratos), `cmdk` (Cmd+K),
+    `next-themes` (dark mode), `@sentry/react` → GlitchTip.
+  - Auth/Storage cliente: `@supabase/supabase-js`.
+  - Scripts: `npm run dev` (Vite, puerto 5173), `npm run build` (`tsc -b && vite build`),
+    `npm run typecheck` (`tsc -b`), `npm run preview`.
+  - NO hay ESLint ni tests en el frontend: la verificación es `npm run typecheck`.
+
+  ### Estructura frontend
+    src/pages/{cliente,proveedor,interno,legal}/  una pantalla por archivo, export nombrado
+    src/layouts/                                  ClienteLayout / ProveedorLayout / InternoLayout
+    src/components/{ui,shared,layout,auth,landing,legal}/
+    src/lib/api/*.ts                              un módulo por dominio del backend
+    src/lib/{auth,supabase,pdf,mock}/, src/lib/{types.ts,utils.ts,codigo.ts}
+    src/hooks/                                    useApiData, use-mobile, useSidebarCollapsed…
+
+  ### Convenciones frontend
+  - Alias `@/` → `src/` (vite + tsconfig). Importar siempre con `@/…`, nunca rutas relativas largas.
+  - tsconfig estricto: `strict`, `noUnusedLocals`, `noUnusedParameters`,
+    `verbatimModuleSyntax` (usar `import type { … }`), `erasableSyntaxOnly`.
+  - Toda página se carga con `lazy()` en `App.tsx` (code-splitting por ruta) y va
+    envuelta en `ErrorBoundary`; los chunks de vendor se agrupan a mano en `vite.config.ts`.
+  - Capa de datos: cada archivo en `src/lib/api/` define (1) un schema zod del
+    payload crudo del backend, (2) un tipo de dominio del frontend, (3) un mapper
+    `toX()` que normaliza (enums `UPPER_CASE` del backend → `lower_case` del front,
+    fechas a `YYYY-MM-DD`), y (4) funciones `fetchX` / `createX` que usan
+    `parseApiResponse(schema, data, "contexto")`. No devolver el payload de axios sin validar.
+  - `src/lib/api/http.ts` es el único cliente axios: inyecta el bearer de Supabase,
+    el header `x-company-id` (empresa activa) y reintenta una vez tras refrescar
+    la sesión en un 401. Errores de UI siempre vía `apiErrorMessage(err)`.
+  - Acceso: `ProtectedRoute` (portal) + `RequireRole` (rol, con modo solo-lectura).
+  - Marca: usar los tokens de `src/index.css` (`--primary`, `--brand-accent`,
+    `--brand-50…700`, `--chart-1…`). Nunca hardcodear hex ni colores sueltos en gráficas.
+  - Las pantallas muestran estados de carga (`TableSkeleton`), vacío (`EmptyState`)
+    y error; no dejar un spinner infinito ni una tabla vacía sin mensaje.
+
+  ## Tech stack — Backend (`bolt_procure_backend`)
+
+  - NestJS 11 + TypeScript 5.7 (CommonJS, decoradores) sobre Express 5.
+  - Prisma 6 + PostgreSQL alojado en Supabase (`DATABASE_URL` vía pooler).
+  - Auth: Supabase Auth real (MFA/TOTP y Google OAuth). El backend NO firma JWTs:
+    `JwtAuthGuard` valida el bearer con `supabase.auth.getUser()` y carga el
+    perfil (portal/role/company) desde Prisma.
+  - Realtime: `@nestjs/websockets` + Socket.IO con `@socket.io/redis-adapter`
+    (`RedisIoAdapter`) para difundir entre instancias.
+  - Redis (`ioredis`): storage de rate limit (`@nestjs/throttler`, 120 req/min por IP) y adapter WS.
+  - Cron: `@nestjs/schedule` (`VencimientosService` — vencimientos de contratos).
+  - Observabilidad: `nestjs-pino` → consola (`pino-pretty` en dev) y Loki/Grafana;
+    `@sentry/nestjs` → GlitchTip (`instrument.ts` se importa ANTES que nada en `main.ts`).
+  - Seguridad/infra: `helmet` (CSP off por Swagger), `compression`, CORS por
+    `CORS_ORIGIN`, `ValidationPipe` global (`whitelist: true, transform: true`).
+  - Swagger en `/docs`, deshabilitado en producción. API en `http://localhost:3001`.
+  - Docs OCR/archivos: `tesseract.js`, `pdf-parse` (OCR y chequeo OFAC son simulados).
+  - Scripts: `npm run start:dev`, `build`, `lint` (eslint --fix), `format` (prettier),
+    `test` / `test:e2e` (Jest + supertest, `*.spec.ts`), `prisma:generate`,
+    `prisma:migrate`, `prisma:studio`, `seed`, `db:reset`.
+  - `docker-compose.yml` levanta SOLO Redis + Loki + Grafana (Postgres es Supabase).
+
+  ### Estructura backend
+  Un módulo Nest por dominio bajo `src/`, cada uno con
+  `X.module.ts`, `X.controller.ts`, `X.service.ts` y `dto/`:
+    auth, usuarios, requerimientos, aprobaciones, matriz-aprobacion, proveedores,
+    homologacion, ofertas, adjudicacion, contratos, seguimiento, disputas,
+    invitaciones, pagos, preguntas, notificaciones, audit-log, subasta,
+    vencimientos, analitica, interno
+  Transversales: `common/` (guards, decorators, filters, dto, adapters, utils),
+  `config/env.validation.ts` (Joi), `prisma/`, `supabase/`, `redis/`, `storage/`, `health/`.
+
+  ### Convenciones backend
+  - Formato: Prettier con `singleQuote: true`, `trailingComma: "all"`; ESLint flat
+    config con `recommendedTypeChecked` + plugin prettier (`prettier/prettier` es error).
+  - Controladores delgados: validan con DTOs (`class-validator` + `class-transformer`),
+    delegan toda la lógica al service. Un `@ApiTags()` por controlador.
+  - RBAC declarativo con los decoradores de `common/decorators`: `@Public()`,
+    `@PortalOnly('CLIENTE'|'PROVEEDOR'|'INTERNO')`, `@Roles()`, `@ReadonlyRoles()`,
+    y `@CurrentUser()` para el `AuthenticatedUser` ({sub, email, portal, role, companyId}).
+    Los guards son globales (`APP_GUARD`): Throttler → JwtAuth → Portal → Roles.
+  - Aislamiento multi-empresa: TODA query debe filtrar por `companyId` del usuario
+    (viene del header `x-company-id` validado contra `CompanyMembership`). Un
+    endpoint nuevo sin ese filtro es un IDOR — ya se cerraron varios.
+  - Escrituras multi-tabla van en `prisma.$transaction`. Listados siempre con
+    límites/paginación (`common/dto/pagination.dto.ts`) y `select` explícito;
+    evitar N+1 y evitar exponer campos sensibles de proveedores.
+  - Todo cambio de schema Prisma requiere una migración versionada
+    (`prisma/migrations/<timestamp>_<snake_case>`), nunca `db push`. Al agregar
+    una relación o filtro frecuente, agregar el índice en la misma migración.
+  - Enums de Prisma en `UPPER_SNAKE_CASE` (Portal, Role, EstadoRequerimiento,
+    EstadoHomologacion, NivelRiesgo, EstadoContrato, EstadoPago, …); el frontend
+    los traduce en su mapper, el backend no emite variantes en minúscula.
+  - Archivos en Supabase Storage con URLs firmadas de corta duración vía
+    `StorageService` (buckets: homologación, requerimientos-documentos, contratos).
+  - Acciones sensibles (aprobar, rechazar, cambiar score, impersonar, adjuntar
+    documento) deben escribir en `AuditLogEntry`; muchas también generan `Notificacion`
+    con `link` directo a la pantalla donde se actúa.
+
+  ## Entidades principales (Prisma)
+
+  Company, User, CompanyMembership, Requerimiento (+Comentario/Documento),
+  Aprobacion (+AprobacionPaso), MatrizAprobacionRegla, ProveedorProfile,
+  Homologacion (+DocumentoHomologacion), Oferta, Adjudicacion, Contrato,
+  HitoSeguimiento, Disputa (+MensajeDisputa), Invitacion, Pregunta, PagoPO,
+  Notificacion, AuditLogEntry, CasoConsultor, BenchmarkEntry, AuctionSession, Puja.
+
+  Roles: COMPRADOR, APROBADOR_CFO, ADMIN_CLIENTE (portal CLIENTE);
+  PROVEEDOR (portal PROVEEDOR); CONSULTOR, COMPLIANCE_OPS (portal INTERNO).
+
+  ## Partes deliberadamente simuladas (no "arreglar" sin pedirlo)
+
+  Firma electrónica tipo DocuSign (falla a propósito el primer intento), OCR y
+  verificación OFAC en homologación, simulador de pronto pago, widget "Actividad
+  reciente" del dashboard, selector de idioma (no hay i18n conectado), y las
+  pantallas internas sin modelo propio (Asistente RFP, Auditoría de Ahorro,
+  Onboarding ERP). Todo lo demás persiste de verdad en Postgres.
+
+  ## Convenciones de trabajo
+
+  - Mensajes de commit en español, imperativo/descriptivo, con prefijo de área
+    cuando aplica: `Homologación: estado BORRADOR, categorías de documento y guardas de reenvío`.
+    No se usa Conventional Commits de forma estricta.
+  - Entorno de desarrollo: Windows + PowerShell. Rutas con `\`, comandos PowerShell
+    (no `&&` en PS 5.1).
+  - Variables de entorno: frontend `VITE_API_URL`, `VITE_SUPABASE_URL`,
+    `VITE_SUPABASE_ANON_KEY`, `VITE_GLITCHTIP_DSN`. Backend `DATABASE_URL`,
+    `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `PORT`,
+    `CORS_ORIGIN`, `REDIS_URL`, `GLITCHTIP_DSN`, `LOKI_HOST`/`LOKI_USER`/`LOKI_PASSWORD`.
+    Nunca commitear `.env`; al agregar una variable, actualizar `.env.example`
+    y `src/config/env.validation.ts` (Joi) en el backend.
+
+# Per-artifact rules
+rules:
+  proposal:
+    - Indicar explícitamente qué repos toca el cambio (frontend, backend o ambos).
+    - Incluir una sección "Non-goals" y no proponer reemplazar las partes simuladas a propósito (firma electrónica, OCR/OFAC, pronto pago) salvo que se pida.
+  design:
+    - Si el cambio agrega o modifica endpoints, documentar método, ruta, DTO de entrada, forma de la respuesta y los decoradores de RBAC (@PortalOnly/@Roles) que aplican.
+    - Si el cambio toca el schema de Prisma, listar modelos/enums/índices afectados y el nombre de la migración.
+    - Declarar cómo se preserva el aislamiento por companyId en cada query nueva.
+  tasks:
+    - Agrupar las tareas por repo (backend primero, luego frontend) y dejar la verificación al final.
+    - 'Incluir siempre una tarea de verificación: `npm run typecheck` en el frontend y `npm run lint` + `npm run build` (y `npm test` si hay specs) en el backend.'
+    - Toda tarea que cambie Prisma debe incluir generar la migración y regenerar el cliente.
+
+# Per-operation guidance
+operations:
+  apply:
+    guidance:
+      - Respetar el estilo existente de cada repo (Prettier con comillas simples en el backend, comillas dobles y alias @/ en el frontend); no reformatear archivos ajenos al cambio.
+      - Un endpoint nuevo no se considera terminado hasta que el cliente en src/lib/api/*.ts lo consume con su schema zod y su mapper.
+      - No introducir datos mock nuevos en el frontend; si falta un dato, agregar el endpoint real.
+      - Mantener los mensajes de UI y los errores de la API en español.
+  archive:
+    guidance:
+      - Actualizar FLUJO-PLATAFORMA.md (frontend) y/o README.md (backend) cuando el cambio altere el flujo funcional o las limitaciones conocidas.
+      - Resumir en el archivo qué quedó pendiente o intencionalmente simulado.

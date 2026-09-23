@@ -23,7 +23,7 @@ export function LoginProveedor() {
             {[
               { icon: Gavel, title: "Invitaciones directas", desc: "Recibe licitaciones alineadas a tu categoría." },
               { icon: Star, title: "Score de desempeño", desc: "Tu reputación construida en cada proceso." },
-              { icon: Wallet, title: "Pronto pago", desc: "Cobra antes con factoring embebido." },
+              { icon: Wallet, title: "Centro de pagos", desc: "Sigue el estado de cobro de tus órdenes de compra." },
             ].map((f) => (
               <div key={f.title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
                 <f.icon className="h-6 w-6 shrink-0 text-info" />

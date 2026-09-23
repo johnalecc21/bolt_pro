@@ -41,7 +41,7 @@ const ConfiguracionCuenta = lazy(() => import("@/pages/cliente/ConfiguracionCuen
 
 const OnboardingProveedor = lazy(() => import("@/pages/proveedor/OnboardingProveedor").then((m) => ({ default: m.OnboardingProveedor })));
 const HomologacionForm = lazy(() => import("@/pages/proveedor/HomologacionForm").then((m) => ({ default: m.HomologacionForm })));
-const EstadoHomologacion = lazy(() => import("@/pages/proveedor/EstadoHomologacion").then((m) => ({ default: m.EstadoHomologacion })));
+const DashboardProveedor = lazy(() => import("@/pages/proveedor/DashboardProveedor").then((m) => ({ default: m.DashboardProveedor })));
 const InvitacionesProveedor = lazy(() => import("@/pages/proveedor/InvitacionesProveedor").then((m) => ({ default: m.InvitacionesProveedor })));
 const CargaOferta = lazy(() => import("@/pages/proveedor/CargaOferta").then((m) => ({ default: m.CargaOferta })));
 const SubastaVivo = lazy(() => import("@/pages/proveedor/SubastaVivo").then((m) => ({ default: m.SubastaVivo })));
@@ -122,7 +122,7 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<EstadoHomologacion />} />
+            <Route path="dashboard" element={<DashboardProveedor />} />
             <Route path="onboarding" element={<OnboardingProveedor />} />
             <Route path="homologacion" element={<HomologacionForm />} />
             <Route path="invitaciones" element={<InvitacionesProveedor />} />

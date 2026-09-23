@@ -16,7 +16,7 @@ const navItems: PortalNavItem[] = [
   { to: "subasta", label: "Subasta en Vivo", icon: Gavel },
   { to: "historial", label: "Historial", icon: Trophy },
   { to: "contratos", label: "Mis Contratos", icon: FileCheck2 },
-  { to: "pagos", label: "Pagos / Factoring", icon: Wallet },
+  { to: "pagos", label: "Pagos", icon: Wallet },
   { to: "perfil", label: "Perfil Empresa", icon: User },
 ];
 

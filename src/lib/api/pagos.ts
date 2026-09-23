@@ -26,12 +26,6 @@ const apiPagoPOSchema = z.object({
 });
 type ApiPagoPO = z.infer<typeof apiPagoPOSchema>;
 
-const prontoPagoResponseSchema = z.object({
-  montoOriginal: z.number(),
-  montoAdelanto: z.number(),
-  descuento: z.number(),
-});
-
 function toPagoPO(p: ApiPagoPO): PagoPO {
   return {
     id: p.id,
@@ -47,9 +41,4 @@ function toPagoPO(p: ApiPagoPO): PagoPO {
 export async function fetchMisPagos(): Promise<PagoPO[]> {
   const { data } = await api.get<unknown>("/pagos");
   return parseApiResponse(z.array(apiPagoPOSchema), data, "pagos").map(toPagoPO);
-}
-
-export async function simularProntoPago(pagoId: string, diasAdelanto: number): Promise<{ montoOriginal: number; montoAdelanto: number; descuento: number }> {
-  const { data } = await api.post<unknown>(`/pagos/${pagoId}/pronto-pago`, { diasAdelanto });
-  return parseApiResponse(prontoPagoResponseSchema, data, "simular pronto pago");
 }
