@@ -10,6 +10,9 @@ import { Bell, KeyRound, Globe, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { roleLabels } from "@/lib/mock/users";
 import { TwoFactorSettingsCard } from "@/components/shared/TwoFactorSettingsCard";
+import { CorreosCard } from "@/components/cuenta/CorreosCard";
+import { PlanUsoCard } from "@/components/cuenta/PlanUsoCard";
+import { AuditoriaCard } from "@/components/cuenta/AuditoriaCard";
 import { supabase } from "@/lib/supabase/client";
 import { apiErrorMessage } from "@/lib/api/http";
 
@@ -107,6 +110,15 @@ export function ConfiguracionCuenta({ portal = "cliente" }: { portal?: "cliente"
       </Card>
 
       <TwoFactorSettingsCard />
+
+      <CorreosCard />
+
+      {portal === "cliente" && (currentUser?.role === "admin_cliente" || currentUser?.role === "aprobador_cfo") && (
+        <>
+          <PlanUsoCard />
+          <AuditoriaCard puedeConfigurar={currentUser.role === "admin_cliente"} />
+        </>
+      )}
 
       <Card className="flex items-center justify-between p-5">
         <div>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,11 +6,13 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { type EstadoReq } from "@/lib/types";
-import { useAuth } from "@/lib/auth/AuthContext";
 import { Plus, FileText, ArrowRight } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimientos } from "@/lib/api/requerimientos";
+import { fetchRequerimientosPagina } from "@/lib/api/requerimientos";
+import { fetchEstructura } from "@/lib/api/estructura";
+import { PaginationBar } from "@/components/shared/PaginationBar";
+import { useDebounced } from "@/hooks/useDebounced";
 
 import { formatMoneyCompact } from "@/lib/moneda";
 const estados: { value: EstadoReq | "todos"; label: string }[] = [
@@ -25,20 +27,23 @@ const estados: { value: EstadoReq | "todos"; label: string }[] = [
 ];
 
 export function Requerimientos() {
-  const { currentUser } = useAuth();
-  const { data: requerimientos, loading } = useApiData(fetchRequerimientos);
   const [query, setQuery] = useState("");
   const [estado, setEstado] = useState<EstadoReq | "todos">("todos");
+  const [centroCostoId, setCentroCostoId] = useState("");
+  const [page, setPage] = useState(1);
+  const q = useDebounced(query.trim());
 
-  const base = currentUser?.role === "comprador"
-    ? (requerimientos ?? []).filter((r) => r.solicitante === currentUser.nombre)
-    : (requerimientos ?? []);
+  // A new filter starts from the first page again.
+  useEffect(() => setPage(1), [q, estado, centroCostoId]);
 
-  const filtrados = base.filter((r) => {
-    const matchQuery = `${r.codigo} ${r.titulo}`.toLowerCase().includes(query.toLowerCase());
-    const matchEstado = estado === "todos" || r.estado === estado;
-    return matchQuery && matchEstado;
-  });
+  // Compradores only get their own requerimientos — the API scopes that by role.
+  const { data, loading } = useApiData(
+    () => fetchRequerimientosPagina({ page, q: q || undefined, estado: estado === "todos" ? undefined : estado, centroCostoId: centroCostoId || undefined }),
+    [page, q, estado, centroCostoId],
+  );
+  const { data: estructura } = useApiData(() => fetchEstructura());
+  const centros = (estructura?.centros ?? []).filter((c) => c.activo);
+  const filtrados = data?.items ?? [];
 
   return (
     <div className="space-y-6 p-6">
@@ -53,13 +58,19 @@ export function Requerimientos() {
       </div>
 
       <div className="flex flex-wrap gap-3">
-        <SearchInput placeholder="Buscar por ID o título..." value={query} onChange={setQuery} />
+        <SearchInput placeholder="Buscar por código (REQ-0012), título o categoría..." value={query} onChange={setQuery} />
         <select className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={estado} onChange={(e) => setEstado(e.target.value as EstadoReq | "todos")}>
           {estados.map((e) => <option key={e.value} value={e.value}>{e.label}</option>)}
         </select>
+        {centros.length > 0 && (
+          <select aria-label="Centro de costo" className="rounded-md border border-input bg-white px-3 py-2 text-sm" value={centroCostoId} onChange={(e) => setCentroCostoId(e.target.value)}>
+            <option value="">Todos los centros de costo</option>
+            {centros.map((c) => <option key={c.id} value={c.id}>{c.codigo} — {c.nombre}</option>)}
+          </select>
+        )}
       </div>
 
-      {loading ? <TableSkeleton /> : (
+      {loading && !data ? <TableSkeleton /> : (
       <Card className="overflow-hidden">
         {filtrados.length === 0 ? (
           <EmptyState icon={FileText} title="No se encontraron requerimientos" description="Ajusta los filtros o crea un nuevo requerimiento." actionLabel="Nuevo requerimiento" onAction={() => window.location.assign("/cliente/requerimientos/nuevo")} />
@@ -85,6 +96,12 @@ export function Requerimientos() {
                     <span>Vence {r.fechaLimite}</span>
                     <span>•</span>
                     <span>Solicitante: {r.solicitante}</span>
+                    {r.centroCosto && (
+                      <>
+                        <span>•</span>
+                        <span>{r.centroCosto}</span>
+                      </>
+                    )}
                   </div>
                 </div>
                 <div className="hidden w-32 shrink-0 sm:block">
@@ -98,6 +115,7 @@ export function Requerimientos() {
             ))}
           </div>
         )}
+        {data && <PaginationBar page={data.page} totalPages={data.totalPages} total={data.total} onPage={setPage} label="requerimientos" />}
       </Card>
       )}
     </div>

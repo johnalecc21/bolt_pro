@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, FileText, Gavel, Handshake, Award,
   FileCheck, Truck, Building2, BarChart3,
-  ShieldCheck, Scale, Users, SlidersHorizontal, Rocket,
+  ShieldCheck, Scale, Users, SlidersHorizontal, Rocket, Landmark,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PortalShellLayout, type PortalNavItem } from "@/components/layout/PortalShellLayout";
@@ -22,6 +22,7 @@ const navItems: PortalNavItem[] = [
   { to: "aprobaciones", label: "Aprobaciones", icon: ShieldCheck, roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
   { to: "usuarios", label: "Usuarios y Roles", icon: Users, roles: ["admin_cliente"] },
   { to: "matriz-aprobacion", label: "Matriz de Aprobación", icon: SlidersHorizontal, roles: ["admin_cliente"] },
+  { to: "estructura", label: "Estructura y presupuestos", icon: Landmark, roles: ["admin_cliente", "aprobador_cfo"] },
 ];
 
 export function ClienteLayout() {

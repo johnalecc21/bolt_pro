@@ -1,4 +1,5 @@
 import { api } from "@/lib/api/http";
+import { mapPaginado, type Paginado } from "@/lib/api/paginacion";
 import type { Proveedor } from "@/lib/types";
 
 interface ApiProveedor {
@@ -49,6 +50,31 @@ export async function fetchProveedores(params?: { categoria?: string; minScore?:
   const { query, ...rest } = params ?? {};
   const { data } = await api.get<ApiProveedor[]>("/proveedores", { params: { ...rest, ...(query ? { q: query } : {}) } });
   return data.map(toProveedor);
+}
+
+/** Server-side paginated directory (search matches name, description and catalog items). */
+export async function fetchProveedoresPagina(params: {
+  page: number;
+  limit?: number;
+  query?: string;
+  categoria?: string;
+  minScore?: number;
+}): Promise<Paginado<Proveedor>> {
+  const { data } = await api.get<Paginado<ApiProveedor>>("/proveedores/pagina", {
+    params: {
+      page: params.page,
+      limit: params.limit ?? 24,
+      ...(params.query ? { q: params.query } : {}),
+      ...(params.categoria && params.categoria !== "Todas" ? { categoria: params.categoria } : {}),
+      ...(params.minScore ? { minScore: params.minScore } : {}),
+    },
+  });
+  return mapPaginado(data, toProveedor);
+}
+
+export async function fetchCategoriasProveedores(): Promise<string[]> {
+  const { data } = await api.get<string[]>("/proveedores/categorias");
+  return data;
 }
 
 export async function fetchProveedor(id: string): Promise<Proveedor> {

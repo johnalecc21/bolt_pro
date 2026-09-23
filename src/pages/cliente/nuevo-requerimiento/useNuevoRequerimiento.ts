@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchProveedores } from "@/lib/api/proveedores";
+import { fetchEstructura } from "@/lib/api/estructura";
+import { formatMoney } from "@/lib/moneda";
 import { createRequerimiento, describirExcluidos } from "@/lib/api/requerimientos";
 import { useMonedaBase } from "@/hooks/useMonedaBase";
 import type { Moneda } from "@/lib/moneda";
@@ -20,6 +22,10 @@ export function useNuevoRequerimiento() {
   const [presupuesto, setPresupuesto] = useState("");
   const monedaBase = useMonedaBase();
   const [moneda, setMoneda] = useState<Moneda>(monedaBase);
+  const [centroCostoId, setCentroCostoId] = useState("");
+  const { data: estructura } = useApiData(() => fetchEstructura());
+  const centrosCosto = (estructura?.centros ?? []).filter((c) => c.activo);
+  const exigeCentroCosto = estructura?.exigeCentroCosto ?? false;
   const [fechaLimite, setFechaLimite] = useState("");
   const [criterios, setCriterios] = useState({ precio: 50, tiempo: 25, calidad: 15, pago: 10 });
   const [requisitosTecnicos, setRequisitosTecnicos] = useState("");
@@ -56,23 +62,35 @@ export function useNuevoRequerimiento() {
       toast.error("Completa título, presupuesto y fecha límite antes de enviar.");
       return;
     }
+    if (exigeCentroCosto && !centroCostoId) {
+      toast.error("Tu empresa exige asignar un centro de costo.");
+      setStep(3);
+      return;
+    }
     setSubmitting(true);
     try {
       const descripcionCompleta = [
         descripcion.trim(),
         requisitosTecnicos.trim() ? `Requisitos técnicos:\n${requisitosTecnicos.trim()}` : "",
       ].filter(Boolean).join("\n\n");
-      const { requerimiento, excluidos } = await createRequerimiento({
+      const { requerimiento, excluidos, presupuesto: evaluacion } = await createRequerimiento({
         titulo: titulo.trim(),
         descripcion: descripcionCompleta || undefined,
         categoria,
         montoEstimado: Number(presupuesto),
         moneda,
+        centroCostoId: centroCostoId || undefined,
         fechaLimite,
         criteriosPeso: criterios,
         especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
         proveedorIds: proveedoresSeleccionados,
       });
+      if (evaluacion?.excede) {
+        toast.warning("Supera el presupuesto del centro de costo", {
+          description: `${evaluacion.centroCosto}: disponible ${formatMoney(evaluacion.disponible, evaluacion.moneda)}. Se envió como excepción de presupuesto y requiere aprobación del CFO.`,
+          duration: 10000,
+        });
+      }
       if (excluidos.length > 0) {
         toast.warning("Requerimiento enviado a aprobación", {
           description: `${excluidos.length} proveedor(es) no se preseleccionaron por no cumplir los requisitos de homologación: ${describirExcluidos(excluidos)}.`,
@@ -96,6 +114,7 @@ export function useNuevoRequerimiento() {
     categoria, setCategoria,
     presupuesto, setPresupuesto,
     moneda, setMoneda,
+    centroCostoId, setCentroCostoId, centrosCosto, exigeCentroCosto,
     fechaLimite, setFechaLimite,
     criterios, setCriterios,
     requisitosTecnicos, setRequisitosTecnicos,

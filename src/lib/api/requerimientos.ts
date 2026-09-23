@@ -3,6 +3,7 @@ import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatRequerimientoCodigo } from "@/lib/codigo";
 import type { EstadoReq, Requerimiento } from "@/lib/types";
 import type { Moneda } from "@/lib/moneda";
+import { mapPaginado, type Paginado } from "@/lib/api/paginacion";
 
 const BUCKET = "requerimientos-documentos";
 
@@ -67,6 +68,8 @@ interface ApiRequerimiento {
   criteriosPeso: Record<string, number> | null;
   especificaciones: Especificacion[] | null;
   solicitante?: { nombre: string };
+  centroCostoId?: string | null;
+  centroCosto?: { codigo: string; nombre: string } | null;
   comentarios?: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos?: ApiDocumentoRequerimiento[];
   adjudicacion?: unknown;
@@ -142,9 +145,19 @@ export function describirExcluidos(excluidos: ProveedorExcluido[]): string {
   return excluidos.map((e) => (e.motivo ? `${e.nombre} (${e.motivo})` : e.nombre)).join(", ");
 }
 
+/** Budget check of the chosen centro de costo — null when it has no budget in that currency. */
+export interface EvaluacionPresupuesto {
+  centroCosto: string;
+  presupuesto: number;
+  disponible: number;
+  moneda: Moneda;
+  excede: boolean;
+}
+
 export interface CreateRequerimientoResultado {
   requerimiento: Requerimiento;
   excluidos: ProveedorExcluido[];
+  presupuesto: EvaluacionPresupuesto | null;
 }
 
 export async function createRequerimiento(payload: {
@@ -157,12 +170,43 @@ export async function createRequerimiento(payload: {
   criteriosPeso?: Record<string, number>;
   especificaciones?: Especificacion[];
   proveedorIds?: string[];
+  centroCostoId?: string;
 }): Promise<CreateRequerimientoResultado> {
-  const { data } = await api.post<ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[] }>(
-    "/requerimientos",
-    payload,
-  );
-  return { requerimiento: toRequerimiento(data), excluidos: data.excluidosPorHomologacion ?? [] };
+  const { data } = await api.post<
+    ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[]; presupuesto?: EvaluacionPresupuesto | null }
+  >("/requerimientos", payload);
+  return {
+    requerimiento: toRequerimiento(data),
+    excluidos: data.excluidosPorHomologacion ?? [],
+    presupuesto: data.presupuesto ?? null,
+  };
+}
+
+export interface RequerimientoListado extends Requerimiento {
+  centroCosto: string | null;
+}
+
+/** Server-side paginated list (search by code/title/category, state and cost center). */
+export async function fetchRequerimientosPagina(params: {
+  page: number;
+  limit?: number;
+  q?: string;
+  estado?: EstadoReq;
+  centroCostoId?: string;
+}): Promise<Paginado<RequerimientoListado>> {
+  const { data } = await api.get<Paginado<ApiRequerimiento>>("/requerimientos/pagina", {
+    params: {
+      page: params.page,
+      limit: params.limit ?? 20,
+      ...(params.q ? { q: params.q } : {}),
+      ...(params.estado ? { estado: params.estado.toUpperCase() } : {}),
+      ...(params.centroCostoId ? { centroCostoId: params.centroCostoId } : {}),
+    },
+  });
+  return mapPaginado(data, (r) => ({
+    ...toRequerimiento(r),
+    centroCosto: r.centroCosto ? `${r.centroCosto.codigo} — ${r.centroCosto.nombre}` : null,
+  }));
 }
 
 export async function updateRequerimientoEstado(id: string, estado: EstadoReq): Promise<Requerimiento> {
@@ -203,14 +247,14 @@ export async function subirDocumentoRequerimiento(id: string, file: File) {
 
   const { data: uploadUrlData } = await api.post<{ docId: string; path: string; token: string }>(
     `/requerimientos/${id}/documentos/upload-url`,
-    { filename: file.name },
+    { filename: file.name, tamanoBytes: file.size },
   );
 
   await uploadToSignedUrl(BUCKET, uploadUrlData.path, uploadUrlData.token, file);
 
   const { data } = await api.post(
     `/requerimientos/${id}/documentos/${uploadUrlData.docId}/confirmar`,
-    { path: uploadUrlData.path },
+    { path: uploadUrlData.path, tamanoBytes: file.size },
   );
   return data;
 }

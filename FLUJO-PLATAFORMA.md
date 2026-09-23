@@ -55,6 +55,9 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 
 ### Otras pantallas de Cliente
 - **Usuarios y Roles** / **Matriz de Aprobación** — solo Admin Cliente; la Matriz es la que realmente decide quién debe aprobar cada requerimiento (no es solo informativa). En la misma pantalla se configuran país y **moneda base** de la empresa (COP, USD, MXN, PEN, CLP, BRL) y los **requisitos de homologación**: qué categorías de documentos (p. ej. HSE, SARLAFT) debe tener validadas un proveedor para poder invitarlo.
+- **Estructura y presupuestos** (`/cliente/estructura`, Admin y CFO) — sedes o unidades de negocio, centros de costo y presupuesto anual por centro, con la ejecución (comprometido en contratos, en proceso en requerimientos, disponible). Al crear un requerimiento se elige el centro de costo (obligatorio si la empresa lo exige); si supera lo disponible, igual se envía pero como **excepción de presupuesto** con el CFO en la aprobación.
+- **Configuración de cuenta** — cada usuario decide si recibe las notificaciones por **correo**; Admin y CFO ven el **plan y su uso** (usuarios, requerimientos del mes, almacenamiento) y exportan la **auditoría en CSV**; el Admin define cuánto tiempo se conserva.
+- **Listados paginados en el servidor** — Requerimientos (con filtro por centro de costo), Contratos y Directorio buscan y paginan en la API, así escalan a miles de registros.
 - **Evaluación de desempeño** (desde Seguimiento) — calidad, plazos, servicio y HSE de 1 a 5 por contrato; el promedio de toda la red se ve en el Directorio.
 - **Directorio de Proveedores** — explora toda la red, no solo los invitados.
 - **Centro de Notificaciones** — al hacer clic en una notificación te lleva directo a la pantalla del asunto (aprobación pendiente resaltada en la bandeja, pregunta sin responder, oferta, etc.), no solo la marca como leída.

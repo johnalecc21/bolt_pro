@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { fetchAuditLog } from "@/lib/api/auditLog";
 import { useApiData } from "@/hooks/useApiData";
-import { History, ChevronLeft, ChevronRight } from "lucide-react";
+import { History } from "lucide-react";
+import { PaginationBar } from "@/components/shared/PaginationBar";
 
 export function AuditLogTable({ limit = 20, showPagination = true }: { limit?: number; showPagination?: boolean }) {
   const [page, setPage] = useState(1);
@@ -42,18 +42,8 @@ export function AuditLogTable({ limit = 20, showPagination = true }: { limit?: n
           </tbody>
         </table>
       </div>
-      {showPagination && data && data.totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-border p-3 text-sm text-muted-foreground">
-          <span>Página {data.page} de {data.totalPages} · {data.total} registros</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
-              <ChevronLeft className="h-4 w-4" /> Anterior
-            </Button>
-            <Button variant="outline" size="sm" disabled={page >= data.totalPages} onClick={() => setPage((p) => p + 1)}>
-              Siguiente <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+      {showPagination && data && (
+        <PaginationBar page={data.page} totalPages={data.totalPages} total={data.total} onPage={setPage} />
       )}
     </Card>
   );

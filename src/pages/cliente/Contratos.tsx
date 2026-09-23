@@ -1,4 +1,4 @@
-import { Fragment, useRef, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -9,7 +9,9 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
 import { SearchInput } from "@/components/shared/SearchInput";
 import { type Contrato } from "@/lib/types";
-import { fetchContratos, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato, emitirPo } from "@/lib/api/contratos";
+import { fetchContratos, fetchContratosPagina, fetchContrato, subirArchivoContrato, obtenerUrlArchivoContrato, emitirPo } from "@/lib/api/contratos";
+import { PaginationBar } from "@/components/shared/PaginationBar";
+import { useDebounced } from "@/hooks/useDebounced";
 import { generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";
 import { Download, FileCheck, Calendar, Loader2, Upload, FileUp, FilePlus2 } from "lucide-react";
@@ -20,9 +22,22 @@ import { formatMoney } from "@/lib/moneda";
 const hoy = new Date().toISOString().slice(0, 10);
 
 export function Contratos() {
-  const { data: contratos, loading, reload } = useApiData(() => fetchContratos());
+  // Full (capped) list only feeds the expiry reminders and the category filter;
+  // the table itself is paginated on the server.
+  const { data: contratos, reload: reloadTodos } = useApiData(() => fetchContratos());
   const [query, setQuery] = useState("");
   const [categoria, setCategoria] = useState("Todas");
+  const [page, setPage] = useState(1);
+  const q = useDebounced(query.trim());
+  useEffect(() => setPage(1), [q, categoria]);
+  const { data: pagina, loading, reload: reloadPagina } = useApiData(
+    () => fetchContratosPagina({ page, q: q || undefined, categoria }),
+    [page, q, categoria],
+  );
+  const reload = () => {
+    reloadTodos();
+    reloadPagina();
+  };
   const [descargando, setDescargando] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState<string | null>(null);
   const [emitiendoPoId, setEmitiendoPoId] = useState<string | null>(null);
@@ -32,11 +47,7 @@ export function Contratos() {
   const subiendoIdRef = useRef<string | null>(null);
   const categorias = ["Todas", ...Array.from(new Set((contratos ?? []).map((c) => c.categoria)))];
 
-  const filtrados = (contratos ?? []).filter((c: Contrato) => {
-    const matchQuery = `${c.codigo} ${c.proveedor}`.toLowerCase().includes(query.toLowerCase());
-    const matchCat = categoria === "Todas" || c.categoria === categoria;
-    return matchQuery && matchCat;
-  });
+  const filtrados: Contrato[] = pagina?.items ?? [];
 
   const hoyMs = Date.now();
   const diasHastaVencer = (fecha: string) => Math.ceil((new Date(fecha).getTime() - hoyMs) / (24 * 60 * 60 * 1000));
@@ -133,7 +144,7 @@ export function Contratos() {
         </select>
       </div>
 
-      {loading ? <TableSkeleton /> : (
+      {loading && !pagina ? <TableSkeleton /> : (
       <Card className="overflow-hidden">
         {filtrados.length === 0 ? (
           <EmptyState icon={FileCheck} title="No se encontraron documentos" description="Ajusta los filtros de búsqueda." />
@@ -231,6 +242,7 @@ export function Contratos() {
             </table>
           </div>
         )}
+        {pagina && <PaginationBar page={pagina.page} totalPages={pagina.totalPages} total={pagina.total} onPage={setPage} label="contratos" />}
       </Card>
       )}
 

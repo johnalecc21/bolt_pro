@@ -8,13 +8,14 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { AuditLogTable } from "@/components/shared/AuditLogTable";
-import { LogIn, Building2, Plus, Loader2 } from "lucide-react";
+import { LogIn, Building2, Plus, Loader2, Download } from "lucide-react";
 import { fetchClientes, impersonarCliente, crearCliente, type ClienteAdmin } from "@/lib/api/interno";
 import { apiErrorMessage } from "@/lib/api/http";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 import { cn } from "@/lib/utils";
 
+import { exportarAuditoriaCsv } from "@/lib/api/auditLog";
 const facturacionColor: Record<string, string> = {
   "Al día": "text-success",
   Pendiente: "text-warning-foreground",
@@ -142,8 +143,18 @@ export function AdminClientes() {
         </div>
       </Card>}
 
-      <div>
-        <h2 className="mb-3 font-semibold">Log de impersonación y acciones sensibles</h2>
+      <div className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">Log de impersonación y acciones sensibles</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-1.5"
+            onClick={() => exportarAuditoriaCsv().catch((err) => toast.error(apiErrorMessage(err, "No se pudo exportar la auditoría.")))}
+          >
+            <Download className="h-4 w-4" /> Exportar CSV (todas las empresas)
+          </Button>
+        </div>
         <AuditLogTable />
       </div>
     </div>

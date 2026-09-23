@@ -1,18 +1,35 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { MONEDAS, type Moneda } from "@/lib/moneda";
+import { formatMoney, MONEDAS, type Moneda } from "@/lib/moneda";
+import type { CentroCosto } from "@/lib/api/estructura";
 
 interface PasoPresupuestoProps {
   presupuesto: string;
   onPresupuestoChange: (value: string) => void;
   moneda: Moneda;
   onMonedaChange: (value: Moneda) => void;
+  centroCostoId: string;
+  onCentroCostoChange: (value: string) => void;
+  centrosCosto: CentroCosto[];
+  exigeCentroCosto: boolean;
   fechaLimite: string;
   onFechaLimiteChange: (value: string) => void;
 }
 
-export function PasoPresupuesto({ presupuesto, onPresupuestoChange, moneda, onMonedaChange, fechaLimite, onFechaLimiteChange }: PasoPresupuestoProps) {
+export function PasoPresupuesto({
+  presupuesto,
+  onPresupuestoChange,
+  moneda,
+  onMonedaChange,
+  centroCostoId,
+  onCentroCostoChange,
+  centrosCosto,
+  exigeCentroCosto,
+  fechaLimite,
+  onFechaLimiteChange,
+}: PasoPresupuestoProps) {
+  const centro = centrosCosto.find((c) => c.id === centroCostoId);
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">Cantidad y presupuesto</h2>
@@ -40,6 +57,24 @@ export function PasoPresupuesto({ presupuesto, onPresupuestoChange, moneda, onMo
           <Label>Fecha requerida</Label>
           <Input type="date" value={fechaLimite} onChange={(e) => onFechaLimiteChange(e.target.value)} />
         </div>
+        {centrosCosto.length > 0 && (
+          <div className="col-span-2 space-y-2">
+            <Label htmlFor="centro-costo">Centro de costo{exigeCentroCosto ? "" : " (opcional)"}</Label>
+            <NativeSelect id="centro-costo" className="w-full" value={centroCostoId} onChange={(e) => onCentroCostoChange(e.target.value)}>
+              <NativeSelectOption value="">{exigeCentroCosto ? "Selecciona un centro de costo" : "Sin centro de costo"}</NativeSelectOption>
+              {centrosCosto.map((c) => (
+                <NativeSelectOption key={c.id} value={c.id}>
+                  {c.codigo} — {c.nombre}{c.unidadNegocio ? ` (${c.unidadNegocio.nombre})` : ""}
+                </NativeSelectOption>
+              ))}
+            </NativeSelect>
+            {centro?.presupuesto && (
+              <p className="text-xs text-muted-foreground">
+                Presupuesto {centro.presupuesto.anio}: {formatMoney(centro.presupuesto.monto, centro.presupuesto.moneda)}. Si el requerimiento supera lo disponible, se aprueba como excepción con el CFO.
+              </p>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

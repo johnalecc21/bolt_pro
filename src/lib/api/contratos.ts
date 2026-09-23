@@ -3,6 +3,7 @@ import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatContratoCodigo } from "@/lib/codigo";
 import type { Contrato } from "@/lib/types";
 import type { Moneda } from "@/lib/moneda";
+import { mapPaginado, type Paginado } from "@/lib/api/paginacion";
 import type { EstadoHito, Hito } from "@/lib/api/seguimiento";
 
 const BUCKET = "contratos-documentos";
@@ -54,6 +55,24 @@ function toContrato(c: ApiContrato): Contrato {
     hijas: c.hijas?.map((h) => ({ id: h.id, monto: h.monto, estado: ESTADO_LABEL[h.estado] })),
     condicionesPagoDias: c.condicionesPagoDias,
   };
+}
+
+/** Server-side paginated list for the Contratos screen. */
+export async function fetchContratosPagina(params: {
+  page: number;
+  limit?: number;
+  q?: string;
+  categoria?: string;
+}): Promise<Paginado<Contrato>> {
+  const { data } = await api.get<Paginado<ApiContrato>>("/contratos/pagina", {
+    params: {
+      page: params.page,
+      limit: params.limit ?? 20,
+      ...(params.q ? { q: params.q } : {}),
+      ...(params.categoria && params.categoria !== "Todas" ? { categoria: params.categoria } : {}),
+    },
+  });
+  return mapPaginado(data, toContrato);
 }
 
 export async function fetchContratos(params?: { categoria?: string; q?: string }): Promise<Contrato[]> {
@@ -145,12 +164,16 @@ export async function subirArchivoContrato(id: string, file: File) {
 
   const { data: uploadUrlData } = await api.post<{ path: string; token: string }>(
     `/contratos/${id}/upload-url`,
-    { filename: file.name },
+    { filename: file.name, tamanoBytes: file.size },
   );
 
   await uploadToSignedUrl(BUCKET, uploadUrlData.path, uploadUrlData.token, file);
 
-  const { data } = await api.post(`/contratos/${id}/adjuntar`, { path: uploadUrlData.path, nombre: file.name });
+  const { data } = await api.post(`/contratos/${id}/adjuntar`, {
+    path: uploadUrlData.path,
+    nombre: file.name,
+    tamanoBytes: file.size,
+  });
   return data;
 }
 

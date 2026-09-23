@@ -19,6 +19,7 @@ export function NuevoRequerimiento() {
     categoria, setCategoria,
     presupuesto, setPresupuesto,
     moneda, setMoneda,
+    centroCostoId, setCentroCostoId, centrosCosto, exigeCentroCosto,
     fechaLimite, setFechaLimite,
     criterios, setCriterios,
     requisitosTecnicos, setRequisitosTecnicos,
@@ -78,6 +79,10 @@ export function NuevoRequerimiento() {
             onPresupuestoChange={setPresupuesto}
             moneda={moneda}
             onMonedaChange={setMoneda}
+            centroCostoId={centroCostoId}
+            onCentroCostoChange={setCentroCostoId}
+            centrosCosto={centrosCosto}
+            exigeCentroCosto={exigeCentroCosto}
             fechaLimite={fechaLimite}
             onFechaLimiteChange={setFechaLimite}
           />

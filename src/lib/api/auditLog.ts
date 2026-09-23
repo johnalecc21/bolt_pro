@@ -48,3 +48,27 @@ export async function fetchAuditLog(page = 1, limit = 20): Promise<PaginatedAudi
     })),
   };
 }
+
+/** Downloads the audit trail as CSV (through the API so the auth header is sent). */
+export async function exportarAuditoriaCsv(desde?: string, hasta?: string) {
+  const { data } = await api.get<Blob>("/audit-log/export", {
+    params: { ...(desde ? { desde } : {}), ...(hasta ? { hasta: `${hasta}T23:59:59` } : {}) },
+    responseType: "blob",
+  });
+  const url = URL.createObjectURL(data);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `auditoria-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function fetchRetencionAuditoria(): Promise<number> {
+  const { data } = await api.get<{ meses: number }>("/audit-log/retencion");
+  return data.meses;
+}
+
+export async function guardarRetencionAuditoria(meses: number): Promise<number> {
+  const { data } = await api.put<{ meses: number }>("/audit-log/retencion", { meses });
+  return data.meses;
+}

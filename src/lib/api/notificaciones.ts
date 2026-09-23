@@ -79,3 +79,19 @@ export function useNotifications() {
 
   return { notifications, unread, markAsRead, markAllAsRead };
 }
+
+export interface PreferenciasCorreo {
+  recibirCorreos: boolean;
+  /** False when the platform has no email provider configured yet. */
+  correoHabilitado: boolean;
+}
+
+export async function fetchPreferenciasCorreo(): Promise<PreferenciasCorreo> {
+  const { data } = await api.get<PreferenciasCorreo>("/notificaciones/preferencias");
+  return data;
+}
+
+export async function guardarPreferenciasCorreo(recibirCorreos: boolean): Promise<PreferenciasCorreo> {
+  const { data } = await api.put<PreferenciasCorreo>("/notificaciones/preferencias", { recibirCorreos });
+  return data;
+}
