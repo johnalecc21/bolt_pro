@@ -141,7 +141,7 @@ export function cobros(d: DatosProveedorFiltrados, ahora = Date.now()): CobrosPr
     const t = new Date(p.pactada).getTime();
     return t >= ahora && t < ahora + 30 * MS_DIA;
   });
-  const vigentes = d.contratos.filter((c) => !c.contratoPadreId && new Date(c.vigenciaFin).getTime() >= ahora);
+  const vigentes = d.contratos.filter((c) => !c.contratoPadreId && c.estado !== "TERMINADO" && new Date(c.vigenciaFin).getTime() >= ahora);
   const porVencer = vigentes
     .map((c) => ({ c, dias: Math.ceil((new Date(c.vigenciaFin).getTime() - ahora) / MS_DIA) }))
     .filter(({ dias }) => dias <= 90)

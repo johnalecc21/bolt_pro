@@ -50,6 +50,8 @@ const InvitacionesProveedor = lazy(() => import("@/pages/proveedor/InvitacionesP
 const CargaOferta = lazy(() => import("@/pages/proveedor/CargaOferta").then((m) => ({ default: m.CargaOferta })));
 const SubastaVivo = lazy(() => import("@/pages/proveedor/SubastaVivo").then((m) => ({ default: m.SubastaVivo })));
 const HistorialProveedor = lazy(() => import("@/pages/proveedor/HistorialProveedor").then((m) => ({ default: m.HistorialProveedor })));
+const MiContratoDetalle = lazy(() => import("@/pages/proveedor/MiContratoDetalle").then((m) => ({ default: m.MiContratoDetalle })));
+const ContratoDetalle = lazy(() => import("@/pages/cliente/ContratoDetalle").then((m) => ({ default: m.ContratoDetalle })));
 const MisContratos = lazy(() => import("@/pages/proveedor/MisContratos").then((m) => ({ default: m.MisContratos })));
 const PagosFactoring = lazy(() => import("@/pages/proveedor/PagosFactoring").then((m) => ({ default: m.PagosFactoring })));
 const PerfilEmpresa = lazy(() => import("@/pages/proveedor/PerfilEmpresa").then((m) => ({ default: m.PerfilEmpresa })));
@@ -106,6 +108,7 @@ export default function App() {
             <Route path="adjudicacion" element={<RequireRole allow={["comprador", "admin_cliente", "aprobador_cfo"]}><Adjudicacion /></RequireRole>} />
             <Route path="adjudicacion/:id" element={<RequireRole allow={["comprador", "admin_cliente", "aprobador_cfo"]}><Adjudicacion /></RequireRole>} />
             <Route path="contratos" element={<Contratos />} />
+            <Route path="contratos/:id" element={<ContratoDetalle />} />
             <Route path="seguimiento" element={<RequireRole allow={["comprador", "admin_cliente"]}><Seguimiento /></RequireRole>} />
             <Route path="disputas" element={<RequireRole allow={["comprador", "admin_cliente"]}><Disputas /></RequireRole>} />
             <Route path="pagos" element={<RequireRole allow={["comprador", "admin_cliente", "aprobador_cfo"]}><CuentasPorPagar /></RequireRole>} />
@@ -141,6 +144,7 @@ export default function App() {
             <Route path="historial" element={<HistorialProveedor />} />
             <Route path="desempeno" element={<MiDesempeno />} />
             <Route path="contratos" element={<MisContratos />} />
+            <Route path="contratos/:id" element={<MiContratoDetalle />} />
             <Route path="pagos" element={<PagosFactoring />} />
             <Route path="perfil" element={<PerfilEmpresa />} />
             <Route path="vitrina" element={<MiVitrina />} />

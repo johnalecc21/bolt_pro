@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
+import { StatusBadge } from "@/components/shared/StatusBadge";
+import { ESTADO_GENERAL, estadoGeneral } from "@/lib/contratos/hitos";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +36,7 @@ export function MisContratos() {
         if (pendingTab) pendingTab.location.href = url;
         toast.success("Documento del cliente abierto", { description: c.archivoNombre });
       } else {
-        generateContratoPdf(c);
+        generateContratoPdf({ ...c, esMarco: c.esMarco });
         toast.success("PDF generado", { description: `${c.codigo}.pdf` });
       }
     } catch (err) {
@@ -62,7 +65,8 @@ export function MisContratos() {
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h2 className="font-semibold">{c.codigo}</h2>
+                    <Link to={`/proveedor/contratos/${c.id}`} className="font-semibold text-primary hover:underline">{c.codigo}</Link>
+                    <StatusBadge estado={c.estado} />
                     <Badge variant="secondary" className="text-xs">{c.categoria}</Badge>
                     {c.archivoNombre && (
                       <span className="flex items-center gap-0.5 text-xs text-info" title={c.archivoNombre}>
@@ -70,21 +74,25 @@ export function MisContratos() {
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-muted-foreground">{c.cliente}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {c.cliente}
+                    {c.esMarco ? " · Contrato Marco (se ejecuta con órdenes de compra)" : c.hitos.length > 0 ? ` · Entregas: ${ESTADO_GENERAL[estadoGeneral(c.hitos)].toLowerCase()}` : ""}
+                  </p>
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="text-sm font-medium">{formatMoney(c.monto, c.moneda)}</span>
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" /> {c.vigenciaInicio} — {c.vigenciaFin}
                   </div>
-                  <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} title="Descargar">
+                  <Button asChild variant="outline" size="sm"><Link to={`/proveedor/contratos/${c.id}`}>Ver detalle</Link></Button>
+                  <Button variant="ghost" size="icon" disabled={descargando === c.id} onClick={() => descargar(c)} aria-label="Descargar documento" title="Descargar">
                     {descargando === c.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
 
               {c.hitos.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aún no hay hitos de entrega definidos para esta orden.</p>
+                <p className="text-sm text-muted-foreground">{c.esMarco ? "Tu cliente emitirá órdenes de compra contra este marco; cada una tendrá sus entregas." : "Aún no hay hitos de entrega definidos para esta orden."}</p>
               ) : (
                 <div className="space-y-4">
                   {c.hitos.map((h) => (
@@ -98,7 +106,7 @@ export function MisContratos() {
                           <span className="text-xs text-muted-foreground">Comprometido {h.comprometido}{h.real && ` · Real ${h.real}`}</span>
                         </div>
                         {h.estado === "atrasado" && (
-                          <p className="mt-1 text-xs text-destructive">Este hito está marcado como atrasado por tu cliente.</p>
+                          <p className="mt-1 text-xs text-destructive">Pasó la fecha comprometida. Si ya entregaste, repórtalo desde el detalle del contrato.</p>
                         )}
                       </div>
                     </div>

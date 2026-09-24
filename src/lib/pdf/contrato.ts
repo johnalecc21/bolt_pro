@@ -6,10 +6,26 @@ export interface ContratoPdfHito {
   comprometido: string;
   real: string | null;
   estado: string;
+  /** % of the contract paid when the milestone is received. */
+  porcentaje?: number;
+}
+
+export interface ContratoPdfLinea {
+  descripcion: string;
+  unidad: string;
+  cantidad: number;
+  precioUnitario: number;
+  subtotal: number;
 }
 
 export interface ContratoPdfData {
   id: string;
+  /** Human-readable code (CTO-0001 / PO-0001); shown instead of the id. */
+  codigo?: string;
+  /** Awarded lines, when the process was itemized. */
+  lineas?: ContratoPdfLinea[];
+  /** Set on a Contrato Marco: it's a ceiling paid through POs. */
+  esMarco?: boolean;
   tipo: string;
   proveedor: string;
   cliente?: string;
@@ -47,7 +63,7 @@ export function generateContratoPdf(data: ContratoPdfData) {
   doc.text("Procurex", MARGIN_X, 42);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
-  doc.text(`${data.tipo} — ${data.id}`, MARGIN_X, 64);
+  doc.text(`${data.tipo} — ${data.codigo ?? data.id}`, MARGIN_X, 64);
 
   let y = 130;
   doc.setTextColor(NAVY);
@@ -99,6 +115,34 @@ export function generateContratoPdf(data: ContratoPdfData) {
     y += 30;
   }
 
+  if (data.lineas?.length) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.setTextColor(NAVY);
+    doc.text("Ítems adjudicados", MARGIN_X, y);
+    y += 20;
+    doc.setFontSize(9.5);
+    for (const l of data.lineas) {
+      if (y > PAGE_HEIGHT - MARGIN_BOTTOM - 20) {
+        doc.addPage();
+        y = 60;
+      }
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(NAVY);
+      const desc = doc.splitTextToSize(l.descripcion, CONTENT_WIDTH - 230)[0] as string;
+      doc.text(desc, MARGIN_X, y);
+      doc.setTextColor(MUTED);
+      doc.text(`${l.cantidad.toLocaleString("es-CO", { maximumFractionDigits: 3 })} ${l.unidad} × ${formatMoney(l.precioUnitario, data.moneda)}`, PAGE_WIDTH - MARGIN_X - 110, y, { align: "right" });
+      doc.setTextColor(NAVY);
+      doc.text(formatMoney(l.subtotal, data.moneda), PAGE_WIDTH - MARGIN_X, y, { align: "right" });
+      y += 16;
+    }
+    y += 12;
+    doc.setDrawColor("#E5E7EB");
+    doc.line(MARGIN_X, y, PAGE_WIDTH - MARGIN_X, y);
+    y += 30;
+  }
+
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
   doc.setTextColor(NAVY);
@@ -109,13 +153,23 @@ export function generateContratoPdf(data: ContratoPdfData) {
   if (data.hitos.length === 0) {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(MUTED);
-    doc.text("Sin hitos de entrega definidos todavía.", MARGIN_X, y);
+    doc.text(
+      data.esMarco
+        ? "Contrato Marco: se ejecuta y se paga mediante órdenes de compra emitidas contra él."
+        : "Sin hitos de entrega definidos todavía.",
+      MARGIN_X,
+      y,
+    );
     y += 20;
   } else {
     for (const h of data.hitos) {
       doc.setFont("helvetica", "bold");
       doc.setTextColor(NAVY);
-      doc.text(`• ${h.label}`, MARGIN_X, y);
+      if (y > PAGE_HEIGHT - MARGIN_BOTTOM - 36) {
+        doc.addPage();
+        y = 60;
+      }
+      doc.text(`• ${h.label}${h.porcentaje ? ` — ${h.porcentaje}% del valor (${formatMoney(Math.round((data.monto * h.porcentaje) / 100), data.moneda)})` : ""}`, MARGIN_X, y);
       doc.setFont("helvetica", "normal");
       doc.setTextColor(MUTED);
       const fecha = h.real ? `Comprometido ${h.comprometido} · Real ${h.real}` : `Comprometido ${h.comprometido}`;
@@ -144,7 +198,7 @@ export function generateContratoPdf(data: ContratoPdfData) {
   const clausulaRows: [string, string][] = [
     ...(data.garantiaMeses ? ([["Garantía", `${data.garantiaMeses} meses posteriores a la entrega final`]] as [string, string][]) : []),
     ...(data.plazoDias ? ([["Plazo de ejecución", `${data.plazoDias} días calendario`]] as [string, string][]) : []),
-    ["Condiciones de pago", `${condicionesPagoDias} días desde la aprobación de cada hito`],
+    ["Condiciones de pago", `${condicionesPagoDias} días desde la radicación de la factura de cada hito recibido`],
   ];
   doc.setFontSize(11);
   for (const [label, value] of clausulaRows) {

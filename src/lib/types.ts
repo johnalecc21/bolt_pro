@@ -66,15 +66,20 @@ export interface Contrato {
   moneda: Moneda;
   vigenciaInicio: string;
   vigenciaFin: string;
-  estado: "Activo" | "Por vencer" | "Vencido" | "En renovación";
+  estado: "Activo" | "Por vencer" | "Vencido" | "En renovación" | "Terminado";
   /** Defaults to "acme" when omitted — most seed data predates multi-tenant support. */
   companyId?: string;
   /** Set when the company attached their own PO/contract file — otherwise downloads use the Procurex template. */
   archivoNombre?: string | null;
   /** POs issued under this contract, when it's a Contrato Marco. */
   hijas?: { id: string; monto: number; estado: string }[];
-  /** Days after milestone completion the contract's payments fall due. */
+  /** Days after the invoice is filed that the contract's payments fall due. */
   condicionesPagoDias?: number;
+  /** A ceiling agreement paid through the POs issued against it. */
+  esMarco?: boolean;
+  saldoMarco?: number | null;
+  /** Code of the marco a PO was issued under. */
+  padreCodigo?: string | null;
 }
 
 export interface Aprobacion {

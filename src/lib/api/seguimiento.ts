@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import { formatContratoCodigo } from "@/lib/codigo";
+import type { Moneda } from "@/lib/moneda";
 
 export type EstadoHito = "completado" | "en_riesgo" | "atrasado" | "pendiente";
 
@@ -8,21 +9,16 @@ export interface Hito {
   label: string;
   comprometido: string;
   real: string | null;
+  /** Already reflects the dates: past due = atrasado, due within 3 days = en riesgo. */
   estado: EstadoHito;
   porcentaje: number;
   pagoGeneradoId: string | null;
+  /** What the proveedor reported about it (delivered, progress…). */
+  avanceProveedor: string | null;
+  avanceReportadoAt: string | null;
 }
 
-export interface SeguimientoContrato {
-  id: string;
-  codigo: string;
-  proveedor: string;
-  categoria: string;
-  monto: number;
-  hitos: Hito[];
-}
-
-interface ApiHito {
+export interface ApiHito {
   id: string;
   label: string;
   comprometido: string;
@@ -30,6 +26,38 @@ interface ApiHito {
   estado: "COMPLETADO" | "EN_RIESGO" | "ATRASADO" | "PENDIENTE";
   porcentaje: number;
   pagoGeneradoId: string | null;
+  avanceProveedor?: string | null;
+  avanceReportadoAt?: string | null;
+}
+
+export function mapHito(h: ApiHito): Hito {
+  return {
+    id: h.id,
+    label: h.label,
+    comprometido: h.comprometido.slice(0, 10),
+    real: h.real ? h.real.slice(0, 10) : null,
+    estado: h.estado.toLowerCase() as EstadoHito,
+    porcentaje: h.porcentaje,
+    pagoGeneradoId: h.pagoGeneradoId,
+    avanceProveedor: h.avanceProveedor ?? null,
+    avanceReportadoAt: h.avanceReportadoAt ?? null,
+  };
+}
+
+export type EstadoContratoApi = "ACTIVO" | "POR_VENCER" | "VENCIDO" | "EN_RENOVACION" | "TERMINADO";
+
+export interface SeguimientoContrato {
+  id: string;
+  codigo: string;
+  proveedor: string;
+  categoria: string;
+  monto: number;
+  moneda: Moneda;
+  estado: EstadoContratoApi;
+  esMarco: boolean;
+  porcentajeAsignado: number;
+  vigenciaFin: string;
+  hitos: Hito[];
 }
 
 interface ApiContratoConHitos {
@@ -39,6 +67,11 @@ interface ApiContratoConHitos {
   proveedorNombre: string;
   categoria: string;
   monto: number;
+  moneda: Moneda;
+  estado: EstadoContratoApi;
+  esMarco: boolean;
+  porcentajeAsignado: number;
+  vigenciaFin: string;
   hitos: ApiHito[];
 }
 
@@ -50,15 +83,12 @@ export async function fetchSeguimiento(): Promise<SeguimientoContrato[]> {
     proveedor: c.proveedorNombre,
     categoria: c.categoria,
     monto: c.monto,
-    hitos: c.hitos.map((h) => ({
-      id: h.id,
-      label: h.label,
-      comprometido: h.comprometido.slice(0, 10),
-      real: h.real ? h.real.slice(0, 10) : null,
-      estado: h.estado.toLowerCase() as EstadoHito,
-      porcentaje: h.porcentaje,
-      pagoGeneradoId: h.pagoGeneradoId,
-    })),
+    moneda: c.moneda,
+    estado: c.estado,
+    esMarco: c.esMarco,
+    porcentajeAsignado: c.porcentajeAsignado,
+    vigenciaFin: c.vigenciaFin.slice(0, 10),
+    hitos: c.hitos.map(mapHito),
   }));
 }
 

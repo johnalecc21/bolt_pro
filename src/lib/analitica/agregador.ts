@@ -198,7 +198,8 @@ export function exposicion(d: DatosFiltrados, ahora = Date.now()): Exposicion {
     return t >= ahora && t < ahora + 30 * MS_DIA;
   });
   const porVencer = d.contratos
-    .filter((c) => !c.contratoPadreId)
+    // Terminated contracts don't expire: they already ended.
+    .filter((c) => !c.contratoPadreId && c.estado !== "TERMINADO")
     .map((c) => ({ c, dias: Math.ceil((new Date(c.vigenciaFin).getTime() - ahora) / MS_DIA) }))
     .filter(({ dias }) => dias >= 0 && dias <= 90)
     .sort((a, b) => a.dias - b.dias)
