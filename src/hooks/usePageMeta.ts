@@ -1,4 +1,5 @@
 import { useEffect } from "react"
+import { useLocation } from "react-router-dom"
 
 const SITE = "Procurex"
 const DEFAULT_TITLE = "Procurex · Plataforma de compras corporativas y homologación de proveedores"
@@ -25,8 +26,22 @@ interface PageMeta {
   noindex?: boolean
 }
 
-/** Per-route <title>, description and robots — the SPA only ships one index.html. */
+/**
+ * index.html ships a canonical/og:url for "/" (absolute, from the build's site
+ * URL). Every route must point them at itself, or search engines would treat
+ * vitrinas and legal pages as duplicates of the home page.
+ */
+function setCanonical(pathname: string) {
+  const link = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+  const origin = link ? new URL(link.href).origin : window.location.origin
+  const href = `${origin}${pathname}`
+  if (link) link.href = href
+  setMeta('meta[property="og:url"]', "property", "og:url", href)
+}
+
+/** Per-route <title>, description, canonical and robots — the SPA only ships one index.html. */
 export function usePageMeta({ title, description, noindex = false }: PageMeta) {
+  const { pathname } = useLocation()
   useEffect(() => {
     const previousTitle = document.title
     const descEl = document.head.querySelector<HTMLMetaElement>('meta[name="description"]')
@@ -39,11 +54,12 @@ export function usePageMeta({ title, description, noindex = false }: PageMeta) {
     }
     if (title) setMeta('meta[property="og:title"]', "property", "og:title", document.title)
     setMeta('meta[name="robots"]', "name", "robots", noindex ? "noindex, nofollow" : null)
+    setCanonical(pathname)
 
     return () => {
       document.title = previousTitle
       if (description && previousDesc !== null) setMeta('meta[name="description"]', "name", "description", previousDesc)
       setMeta('meta[name="robots"]', "name", "robots", null)
     }
-  }, [title, description, noindex])
+  }, [title, description, noindex, pathname])
 }

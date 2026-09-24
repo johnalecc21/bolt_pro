@@ -49,7 +49,7 @@ export function seoPlugin(env: Record<string, string>): Plugin {
         "Allow: /proveedor/registro",
         "Allow: /vitrina/",
         ...PRIVATE_PREFIXES.map((p) => `Disallow: ${p}`),
-        ...(siteUrl ? ["", `Sitemap: ${siteUrl}/sitemap.xml`] : []),
+        ...(siteUrl ? ["", `Sitemap: ${siteUrl}/sitemap.xml`, `Sitemap: ${siteUrl}/sitemap-vitrinas.xml`] : []),
         "",
       ].join("\n")
       this.emitFile({ type: "asset", fileName: "robots.txt", source: robots })
