@@ -17,7 +17,7 @@ context: |
 
   ## Repositorios (proyectos hermanos, NO anidados)
 
-  - Frontend: `C:\Users\alejo\Documents\proyectos\bolt_procure`      (rama de trabajo: `integration`, base: `main`)
+  - Frontend: `C:\Users\alejo\Documents\proyectos\bolt_procure`      (ramas: `develop` para trabajo, `main` para producción)
   - Backend:  `C:\Users\alejo\Documents\proyectos\bolt_procure_backend` (rama: `main`)
 
   Casi todo cambio funcional toca AMBOS repos: endpoint + DTO + servicio en el
