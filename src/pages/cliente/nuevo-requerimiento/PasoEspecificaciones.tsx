@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, X } from "lucide-react";
+import { ItemsEditor, type ItemBorrador } from "@/pages/cliente/nuevo-requerimiento/ItemsEditor";
 
 interface PasoEspecificacionesProps {
   requisitosTecnicos: string;
@@ -11,11 +12,14 @@ interface PasoEspecificacionesProps {
   onActualizarEspecificacion: (index: number, campo: "name" | "value", valor: string) => void;
   onEliminarEspecificacion: (index: number) => void;
   onAgregarEspecificacion: () => void;
+  items: ItemBorrador[];
+  onItemsChange: (items: ItemBorrador[]) => void;
 }
 
 export function PasoEspecificaciones({
   requisitosTecnicos, onRequisitosTecnicosChange,
   especificaciones, onActualizarEspecificacion, onEliminarEspecificacion, onAgregarEspecificacion,
+  items, onItemsChange,
 }: PasoEspecificacionesProps) {
   return (
     <div className="space-y-4">
@@ -55,6 +59,9 @@ export function PasoEspecificaciones({
             <Plus className="mr-2 h-4 w-4" /> Agregar especificación
           </Button>
         </div>
+      </div>
+      <div className="border-t pt-4">
+        <ItemsEditor items={items} onChange={onItemsChange} />
       </div>
     </div>
   );

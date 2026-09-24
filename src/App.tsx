@@ -33,6 +33,7 @@ const Adjudicacion = lazy(() => import("@/pages/cliente/Adjudicacion").then((m) 
 const Contratos = lazy(() => import("@/pages/cliente/Contratos").then((m) => ({ default: m.Contratos })));
 const Seguimiento = lazy(() => import("@/pages/cliente/Seguimiento").then((m) => ({ default: m.Seguimiento })));
 const Disputas = lazy(() => import("@/pages/cliente/Disputas").then((m) => ({ default: m.Disputas })));
+const CuentasPorPagar = lazy(() => import("@/pages/cliente/CuentasPorPagar").then((m) => ({ default: m.CuentasPorPagar })));
 const AnaliticaCFO = lazy(() => import("@/pages/cliente/AnaliticaCFO").then((m) => ({ default: m.AnaliticaCFO })));
 const DirectorioProveedores = lazy(() => import("@/pages/cliente/DirectorioProveedores").then((m) => ({ default: m.DirectorioProveedores })));
 const EstructuraPresupuestos = lazy(() => import("@/pages/cliente/EstructuraPresupuestos").then((m) => ({ default: m.EstructuraPresupuestos })));
@@ -107,6 +108,7 @@ export default function App() {
             <Route path="contratos" element={<Contratos />} />
             <Route path="seguimiento" element={<RequireRole allow={["comprador", "admin_cliente"]}><Seguimiento /></RequireRole>} />
             <Route path="disputas" element={<RequireRole allow={["comprador", "admin_cliente"]}><Disputas /></RequireRole>} />
+            <Route path="pagos" element={<RequireRole allow={["comprador", "admin_cliente", "aprobador_cfo"]}><CuentasPorPagar /></RequireRole>} />
             <Route path="analitica" element={<RequireRole allow={["aprobador_cfo", "admin_cliente"]}><AnaliticaCFO /></RequireRole>} />
             <Route path="directorio" element={<RequireRole allow={["comprador", "admin_cliente"]}><DirectorioProveedores /></RequireRole>} />
             <Route path="estructura" element={<RequireRole allow={["admin_cliente", "aprobador_cfo"]}><EstructuraPresupuestos /></RequireRole>} />

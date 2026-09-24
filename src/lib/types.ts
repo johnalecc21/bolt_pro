@@ -11,6 +11,8 @@ import type { Moneda } from "@/lib/moneda";
 
 export type Prioridad = "normal" | "alta" | "urgente";
 
+export const PRIORIDAD_LABEL: Record<Prioridad, string> = { normal: "Normal", alta: "Alta", urgente: "Urgente" };
+
 export interface Requerimiento {
   id: string;
   /** Human-readable sequential code (REQ-0001, ...) — show this, not `id`. */

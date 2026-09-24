@@ -1,4 +1,5 @@
 import { formatMoney, type Moneda } from "@/lib/moneda";
+import { PRIORIDAD_LABEL, type Prioridad } from "@/lib/types";
 
 interface Criterios {
   precio: number;
@@ -16,15 +17,18 @@ interface PasoRevisionProps {
   fechaLimite: string;
   criterios: Criterios;
   proveedoresSeleccionados: string[];
+  prioridad: Prioridad;
+  items: number;
 }
 
-export function PasoRevision({ titulo, descripcion, categoria, presupuesto, moneda, fechaLimite, criterios, proveedoresSeleccionados }: PasoRevisionProps) {
+export function PasoRevision({ titulo, descripcion, categoria, presupuesto, moneda, fechaLimite, criterios, proveedoresSeleccionados, prioridad, items }: PasoRevisionProps) {
   const filas: [string, string][] = [
     ["Título", titulo || "(sin definir)"],
     ["Descripción", descripcion || "(sin definir)"],
     ["Categoría", categoria],
-    ["Prioridad", "Normal"],
+    ["Prioridad", PRIORIDAD_LABEL[prioridad]],
     ["Presupuesto", presupuesto ? formatMoney(Number(presupuesto), moneda) : "(sin definir)"],
+    ["Ítems a cotizar", items ? `${items} línea(s) — oferta por ítem` : "Sin ítems — oferta por valor total"],
     ["Fecha requerida", fechaLimite || "(sin definir)"],
     ["Criterios", `Precio ${criterios.precio}% · Tiempo ${criterios.tiempo}% · Calidad ${criterios.calidad}% · Pago ${criterios.pago}%`],
     ["Proveedores preseleccionados", String(proveedoresSeleccionados.length)],

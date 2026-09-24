@@ -8,9 +8,10 @@ import type { RequerimientoDetalle } from "@/lib/api/requerimientos";
 interface DescripcionEspecificacionesProps {
   descripcion: RequerimientoDetalle["descripcion"];
   especificaciones: RequerimientoDetalle["especificaciones"];
+  items?: RequerimientoDetalle["items"];
 }
 
-export function DescripcionEspecificaciones({ descripcion, especificaciones }: DescripcionEspecificacionesProps) {
+export function DescripcionEspecificaciones({ descripcion, especificaciones, items = [] }: DescripcionEspecificacionesProps) {
   const [abierto, setAbierto] = useState(true);
 
   return (
@@ -34,6 +35,28 @@ export function DescripcionEspecificaciones({ descripcion, especificaciones }: D
                   <span className="font-medium">{spec.value}</span>
                 </div>
               ))}
+            </div>
+          )}
+          {items.length > 0 && (
+            <div className="overflow-x-auto rounded-lg border border-border">
+              <table className="w-full text-sm">
+                <thead className="bg-muted/50 text-xs text-muted-foreground">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium">#</th>
+                    <th className="px-3 py-2 text-left font-medium">Ítem a cotizar</th>
+                    <th className="px-3 py-2 text-right font-medium">Cantidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items.map((it, i) => (
+                    <tr key={it.id} className="border-t border-border">
+                      <td className="px-3 py-2 text-muted-foreground">{i + 1}</td>
+                      <td className="px-3 py-2">{it.descripcion}</td>
+                      <td className="px-3 py-2 text-right tabular-nums">{it.cantidad.toLocaleString("es-CO", { maximumFractionDigits: 3 })} {it.unidad}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CollapsibleContent>

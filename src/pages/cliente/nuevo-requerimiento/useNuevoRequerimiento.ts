@@ -10,6 +10,7 @@ import { useMonedaBase } from "@/hooks/useMonedaBase";
 import type { Moneda } from "@/lib/moneda";
 import { apiErrorMessage } from "@/lib/api/http";
 import type { Prioridad } from "@/lib/types";
+import { itemIncompleto, itemsValidos, type ItemBorrador } from "@/pages/cliente/nuevo-requerimiento/ItemsEditor";
 
 export const CATEGORIAS_CATALOGO = ["Servicios Generales", "Materia Prima"];
 export const TOTAL_STEPS = 6;
@@ -36,6 +37,8 @@ export function useNuevoRequerimiento() {
     { name: "SLA requerido", value: "99.9%" },
     { name: "Soporte", value: "24/7" },
   ]);
+  const [items, setItems] = useState<ItemBorrador[]>([]);
+  const itemsConError = items.some(itemIncompleto);
   const [proveedoresSeleccionados, setProveedoresSeleccionados] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const { data: proveedores, loading: loadingProveedores } = useApiData(() => fetchProveedores());
@@ -64,6 +67,11 @@ export function useNuevoRequerimiento() {
       toast.error("Completa título, presupuesto y fecha límite antes de enviar.");
       return;
     }
+    if (itemsConError) {
+      toast.error("Hay ítems incompletos.");
+      setStep(2);
+      return;
+    }
     if (exigeCentroCosto && !centroCostoId) {
       toast.error("Tu empresa exige asignar un centro de costo.");
       setStep(3);
@@ -87,6 +95,7 @@ export function useNuevoRequerimiento() {
         criteriosPeso: criterios,
         especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
         proveedorIds: proveedoresSeleccionados,
+        items: itemsValidos(items),
       });
       if (evaluacion?.excede) {
         toast.warning("Supera el presupuesto del centro de costo", {
@@ -123,6 +132,7 @@ export function useNuevoRequerimiento() {
     criterios, setCriterios,
     requisitosTecnicos, setRequisitosTecnicos,
     especificaciones, actualizarEspecificacion, eliminarEspecificacion, agregarEspecificacion,
+    items, setItems, itemsConError,
     proveedoresSeleccionados, toggleProveedor,
     submitting,
     proveedores, loadingProveedores,

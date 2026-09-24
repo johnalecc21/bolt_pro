@@ -95,19 +95,32 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   );
 
   const [oferta, setOferta] = useState<MiOferta | null>(null);
+  // Unit price per line as typed ("" = not quoting that line).
+  const [precios, setPrecios] = useState<Record<string, string>>({});
   const [pregunta, setPregunta] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [enviandoPregunta, setEnviandoPregunta] = useState(false);
 
   useEffect(() => {
-    if (ofertaData) setOferta(ofertaData);
+    if (ofertaData) {
+      setOferta(ofertaData);
+      setPrecios(Object.fromEntries(ofertaData.items.map((i) => [i.itemId, String(i.precioUnitario)])));
+    }
   }, [ofertaData]);
 
   if (loading || !oferta) {
     return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
   }
 
-  const camposCompletos = oferta.precioTotal > 0 && oferta.plazoEntregaDias > 0;
+  const lineas = oferta.lineas;
+  const itemizada = lineas.length > 0;
+  const cotizadas = lineas
+    .filter((l) => precios[l.id]?.trim() && Number(precios[l.id]) >= 0)
+    .map((l) => ({ itemId: l.id, precioUnitario: Math.round(Number(precios[l.id])), cantidad: l.cantidad }));
+  // Same rounding the server applies; the server recomputes it anyway.
+  const totalItems = cotizadas.reduce((s, c) => s + Math.round(c.cantidad * c.precioUnitario), 0);
+  const moneda = invitacion?.moneda ?? "USD";
+  const camposCompletos = (itemizada ? cotizadas.length > 0 : oferta.precioTotal > 0) && oferta.plazoEntregaDias > 0;
 
   function update(patch: Partial<MiOferta>) {
     setOferta((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -119,8 +132,9 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
     try {
       await guardarMiOferta({
         requerimientoId,
-        precioUnitario: oferta.precioUnitario,
-        precioTotal: oferta.precioTotal,
+        precioUnitario: itemizada ? 0 : oferta.precioUnitario,
+        precioTotal: itemizada ? totalItems : oferta.precioTotal,
+        items: itemizada ? cotizadas.map(({ itemId, precioUnitario }) => ({ itemId, precioUnitario })) : undefined,
         plazoEntregaDias: oferta.plazoEntregaDias,
         condicionesPagoDias: oferta.condicionesPagoDias,
         garantiaMeses: oferta.garantiaMeses,
@@ -154,7 +168,7 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold">{requerimientoId} — Detalle y carga de oferta</h1>
+        <h1 className="text-2xl font-bold">{invitacion?.titulo ?? "Proceso"} — Detalle y carga de oferta</h1>
         <p className="text-sm text-muted-foreground">{invitacion?.cliente ?? "Cliente"} · Categoría: {invitacion?.categoria ?? "—"}</p>
       </div>
 
@@ -196,15 +210,73 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
           </div>
         ) : (
           <>
+            {itemizada && (
+              <div className="mb-5 space-y-2">
+                <p className="text-sm text-muted-foreground">
+                  Cotiza el precio unitario de cada ítem. Deja en blanco los que no ofreces: el comprador puede adjudicar por ítem, así que puedes ganar solo algunas líneas.
+                </p>
+                <div className="overflow-x-auto rounded-lg border border-border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 text-xs text-muted-foreground">
+                      <tr>
+                        <th className="px-3 py-2 text-left font-medium">Ítem</th>
+                        <th className="px-3 py-2 text-right font-medium">Cantidad</th>
+                        <th className="px-3 py-2 text-right font-medium">Precio unitario ({moneda})</th>
+                        <th className="px-3 py-2 text-right font-medium">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {lineas.map((l) => {
+                        const pu = precios[l.id]?.trim() ? Number(precios[l.id]) : null;
+                        return (
+                          <tr key={l.id} className="border-t border-border">
+                            <td className="px-3 py-2">
+                              {l.descripcion}
+                              {l.especificacion && <span className="block text-xs text-muted-foreground">{l.especificacion}</span>}
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums whitespace-nowrap">{l.cantidad.toLocaleString("es-CO", { maximumFractionDigits: 3 })} {l.unidad}</td>
+                            <td className="px-3 py-2 text-right">
+                              <Input
+                                type="number"
+                                min={0}
+                                inputMode="decimal"
+                                aria-label={`Precio unitario de ${l.descripcion}`}
+                                placeholder="No cotizo"
+                                className="ml-auto w-36 text-right"
+                                value={precios[l.id] ?? ""}
+                                onChange={(e) => setPrecios((p) => ({ ...p, [l.id]: e.target.value }))}
+                              />
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums">
+                              {pu == null ? <span className="text-muted-foreground">—</span> : formatMoney(Math.round(l.cantidad * Math.round(pu)), moneda)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr className="border-t border-border bg-muted/30 font-medium">
+                        <td className="px-3 py-2" colSpan={3}>Total ({cotizadas.length} de {lineas.length} ítems cotizados)</td>
+                        <td className="px-3 py-2 text-right tabular-nums">{formatMoney(totalItems, moneda)}</td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Precio unitario ({invitacion?.moneda ?? "USD"})</Label>
-                <Input type="number" value={oferta.precioUnitario || ""} onChange={(e) => update({ precioUnitario: Number(e.target.value) })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Precio total ({invitacion?.moneda ?? "USD"})</Label>
-                <Input type="number" value={oferta.precioTotal || ""} onChange={(e) => update({ precioTotal: Number(e.target.value) })} />
-              </div>
+              {!itemizada && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label>Precio unitario ({moneda})</Label>
+                    <Input type="number" value={oferta.precioUnitario || ""} onChange={(e) => update({ precioUnitario: Number(e.target.value) })} />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>Precio total ({moneda})</Label>
+                    <Input type="number" value={oferta.precioTotal || ""} onChange={(e) => update({ precioTotal: Number(e.target.value) })} />
+                  </div>
+                </>
+              )}
               <div className="space-y-1.5">
                 <Label>Plazo de entrega (días)</Label>
                 <Input type="number" value={oferta.plazoEntregaDias || ""} onChange={(e) => update({ plazoEntregaDias: Number(e.target.value) })} />

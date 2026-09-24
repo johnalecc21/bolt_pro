@@ -13,6 +13,19 @@ export interface Especificacion {
   value: string;
 }
 
+/** One line of the bill of quantities; suppliers price each line. */
+export interface ItemRequerimiento {
+  descripcion: string;
+  cantidad: number;
+  unidad: string;
+  especificacion?: string | null;
+}
+
+export interface ItemRequerimientoGuardado extends ItemRequerimiento {
+  id: string;
+  orden: number;
+}
+
 export interface AprobacionPaso {
   rol: string;
   aprobadoAt: string;
@@ -74,7 +87,7 @@ interface ApiRequerimiento {
   centroCosto?: { codigo: string; nombre: string } | null;
   comentarios?: { id: string; autor: string; texto: string; createdAt: string }[];
   documentos?: ApiDocumentoRequerimiento[];
-  adjudicacion?: unknown;
+  items?: ItemRequerimientoGuardado[];
   ofertas?: unknown[];
   aprobaciones?: AprobacionRequerimiento[];
   invitaciones?: InvitacionRequerimiento[];
@@ -112,6 +125,7 @@ export interface RequerimientoDetalle extends Requerimiento {
   documentos: DocumentoRequerimiento[];
   aprobaciones: AprobacionRequerimiento[];
   invitaciones: InvitacionRequerimiento[];
+  items: ItemRequerimientoGuardado[];
 }
 
 function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
@@ -124,6 +138,7 @@ function toRequerimientoDetalle(r: ApiRequerimiento): RequerimientoDetalle {
     documentos: (r.documentos ?? []).map(toDocumento),
     aprobaciones: r.aprobaciones ?? [],
     invitaciones: r.invitaciones ?? [],
+    items: r.items ?? [],
   };
 }
 
@@ -176,6 +191,7 @@ export async function createRequerimiento(payload: {
   proveedorIds?: string[];
   centroCostoId?: string;
   prioridad?: Prioridad;
+  items?: ItemRequerimiento[];
 }): Promise<CreateRequerimientoResultado> {
   const { data } = await api.post<
     ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[]; presupuesto?: EvaluacionPresupuesto | null }

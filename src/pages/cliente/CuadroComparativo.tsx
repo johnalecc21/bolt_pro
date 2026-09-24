@@ -14,6 +14,8 @@ import { fetchRequerimiento } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 import { fetchAdjudicacion, crearAdjudicacion } from "@/lib/api/adjudicacion";
 import { apiErrorMessage } from "@/lib/api/http";
+import { ComparativoItems } from "@/components/cliente/ComparativoItems";
+import { compararItems, preciosComparables } from "@/lib/comparativo/items";
 
 import { formatMoney } from "@/lib/moneda";
 const criterios = [
@@ -71,14 +73,39 @@ export function CuadroComparativo() {
   const [showWeights, setShowWeights] = useState(false);
 
   const ofertasBase = (ofertasData ?? []).filter((o) => o.enviada);
-  const ofertas = useMemo(() => computeScores(ofertasBase, appliedWeights), [ofertasBase, appliedWeights]);
+  const lineas = requerimiento?.items ?? [];
+  // Itemized tenders: a partial offer's total isn't comparable, so the ranking
+  // scores a price where every unquoted line counts at its highest quote.
+  const cobertura = useMemo(() => {
+    if (lineas.length === 0) return null;
+    const resumen = compararItems(lineas, ofertasBase);
+    return { comparables: preciosComparables(resumen), lineas: new Map(resumen.totales.map((t) => [t.proveedorId, t.lineas])) };
+  }, [lineas, ofertasBase]);
+  const ofertas = useMemo(() => {
+    if (!cobertura) return computeScores(ofertasBase, appliedWeights);
+    const puntuadas = computeScores(ofertasBase.map((o) => ({ ...o, precio: cobertura.comparables.get(o.proveedorId) ?? o.precio })), appliedWeights);
+    return puntuadas.map((o, i) => ({ ...o, precio: ofertasBase[i].precio }));
+  }, [ofertasBase, appliedWeights, cobertura]);
+  const parcial = (proveedorId: string) => {
+    const n = cobertura?.lineas.get(proveedorId);
+    return n != null && n < lineas.length ? `${n} de ${lineas.length} ítems` : null;
+  };
   const sorted = [...ofertas].sort((a, b) => b.score - a.score);
-  // Once a proceso has an adjudicación, the chosen winner takes precedence
+  // Once a proceso has an adjudicación, the chosen winner(s) take precedence
   // over whatever the live weight sliders currently compute.
-  const winner = adjudicacion
-    ? ofertas.find((o) => o.proveedorId === adjudicacion.proveedorId) ?? sorted[0]
+  const adjudicados = new Set(adjudicacion?.adjudicaciones.map((a) => a.proveedorId) ?? []);
+  const principal = adjudicacion
+    ? [...adjudicacion.adjudicaciones].sort((a, b) => b.precioFinal - a.precioFinal)[0]
+    : undefined;
+  const winner = principal
+    ? ofertas.find((o) => o.proveedorId === principal.proveedorId) ?? sorted[0]
     : sorted[0];
-  const minPrecio = ofertasBase.length ? Math.min(...ofertasBase.map((o) => o.precio)) : 0;
+  const itemizado = (requerimiento?.items.length ?? 0) > 0;
+  const adjudicadoPorItem = adjudicacion
+    ? Object.fromEntries(adjudicacion.adjudicaciones.flatMap((a) => a.lineas.map((l) => [l.itemId, a.proveedorId])))
+    : undefined;
+  const completas = ofertasBase.filter((o) => !parcial(o.proveedorId));
+  const minPrecio = completas.length ? Math.min(...completas.map((o) => o.precio)) : 0;
   const weightSum = weights.precio + weights.plazo + weights.calidad + weights.pago;
   const benchmarkEstimado = ofertasBase.length
     ? Math.round(ofertasBase.reduce((sum, o) => sum + o.precio, 0) / ofertasBase.length)
@@ -119,6 +146,15 @@ export function CuadroComparativo() {
     }
   }
 
+  async function adjudicarPorItems(asignaciones: { itemId: string; proveedorId: string }[]) {
+    try {
+      await crearAdjudicacion({ requerimientoId, asignaciones });
+      navigate(`/cliente/adjudicacion/${requerimientoId}`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo adjudicar."));
+    }
+  }
+
   function exportarCSV() {
     const header = ["Proveedor", "Precio", "Plazo (días)", "Calidad", "Condiciones de pago (días)", "Score"];
     const rows = ofertas.map((o) => [o.proveedor, o.precio, o.plazo, o.calidad, o.pago, o.score]);
@@ -140,7 +176,7 @@ export function CuadroComparativo() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Cuadro Comparativo de Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimientoId} — {requerimiento.titulo}</p>
+          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimiento.codigo} — {requerimiento.titulo}</p>
         </div>
         <div className="flex gap-2">
           {mode === "full" && (
@@ -206,7 +242,7 @@ export function CuadroComparativo() {
               {i === 0 && <Trophy className="ml-auto h-5 w-5 text-warning" />}
             </div>
             <div className="mt-3 space-y-1 text-sm">
-              <div className="flex justify-between"><span className="text-muted-foreground">Precio</span><span className="font-medium">{formatMoney(o.precio, requerimiento.moneda)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Precio</span><span className="text-right font-medium">{formatMoney(o.precio, requerimiento.moneda)}{parcial(o.proveedorId) && <span className="block text-xs font-normal text-muted-foreground">cotizó {parcial(o.proveedorId)}</span>}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Plazo</span><span className="font-medium">{o.plazo} días</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Pago</span><span className="font-medium">{o.pago} días</span></div>
             </div>
@@ -224,26 +260,30 @@ export function CuadroComparativo() {
                 {ofertas.map((o) => (
                   <th key={o.proveedor} className="p-4 text-left text-sm font-medium">
                     {o.proveedor}
-                    {o.proveedor === winner.proveedor && <Badge className="ml-2 bg-primary/10 text-primary text-[10px]">Ganador</Badge>}
+                    {(adjudicacion ? adjudicados.has(o.proveedorId) : o.proveedor === winner.proveedor) && (
+                      <Badge className="ml-2 bg-primary/10 text-primary text-[10px]">{adjudicacion ? "Adjudicado" : "Mejor score"}</Badge>
+                    )}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {criterios.map((c) => {
-                const values = ofertas.map((o) => o[c.key]);
+                const values = ofertas.filter((o) => c.key !== "precio" || !parcial(o.proveedorId)).map((o) => o[c.key]);
                 const best = c.lowerIsBetter ? Math.min(...values) : Math.max(...values);
                 return (
                   <tr key={c.key} className="border-b border-border">
                     <td className="p-4 text-sm font-medium">{c.label}</td>
                     {ofertas.map((o) => {
                       const val = o[c.key];
-                      const isBest = val === best;
-                      const isAnomaly = c.key === "precio" && val > minPrecio * 1.2;
+                      // A partial offer's total isn't "the best price" of the tender.
+                      const isBest = val === best && !(c.key === "precio" && parcial(o.proveedorId));
+                      const isAnomaly = c.key === "precio" && minPrecio > 0 && val > minPrecio * 1.2;
                       return (
                         <td key={o.proveedor} className={cn("p-4 text-sm", isBest && "bg-success/10 font-semibold text-success")}>
                           <span className="flex items-center gap-1">
                             {c.key === "precio" ? formatMoney(val, requerimiento.moneda) : `${c.prefix}${val.toLocaleString()}${c.suffix}`}
+                            {c.key === "precio" && parcial(o.proveedorId) && <span className="text-xs font-normal text-muted-foreground">({parcial(o.proveedorId)})</span>}
                             {isAnomaly && (
                               <span title="Oferta atípica — 20% sobre el mínimo">
                                 <AlertTriangle className="h-3.5 w-3.5 text-destructive" />
@@ -269,6 +309,16 @@ export function CuadroComparativo() {
         </div>
       </Card>
 
+      {itemizado && (
+        <ComparativoItems
+          items={requerimiento.items}
+          ofertas={ofertasBase}
+          moneda={requerimiento.moneda}
+          adjudicado={adjudicadoPorItem}
+          onAdjudicar={mode === "full" && !adjudicacion ? adjudicarPorItems : undefined}
+        />
+      )}
+
       {/* Benchmark */}
       <div className="rounded-lg bg-info/10 p-4 text-sm text-info">
         <strong>Precio promedio de las ofertas recibidas:</strong> <strong>{formatMoney(benchmarkEstimado, requerimiento.moneda)}</strong>. La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del promedio.
@@ -293,8 +343,8 @@ export function CuadroComparativo() {
               </Link>
             </Button>
           )}
-          <Button className="gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
-            <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : `Adjudicar a ${winner?.proveedor ?? "la mejor oferta"}`}
+          <Button className="gap-2" variant={itemizado ? "outline" : "default"} onClick={adjudicarDirectamente} disabled={adjudicando}>
+            <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : `Adjudicar todo a ${winner?.proveedor ?? "la mejor oferta"}`}
           </Button>
         </div>
       )}

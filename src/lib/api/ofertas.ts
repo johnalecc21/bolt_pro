@@ -11,6 +11,13 @@ export interface OfertaProceso {
   calidad: number;
   pago: number;
   enviada: boolean;
+  /** Unit price per quoted line (itemized requerimientos only). */
+  items: PrecioItem[];
+}
+
+export interface PrecioItem {
+  itemId: string;
+  precioUnitario: number;
 }
 
 interface ApiOferta {
@@ -22,6 +29,7 @@ interface ApiOferta {
   condicionesPagoDias: number;
   enviada: boolean;
   proveedor: { nombre: string };
+  items?: PrecioItem[];
 }
 
 function toOfertaProceso(o: ApiOferta): OfertaProceso {
@@ -34,6 +42,7 @@ function toOfertaProceso(o: ApiOferta): OfertaProceso {
     calidad: o.calidad,
     pago: o.condicionesPagoDias,
     enviada: o.enviada,
+    items: o.items ?? [],
   };
 }
 
@@ -81,7 +90,18 @@ export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
   }));
 }
 
+/** A line of the bill of quantities, as the proveedor sees it. */
+export interface LineaCotizable {
+  id: string;
+  descripcion: string;
+  cantidad: number;
+  unidad: string;
+  especificacion: string | null;
+}
+
 export interface MiOferta {
+  items: PrecioItem[];
+  lineas: LineaCotizable[];
   precioUnitario: number;
   precioTotal: number;
   plazoEntregaDias: number;
@@ -92,6 +112,8 @@ export interface MiOferta {
 }
 
 interface ApiMiOferta {
+  items?: PrecioItem[];
+  lineas?: LineaCotizable[];
   precioUnitario: number;
   precioTotal: number;
   plazoEntregaDias: number;
@@ -102,13 +124,13 @@ interface ApiMiOferta {
 }
 
 const OFERTA_VACIA: MiOferta = {
-  precioUnitario: 0, precioTotal: 0, plazoEntregaDias: 0,
+  items: [], lineas: [], precioUnitario: 0, precioTotal: 0, plazoEntregaDias: 0,
   condicionesPagoDias: 0, garantiaMeses: 0, vigenciaOfertaDias: 0, enviada: false,
 };
 
 export async function fetchMiOferta(requerimientoId: string): Promise<MiOferta> {
   const { data } = await api.get<ApiMiOferta | null>(`/ofertas/mine/${requerimientoId}`);
-  return data ?? OFERTA_VACIA;
+  return data ? { ...data, items: data.items ?? [], lineas: data.lineas ?? [] } : OFERTA_VACIA;
 }
 
 export async function guardarMiOferta(payload: {
@@ -119,6 +141,8 @@ export async function guardarMiOferta(payload: {
   condicionesPagoDias: number;
   garantiaMeses: number;
   vigenciaOfertaDias: number;
+  /** Itemized requerimientos: the quoted lines (the server computes the total). */
+  items?: PrecioItem[];
 }) {
   const { data } = await api.put("/ofertas", payload);
   return data;
@@ -144,6 +168,8 @@ export interface ProcesoHistorial {
   plazoDias?: number;
   condicionesPagoDias?: number;
   garantiaMeses?: number;
+  /** Won only some of the lines of a process awarded by items. */
+  adjudicacionParcial?: boolean;
 }
 
 export interface HistorialProveedor {
@@ -167,6 +193,7 @@ interface ApiHistorial {
     plazoDias?: number;
     condicionesPagoDias?: number;
     garantiaMeses?: number;
+    adjudicacionParcial?: boolean;
   }[];
   competitividad: { tuOfertaPromedioVsMercado: number };
 }

@@ -9,6 +9,7 @@ import { PasoPresupuesto } from "@/pages/cliente/nuevo-requerimiento/PasoPresupu
 import { PasoCriterios } from "@/pages/cliente/nuevo-requerimiento/PasoCriterios";
 import { PasoProveedores } from "@/pages/cliente/nuevo-requerimiento/PasoProveedores";
 import { PasoRevision } from "@/pages/cliente/nuevo-requerimiento/PasoRevision";
+import { itemsValidos } from "@/pages/cliente/nuevo-requerimiento/ItemsEditor";
 
 export function NuevoRequerimiento() {
   const {
@@ -25,6 +26,7 @@ export function NuevoRequerimiento() {
     criterios, setCriterios,
     requisitosTecnicos, setRequisitosTecnicos,
     especificaciones, actualizarEspecificacion, eliminarEspecificacion, agregarEspecificacion,
+    items, setItems, itemsConError,
     proveedoresSeleccionados, toggleProveedor,
     submitting,
     proveedores, loadingProveedores,
@@ -73,6 +75,8 @@ export function NuevoRequerimiento() {
             onActualizarEspecificacion={actualizarEspecificacion}
             onEliminarEspecificacion={eliminarEspecificacion}
             onAgregarEspecificacion={agregarEspecificacion}
+            items={items}
+            onItemsChange={setItems}
           />
         )}
 
@@ -114,6 +118,8 @@ export function NuevoRequerimiento() {
             fechaLimite={fechaLimite}
             criterios={criterios}
             proveedoresSeleccionados={proveedoresSeleccionados}
+            prioridad={prioridad}
+            items={itemsValidos(items).length}
           />
         )}
 
@@ -127,7 +133,7 @@ export function NuevoRequerimiento() {
           {step < TOTAL_STEPS ? (
             <Button
               onClick={() => setStep((s) => s + 1)}
-              disabled={(step === 4 && total !== 100) || (step === 5 && proveedoresSeleccionados.length < 3)}
+              disabled={(step === 2 && itemsConError) || (step === 4 && total !== 100) || (step === 5 && proveedoresSeleccionados.length < 3)}
             >
               Siguiente <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

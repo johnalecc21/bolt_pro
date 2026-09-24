@@ -79,7 +79,7 @@ export function DetalleRequerimiento() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-6">
-          <DescripcionEspecificaciones descripcion={req.descripcion} especificaciones={req.especificaciones} />
+          <DescripcionEspecificaciones descripcion={req.descripcion} especificaciones={req.especificaciones} items={req.items} />
           <ProcesoTimeline
             req={req}
             comentario={comentario}

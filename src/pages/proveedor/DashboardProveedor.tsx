@@ -25,7 +25,7 @@ export function DashboardProveedor() {
   const nuevasInvitaciones = (invitaciones ?? []).filter((i) => i.estado === "nueva");
   const ofertasPorEnviar = (ofertas ?? []).filter((o) => !o.enviada);
   const contratosActivos = (contratos ?? []).filter((c) => c.estado === "Activo" || c.estado === "Por vencer");
-  const pagosPendientes = (pagos ?? []).filter((p) => p.estado === "pendiente");
+  const pagosPendientes = (pagos ?? []).filter((p) => p.estado !== "pagado");
 
   const pendientes = [
     ...nuevasInvitaciones.map((i) => ({

@@ -31,6 +31,7 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
     { label: "Adjudicación", to: "adjudicacion", roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
     { label: "Contratos / POs", to: "contratos" },
     { label: "Seguimiento", to: "seguimiento", roles: ["comprador", "admin_cliente"] },
+    { label: "Cuentas por pagar", to: "pagos", roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
     { label: "Disputas", to: "disputas", roles: ["comprador", "admin_cliente"] },
     { label: "Directorio de proveedores", to: "directorio", roles: ["comprador", "admin_cliente"] },
     { label: "Analítica CFO", to: "analitica", roles: ["aprobador_cfo", "admin_cliente"] },

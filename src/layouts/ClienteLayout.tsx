@@ -1,4 +1,5 @@
 import {
+  Receipt,
   LayoutDashboard, FileText, Gavel, Handshake, Award,
   FileCheck, Truck, Building2, BarChart3,
   ShieldCheck, Scale, Users, SlidersHorizontal, Rocket, Landmark,
@@ -16,6 +17,7 @@ const navItems: PortalNavItem[] = [
   { to: "adjudicacion", label: "Adjudicación", icon: Award, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
   { to: "contratos", label: "Contratos / POs", icon: FileCheck },
   { to: "seguimiento", label: "Seguimiento", icon: Truck, roles: ["comprador", "admin_cliente"] },
+  { to: "pagos", label: "Cuentas por pagar", icon: Receipt, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
   { to: "disputas", label: "Disputas", icon: Scale, roles: ["comprador", "admin_cliente"] },
   { to: "directorio", label: "Directorio Proveedores", icon: Building2, roles: ["comprador", "admin_cliente"] },
   { to: "analitica", label: "Analítica CFO", icon: BarChart3, roles: ["aprobador_cfo", "admin_cliente"] },
