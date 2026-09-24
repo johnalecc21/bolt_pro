@@ -39,6 +39,8 @@ export function Negociacion() {
     [requerimientoId],
   );
   const [formato, setFormato] = useState("subasta");
+  const [duracionMin, setDuracionMin] = useState(30);
+  const [participantes, setParticipantes] = useState<"finalistas" | "todos">("finalistas");
   const { state: auction, iniciar, cerrar } = useSubasta(requerimientoId);
   const activa = auction.status === "activa";
   const [, forceTick] = useState(0);
@@ -71,14 +73,10 @@ export function Negociacion() {
     );
   }
 
+  const ofertasEnviadas = (ofertas ?? []).filter((o) => o.enviada).length;
+
   function iniciarRonda() {
-    const pujasIniciales = (ofertas ?? [])
-      .filter((o) => o.enviada)
-      .slice()
-      .sort((a, b) => a.precio - b.precio)
-      .slice(0, 3)
-      .map((o) => ({ proveedorId: o.proveedorId, proveedorNombre: o.proveedor, monto: o.precio }));
-    iniciar(15 * 60 * 1000, pujasIniciales);
+    iniciar({ duracionMin, participantes });
   }
 
   function handleCerrarRonda() {
@@ -129,26 +127,39 @@ export function Negociacion() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Ventana de tiempo</label>
-                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
-                  <option>30 minutos</option>
-                  <option>1 hora</option>
-                  <option>2 horas</option>
-                  <option>24 horas</option>
+                <select
+                  value={duracionMin}
+                  onChange={(e) => setDuracionMin(Number(e.target.value))}
+                  className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                >
+                  <option value={30}>30 minutos</option>
+                  <option value={60}>1 hora</option>
+                  <option value={120}>2 horas</option>
+                  <option value={1440}>24 horas</option>
                 </select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Proveedores incluidos</label>
-                <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
-                  <option>3 finalistas</option>
-                  <option>Todos los ofertantes</option>
+                <select
+                  value={participantes}
+                  onChange={(e) => setParticipantes(e.target.value as "finalistas" | "todos")}
+                  className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+                >
+                  <option value="finalistas">3 finalistas</option>
+                  <option value="todos">Todos los ofertantes</option>
                 </select>
               </div>
             </div>
           </Card>
 
-          <Button onClick={iniciarRonda}>
-            <Gavel className="mr-2 h-4 w-4" /> Iniciar ronda de negociación
-          </Button>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={iniciarRonda} disabled={ofertasEnviadas < 2}>
+              <Gavel className="mr-2 h-4 w-4" /> Iniciar ronda de negociación
+            </Button>
+            {ofertasEnviadas < 2 && (
+              <p className="text-sm text-muted-foreground">Se necesitan al menos 2 ofertas enviadas para negociar.</p>
+            )}
+          </div>
         </>
       ) : (
         <>

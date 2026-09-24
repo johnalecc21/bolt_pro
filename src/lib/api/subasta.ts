@@ -91,9 +91,10 @@ export function useSubasta(requerimientoId: string | undefined) {
     };
   }, [requerimientoId]);
 
+  /** Participants and starting amounts are taken server-side from the sent offers. */
   const iniciar = useCallback(
-    (durationMs: number, seed: { proveedorId: string; proveedorNombre: string; monto: number }[]) => {
-      socketRef.current?.emit("iniciar", { requerimientoId, durationMs, seed });
+    (opciones: { duracionMin: number; participantes: "finalistas" | "todos" }) => {
+      socketRef.current?.emit("iniciar", { requerimientoId, ...opciones });
     },
     [requerimientoId],
   );
