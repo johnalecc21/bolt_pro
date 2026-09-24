@@ -1,15 +1,18 @@
 import axios, { AxiosError } from "axios";
 import type { ZodType } from "zod";
 import { supabase } from "@/lib/supabase/client";
+import { cachedDefaultAdapter, invalidateApiCache } from "@/lib/api/responseCache";
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:3001",
 });
+api.defaults.adapter = cachedDefaultAdapter(api.defaults.adapter);
 
 let activeCompanyId: string | null = null;
 
 /** Called by AuthContext whenever the user's active company changes. */
 export function setActiveCompanyId(companyId: string | null) {
+  if (companyId !== activeCompanyId) invalidateApiCache();
   activeCompanyId = companyId;
 }
 

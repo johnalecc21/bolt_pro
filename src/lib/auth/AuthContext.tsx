@@ -71,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const me = await apiMe();
-        const requires2FA = await hasMfaEnrolled();
+        // Independent calls (our API and Supabase Auth) — run them together.
+        const [me, requires2FA] = await Promise.all([apiMe(), hasMfaEnrolled()]);
         if (cancelled) return;
         const companies = me.companies.map(toCompany);
         setCurrentUser(toMockUser(me.user, companies, requires2FA));

@@ -67,7 +67,8 @@ export function PortalShellLayout({
     .slice(2)
     .map((s) => (/^c[a-z0-9]{20,}$/.test(s) || /^[A-Z]+-\d+$/.test(s) ? "Detalle" : s.charAt(0).toUpperCase() + s.slice(1)));
   const visibleItems = navItems.filter((item) => !item.roles || (currentUser && item.roles.includes(currentUser.role)));
-  usePageMeta({ title: crumbs.at(-1) ?? portal.charAt(0).toUpperCase() + portal.slice(1), noindex: true });
+  const section = navItems.find((item) => segments[1] === item.to.split("/")[0])?.label;
+  usePageMeta({ title: section ?? crumbs.at(-1) ?? portal.charAt(0).toUpperCase() + portal.slice(1), noindex: true });
 
   function handleLogout() {
     logout();

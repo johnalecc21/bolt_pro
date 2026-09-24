@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { apiErrorMessage } from "@/lib/api/http";
+import { invalidateApiCache } from "@/lib/api/responseCache";
 
 export function useApiData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const reload = useCallback(() => {
+  const load = useCallback(() => {
     setLoading(true);
     fetcher()
       .then((d) => {
@@ -19,8 +20,14 @@ export function useApiData<T>(fetcher: () => Promise<T>, deps: unknown[] = []) {
   }, deps);
 
   useEffect(() => {
-    reload();
-  }, [reload]);
+    load();
+  }, [load]);
+
+  // An explicit reload means "I know it changed" — skip the short GET cache.
+  const reload = useCallback(() => {
+    invalidateApiCache();
+    load();
+  }, [load]);
 
   return { data, loading, error, reload };
 }
