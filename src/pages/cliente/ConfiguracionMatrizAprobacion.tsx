@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
-import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator, FileText } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Plus, Trash2, Calculator, FileText, MessageSquareText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
 import {
@@ -22,6 +22,7 @@ import {
 import { apiErrorMessage } from "@/lib/api/http";
 import { formatMoney, MONEDAS, PAISES, type Moneda } from "@/lib/moneda";
 import { RequisitosHomologacionCard } from "@/components/cliente/RequisitosHomologacionCard";
+import { Switch } from "@/components/ui/switch";
 
 let tempId = 0;
 function nextTempId() {
@@ -51,7 +52,7 @@ export function ConfiguracionMatrizAprobacion() {
   const [reglas, setReglas] = useState<Regla[]>([]);
   const [ejemplo, setEjemplo] = useState(75000);
   const [saving, setSaving] = useState(false);
-  const [config, setConfig] = useState<ConfigEmpresa>({ umbralContratoMarco: 50000, monedaBase: "USD", pais: "CO" });
+  const [config, setConfig] = useState<ConfigEmpresa>({ umbralContratoMarco: 50000, monedaBase: "USD", pais: "CO", feedbackCompetitivo: false });
   const [savingUmbral, setSavingUmbral] = useState(false);
   const moneda = configFetched?.monedaBase ?? "USD";
   const error = validar(reglas, moneda);
@@ -63,6 +64,20 @@ export function ConfiguracionMatrizAprobacion() {
   useEffect(() => {
     if (configFetched) setConfig(configFetched);
   }, [configFetched]);
+
+  const [savingFeedback, setSavingFeedback] = useState(false);
+  async function cambiarFeedback(activo: boolean) {
+    setSavingFeedback(true);
+    try {
+      const guardado = await guardarConfigEmpresa({ ...config, feedbackCompetitivo: activo });
+      setConfig(guardado);
+      toast.success(activo ? "Los proveedores verán su posición y brecha" : "Retroalimentación competitiva desactivada");
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo guardar."));
+    } finally {
+      setSavingFeedback(false);
+    }
+  }
 
   async function guardarUmbral() {
     setSavingUmbral(true);
@@ -149,6 +164,23 @@ export function ConfiguracionMatrizAprobacion() {
           </label>
           <Button size="sm" onClick={guardarUmbral} disabled={savingUmbral}>{savingUmbral ? "Guardando..." : "Guardar configuración"}</Button>
         </div>
+      </Card>
+
+      <Card className="flex flex-row items-start justify-between gap-4 p-5">
+        <div className="space-y-1">
+          <h2 className="flex items-center gap-2 font-semibold"><MessageSquareText className="h-4 w-4" /> Retroalimentación a proveedores</h2>
+          <p className="text-sm text-muted-foreground">
+            Cuando un proveedor pierde un proceso, mostrarle su posición por precio (por ejemplo, 2° de 4) y qué tan lejos quedó del precio adjudicado. Nunca
+            ve el nombre del ganador ni los precios de otros proveedores. Suele mejorar las ofertas de las siguientes rondas.
+          </p>
+          <p className="text-xs text-muted-foreground">{config.feedbackCompetitivo ? "Activado: aplica a todos los procesos ya decididos y a los nuevos." : "Desactivado: los proveedores solo ven si ganaron o perdieron."}</p>
+        </div>
+        <Switch
+          checked={config.feedbackCompetitivo}
+          disabled={savingFeedback}
+          onCheckedChange={cambiarFeedback}
+          aria-label="Mostrar a los proveedores su posición y brecha con el adjudicado"
+        />
       </Card>
 
       <RequisitosHomologacionCard />

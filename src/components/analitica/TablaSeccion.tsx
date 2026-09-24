@@ -4,19 +4,20 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { textoCelda } from "@/lib/analitica/exportar";
-import type { Informe, Seccion } from "@/lib/analitica/informe";
+import type { Seccion } from "@/lib/analitica/informe";
+import type { Moneda } from "@/lib/moneda";
 import { cn } from "@/lib/utils";
 
 interface Props {
   seccion: Seccion;
-  informe: Informe;
+  moneda: Moneda;
   onExportarCsv: (id: string) => void;
   buscable?: boolean;
   maxFilas?: number;
 }
 
 /** A report section rendered as a sortable table — the same rows the Excel/CSV/PDF exports contain. */
-export function TablaSeccion({ seccion, informe, onExportarCsv, buscable = false, maxFilas = 200 }: Props) {
+export function TablaSeccion({ seccion, moneda, onExportarCsv, buscable = false, maxFilas = 200 }: Props) {
   const [orden, setOrden] = useState<{ col: number; asc: boolean } | null>(null);
   const [q, setQ] = useState("");
 
@@ -82,7 +83,7 @@ export function TablaSeccion({ seccion, informe, onExportarCsv, buscable = false
                 <tr key={i} className="border-t border-border hover:bg-muted/30">
                   {fila.map((v, j) => (
                     <td key={j} className={cn("whitespace-nowrap px-3 py-1.5", seccion.columnas[j].tipo === "texto" || seccion.columnas[j].tipo === "fecha" ? "" : "text-right tabular-nums")}>
-                      {textoCelda(v, tipo(i, j), informe.moneda)}
+                      {textoCelda(v, tipo(i, j), moneda)}
                     </td>
                   ))}
                 </tr>

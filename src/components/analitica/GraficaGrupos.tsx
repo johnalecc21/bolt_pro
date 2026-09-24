@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChartContainer } from "@/components/ui/chart";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { METRICAS, plegar, type Grupo, type Metrica } from "@/lib/analitica/agregador";
+import { METRICAS, plegarGrupos, type Grupo, type Metrica } from "@/lib/analitica/agregador";
 import { formatoValor } from "@/lib/analitica/formato";
 import type { TipoGrafica } from "@/lib/api/analitica";
 import type { Moneda } from "@/lib/moneda";
@@ -14,7 +14,10 @@ interface Props {
   titulo: string;
   descripcion?: string;
   grupos: Grupo[];
-  metrica: Metrica;
+  /** CFO metric (label and format come from it)… */
+  metrica?: Metrica;
+  /** …or an explicit value definition, for other dashboards. */
+  valor?: { etiqueta: string; formatear: (v: number, compacto: boolean) => string; sumable: boolean };
   moneda: Moneda;
   tipo?: TipoGrafica;
   /** Label for the grouping column in the table view. */
@@ -27,7 +30,7 @@ const SERIE = "var(--viz-1)";
 const GRID = "var(--viz-grid)";
 const EJE = { tickLine: false, axisLine: false, fontSize: 11 } as const;
 
-function Tip({ active, payload, metrica, moneda }: { active?: boolean; payload?: { payload: Grupo }[]; metrica: Metrica; moneda: Moneda }) {
+function Tip({ active, payload, etiqueta, fmt }: { active?: boolean; payload?: { payload: Grupo }[]; etiqueta: string; fmt: (v: number) => string }) {
   if (!active || !payload?.length) return null;
   const g = payload[0].payload;
   return (
@@ -35,7 +38,7 @@ function Tip({ active, payload, metrica, moneda }: { active?: boolean; payload?:
       <p className="font-medium text-foreground">{g.etiqueta}</p>
       <p className="mt-0.5 flex items-center gap-2 text-muted-foreground">
         <span className="h-2 w-2 rounded-sm" style={{ background: SERIE }} />
-        {METRICAS[metrica].etiqueta}: <span className="font-medium text-foreground tabular-nums">{formatoValor(metrica, g.valor, moneda)}</span>
+        {etiqueta}: <span className="font-medium text-foreground tabular-nums">{fmt(g.valor)}</span>
       </p>
       <p className="mt-0.5 text-muted-foreground">{g.n} registro(s)</p>
     </div>
@@ -47,14 +50,19 @@ function Tip({ active, payload, metrica, moneda }: { active?: boolean; payload?:
  * (slot 1). Every chart has a table twin (the accessible, exact view) and
  * folds anything past 8 bars into "Otros".
  */
-export function GraficaGrupos({ titulo, descripcion, grupos, metrica, moneda, tipo = "barras", dimension, acciones, alto = 260 }: Props) {
+export function GraficaGrupos({ titulo, descripcion, grupos, metrica, valor, moneda, tipo = "barras", dimension, acciones, alto = 260 }: Props) {
+  const def = valor ?? {
+    etiqueta: METRICAS[metrica!].etiqueta,
+    formatear: (v: number, compacto: boolean) => formatoValor(metrica!, v, moneda, compacto),
+    sumable: !(metrica === "ahorroPct" || metrica === "cicloDias" || metrica === "ofertasPromedio"),
+  };
   const [verTabla, setVerTabla] = useState(false);
   // Months/quarters are a continuous axis: never fold them into "Otros".
   const ejeTemporal = grupos.length > 0 && grupos.every((g) => /^\d{4}-(\d{2}|Q\d)$/.test(g.clave));
-  const datos = ejeTemporal || tipo === "lineas" || tipo === "area" ? grupos : plegar(grupos, metrica);
+  const datos = ejeTemporal || tipo === "lineas" || tipo === "area" ? grupos : plegarGrupos(grupos, def.sumable);
   const vacio = grupos.every((g) => g.n === 0);
-  const fmtEje = (v: number) => formatoValor(metrica, v, moneda, true);
-  const tooltip = <Tooltip cursor={{ fill: "var(--muted)", opacity: 0.5 }} content={<Tip metrica={metrica} moneda={moneda} />} />;
+  const fmtEje = (v: number) => def.formatear(v, true);
+  const tooltip = <Tooltip cursor={{ fill: "var(--muted)", opacity: 0.5 }} content={<Tip etiqueta={def.etiqueta} fmt={(v) => def.formatear(v, false)} />} />;
 
   let grafica: ReactNode;
   if (tipo === "barrasHorizontales") {
@@ -133,7 +141,7 @@ export function GraficaGrupos({ titulo, descripcion, grupos, metrica, moneda, ti
             <thead className="sticky top-0 bg-muted/60 text-xs text-muted-foreground">
               <tr>
                 <th className="px-3 py-2 text-left font-medium">{dimension}</th>
-                <th className="px-3 py-2 text-right font-medium">{METRICAS[metrica].etiqueta}</th>
+                <th className="px-3 py-2 text-right font-medium">{def.etiqueta}</th>
                 <th className="px-3 py-2 text-right font-medium">Registros</th>
               </tr>
             </thead>
@@ -141,7 +149,7 @@ export function GraficaGrupos({ titulo, descripcion, grupos, metrica, moneda, ti
               {grupos.map((g) => (
                 <tr key={g.clave} className="border-t border-border">
                   <td className="px-3 py-1.5">{g.etiqueta}</td>
-                  <td className="px-3 py-1.5 text-right tabular-nums">{formatoValor(metrica, g.valor, moneda)}</td>
+                  <td className="px-3 py-1.5 text-right tabular-nums">{def.formatear(g.valor, false)}</td>
                   <td className="px-3 py-1.5 text-right tabular-nums text-muted-foreground">{g.n}</td>
                 </tr>
               ))}
@@ -149,7 +157,7 @@ export function GraficaGrupos({ titulo, descripcion, grupos, metrica, moneda, ti
           </table>
         </div>
       ) : (
-        <ChartContainer config={{ valor: { label: METRICAS[metrica].etiqueta, color: SERIE } }} className="aspect-auto w-full" style={{ height: altoGrafica }}>
+        <ChartContainer config={{ valor: { label: def.etiqueta, color: SERIE } }} className="aspect-auto w-full" style={{ height: altoGrafica }}>
           {grafica as never}
         </ChartContainer>
       )}

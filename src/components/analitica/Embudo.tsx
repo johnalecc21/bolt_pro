@@ -2,16 +2,26 @@ import { Card } from "@/components/ui/card";
 import type { EtapaEmbudo } from "@/lib/analitica/agregador";
 
 /** Ordered stages → the validated ordinal ramp; each bar is labeled with its count and share (no hover needed). */
-export function Embudo({ etapas }: { etapas: EtapaEmbudo[] }) {
+export function Embudo({
+  etapas,
+  titulo = "Embudo de procesos",
+  descripcion = "Procesos creados en el período y hasta dónde llegaron.",
+  vacio = "No se crearon procesos en este período.",
+}: {
+  etapas: EtapaEmbudo[];
+  titulo?: string;
+  descripcion?: string;
+  vacio?: string;
+}) {
   const base = etapas[0]?.procesos ?? 0;
   return (
     <Card className="gap-3 p-5">
       <div>
-        <h3 className="font-semibold">Embudo de procesos</h3>
-        <p className="text-sm text-muted-foreground">Procesos creados en el período y hasta dónde llegaron.</p>
+        <h3 className="font-semibold">{titulo}</h3>
+        <p className="text-sm text-muted-foreground">{descripcion}</p>
       </div>
       {base === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">No se crearon procesos en este período.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">{vacio}</p>
       ) : (
         <ol className="space-y-2">
           {etapas.map((e, i) => (

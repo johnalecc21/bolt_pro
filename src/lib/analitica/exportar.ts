@@ -68,10 +68,14 @@ export function seccionACsv(s: Seccion): string {
   return [header, ...filas].join("\n");
 }
 
+/** Downloads one table as CSV; `sufijo` usually carries the period. */
+export function descargarSeccionCsv(s: Seccion, sufijo: string) {
+  descargar(new Blob(["\ufeff" + seccionACsv(s)], { type: "text/csv;charset=utf-8" }), `${s.id}_${sufijo}.csv`);
+}
+
 export function exportarCsv(informe: Informe, seccionId: string) {
   const s = informe.secciones.find((x) => x.id === seccionId);
-  if (!s) return;
-  descargar(new Blob(["﻿" + seccionACsv(s)], { type: "text/csv;charset=utf-8" }), `${s.id}_${informe.periodo.desde}_${informe.periodo.hasta}.csv`);
+  if (s) descargarSeccionCsv(s, `${informe.periodo.desde}_${informe.periodo.hasta}`);
 }
 
 // --- Excel ------------------------------------------------------------------------
@@ -88,24 +92,37 @@ function nombreHoja(t: string) {
 }
 
 /** One sheet per section plus a cover sheet with period, filters and notes. */
-export async function exportarExcel(informe: Informe) {
+export function exportarExcel(informe: Informe) {
+  return generarExcel({
+    titulo: "Informe de gestión de compras",
+    portada: [
+      informe.empresa,
+      `Período: ${informe.periodo.desde} a ${informe.periodo.hasta}`,
+      `Comparado con: ${informe.periodo.desdeAnterior} a ${informe.periodo.desde}`,
+      `Filtros: ${informe.filtros.length ? informe.filtros.join(" · ") : "ninguno"}`,
+      `Generado: ${new Date(informe.generadoEn).toLocaleString("es-CO")}`,
+    ],
+    notas: informe.notas,
+    secciones: informe.secciones,
+    archivo: nombreArchivo(informe, "xlsx"),
+  });
+}
+
+/** Cover sheet (title, context lines, notes) plus one sheet per section. */
+export async function generarExcel(libro: { titulo: string; portada: string[]; notas: string[]; secciones: Seccion[]; archivo: string }) {
   const { default: writeXlsxFile } = await import("write-excel-file/browser");
   type Hoja = Parameters<typeof writeXlsxFile>[0];
   const negrita = (value: string) => ({ value, fontWeight: "bold" as const });
 
   const portada = [
-    [negrita("Informe de gestión de compras")],
-    [informe.empresa],
-    [`Período: ${informe.periodo.desde} a ${informe.periodo.hasta}`],
-    [`Comparado con: ${informe.periodo.desdeAnterior} a ${informe.periodo.desde}`],
-    [`Filtros: ${informe.filtros.length ? informe.filtros.join(" · ") : "ninguno"}`],
-    [`Generado: ${new Date(informe.generadoEn).toLocaleString("es-CO")}`],
+    [negrita(libro.titulo)],
+    ...libro.portada.map((l) => [l]),
     [null],
     [negrita("Notas")],
-    ...informe.notas.map((n) => [n]),
+    ...libro.notas.map((n) => [n]),
   ];
 
-  const hojas = informe.secciones.map((s) => {
+  const hojas = libro.secciones.map((s) => {
     const data = [
       s.columnas.map((c) => ({ value: c.titulo, fontWeight: "bold" as const, backgroundColor: "#E6EFFB" })),
       ...s.filas.map((f, i) =>
@@ -124,7 +141,7 @@ export async function exportarExcel(informe: Informe) {
 
   const sheets = [{ data: portada, sheet: "Portada", columns: [{ width: 110 }] }, ...hojas] as unknown as Hoja;
   const blob = await writeXlsxFile(sheets).toBlob();
-  descargar(blob, nombreArchivo(informe, "xlsx"));
+  descargar(blob, libro.archivo);
 }
 
 // --- PDF ------------------------------------------------------------------------
@@ -142,14 +159,92 @@ const NIVEL_COLOR: Record<string, [number, number, number]> = {
 };
 
 /** Executive report: KPIs vs. previous period, findings, charts and the key tables. */
-export async function exportarPdf(informe: Informe) {
+export interface TarjetaPdf {
+  t: string;
+  v: string;
+  /** Current and previous value for the delta line; null = not comparable. */
+  a: number | null;
+  b: number | null;
+  subirEsBueno: boolean;
+  /** Replaces the delta line (e.g. "A hoy"). */
+  nota?: string;
+}
+
+export interface GraficaPdf {
+  titulo: string;
+  tipo: "vertical" | "horizontal";
+  datos: [string, number][];
+  formato: TipoColumna;
+}
+
+/** Everything a PDF report needs; each dashboard builds one from its own report data. */
+export interface DocumentoPdf {
+  titulo: string;
+  linea1: string;
+  linea2: string;
+  pie: string;
+  archivo: string;
+  moneda: Moneda;
+  tarjetas: TarjetaPdf[];
+  hallazgos: { nivel: "critico" | "atencion" | "positivo" | "info"; titulo: string; detalle: string }[];
+  graficas: GraficaPdf[];
+  tablas: { seccion: Seccion; limite: number }[];
+  notas: string[];
+}
+
+/** CFO executive report: KPIs vs. previous period, findings, charts and the key tables. */
+export function exportarPdf(informe: Informe) {
+  const m = informe.moneda;
+  const k = informe.kpis;
+  const kp = informe.kpisAnterior;
+  const sec = (id: string) => informe.secciones.find((s) => s.id === id)!;
+  const mensual = sec("mensual");
+  return generarPdf({
+    titulo: "Informe de gestión de compras",
+    linea1: `${informe.empresa} · ${informe.periodo.desde} a ${informe.periodo.hasta} · montos en ${m}`,
+    linea2: `Filtros: ${informe.filtros.length ? informe.filtros.join(" · ") : "ninguno"} · generado ${new Date(informe.generadoEn).toLocaleString("es-CO")}`,
+    pie: `${informe.empresa} · Analítica de compras`,
+    archivo: nombreArchivo(informe, "pdf"),
+    moneda: m,
+    tarjetas: [
+      { t: "Gasto comprometido", v: formatMoneyCompact(k.gasto, m), a: k.gasto, b: kp.gasto, subirEsBueno: false },
+      { t: "Ahorro vs. presupuesto", v: `${formatMoneyCompact(k.ahorro, m)} (${textoCelda(k.ahorroPct, "pct", m)})`, a: k.ahorro, b: kp.ahorro, subirEsBueno: true },
+      { t: "Ahorro por negociación", v: formatMoneyCompact(k.ahorroNegociacion, m), a: k.ahorroNegociacion, b: kp.ahorroNegociacion, subirEsBueno: true },
+      { t: "Procesos adjudicados", v: String(k.procesosAdjudicados), a: k.procesosAdjudicados, b: kp.procesosAdjudicados, subirEsBueno: true },
+      { t: "Ciclo promedio", v: k.cicloDias != null ? `${textoCelda(k.cicloDias, "decimal", m)} días` : "—", a: k.cicloDias, b: kp.cicloDias, subirEsBueno: false },
+      { t: "Ofertas por proceso", v: textoCelda(k.ofertasPromedio, "decimal", m), a: k.ofertasPromedio, b: kp.ofertasPromedio, subirEsBueno: true },
+      { t: "Entrega a tiempo", v: textoCelda(k.entregaATiempo, "pct", m), a: k.entregaATiempo, b: kp.entregaATiempo, subirEsBueno: true },
+      { t: "Proveedores con contrato", v: String(k.proveedoresActivos), a: k.proveedoresActivos, b: kp.proveedoresActivos, subirEsBueno: true },
+    ],
+    hallazgos: informe.insights,
+    graficas: [
+      { titulo: "Gasto comprometido por mes", tipo: "vertical", datos: mensual.filas.map((f) => [String(f[0]), Number(f[1] ?? 0)]), formato: "moneda" },
+      { titulo: "Ahorro por mes", tipo: "vertical", datos: mensual.filas.map((f) => [String(f[0]), Number(f[3] ?? 0)]), formato: "moneda" },
+      { titulo: "Gasto por categoría", tipo: "horizontal", datos: sec("categorias").filas.slice(0, 8).map((f) => [String(f[0]), Number(f[1] ?? 0)]), formato: "moneda" },
+      { titulo: "Top proveedores por gasto", tipo: "horizontal", datos: sec("proveedores").filas.slice(0, 8).map((f) => [String(f[0]), Number(f[1] ?? 0)]), formato: "moneda" },
+    ],
+    tablas: (
+      [
+        ["categorias", 30],
+        ["proveedores", 20],
+        ["centros", 30],
+        ["embudo", 10],
+        ["vencimientos", 20],
+        ["pagos", 25],
+      ] as [string, number][]
+    ).map(([id, limite]) => ({ seccion: sec(id), limite })),
+    notas: informe.notas,
+  });
+}
+
+export async function generarPdf(dp: DocumentoPdf) {
   const { jsPDF } = await import("jspdf");
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   const W = doc.internal.pageSize.getWidth();
   const H = doc.internal.pageSize.getHeight();
   const M = 14;
   let y = M;
-  const m = informe.moneda;
+  const m = dp.moneda;
   const t = pdfSeguro;
   /** Cuts a cell to its column width (no wrapping inside table rows). */
   const ajustar = (texto: string, ancho: number) => {
@@ -187,25 +282,14 @@ export async function exportarPdf(informe: Informe) {
 
   // Header band
   doc.setFillColor(0, 22, 53).rect(0, 0, W, 30, "F");
-  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(16).text("Informe de gestión de compras", M, 13);
-  doc.setFont("helvetica", "normal").setFontSize(9).text(t(`${informe.empresa} · ${informe.periodo.desde} a ${informe.periodo.hasta} · montos en ${m}`), M, 20);
-  doc.setFontSize(8).text(t(`Filtros: ${informe.filtros.length ? informe.filtros.join(" · ") : "ninguno"} · generado ${new Date(informe.generadoEn).toLocaleString("es-CO")}`), M, 25);
+  doc.setTextColor(255, 255, 255).setFont("helvetica", "bold").setFontSize(16).text(t(dp.titulo), M, 13);
+  doc.setFont("helvetica", "normal").setFontSize(9).text(t(dp.linea1), M, 20);
+  doc.setFontSize(8).text(t(dp.linea2), M, 25);
   doc.setFont("helvetica", "bold").setFontSize(10).text("Procurex", W - M, 13, { align: "right" });
   y = 38;
 
-  // KPI grid (4 × 2)
-  const k = informe.kpis;
-  const kp = informe.kpisAnterior;
-  const tarjetas: { t: string; v: string; a: number | null; b: number | null; subirEsBueno: boolean }[] = [
-    { t: "Gasto comprometido", v: formatMoneyCompact(k.gasto, m), a: k.gasto, b: kp.gasto, subirEsBueno: false },
-    { t: "Ahorro vs. presupuesto", v: `${formatMoneyCompact(k.ahorro, m)} (${textoCelda(k.ahorroPct, "pct", m)})`, a: k.ahorro, b: kp.ahorro, subirEsBueno: true },
-    { t: "Ahorro por negociación", v: formatMoneyCompact(k.ahorroNegociacion, m), a: k.ahorroNegociacion, b: kp.ahorroNegociacion, subirEsBueno: true },
-    { t: "Procesos adjudicados", v: String(k.procesosAdjudicados), a: k.procesosAdjudicados, b: kp.procesosAdjudicados, subirEsBueno: true },
-    { t: "Ciclo promedio", v: k.cicloDias != null ? `${textoCelda(k.cicloDias, "decimal", m)} días` : "—", a: k.cicloDias, b: kp.cicloDias, subirEsBueno: false },
-    { t: "Ofertas por proceso", v: textoCelda(k.ofertasPromedio, "decimal", m), a: k.ofertasPromedio, b: kp.ofertasPromedio, subirEsBueno: true },
-    { t: "Entrega a tiempo", v: textoCelda(k.entregaATiempo, "pct", m), a: k.entregaATiempo, b: kp.entregaATiempo, subirEsBueno: true },
-    { t: "Proveedores con contrato", v: String(k.proveedoresActivos), a: k.proveedoresActivos, b: kp.proveedoresActivos, subirEsBueno: true },
-  ];
+  // KPI grid (4 per row)
+  const tarjetas = dp.tarjetas;
   const cw = (W - 2 * M - 3 * 4) / 4;
   tarjetas.forEach((c, i) => {
     const x = M + (i % 4) * (cw + 4);
@@ -213,7 +297,9 @@ export async function exportarPdf(informe: Informe) {
     doc.setDrawColor(...HAIRLINE).setLineWidth(0.2).roundedRect(x, yy, cw, 20, 2, 2, "S");
     doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(...TINTA_2).text(t(c.t), x + 3, yy + 5);
     doc.setFont("helvetica", "bold").setFontSize(11).setTextColor(...TINTA).text(t(c.v), x + 3, yy + 11.5, { maxWidth: cw - 6 });
-    if (c.a != null && c.b != null && c.b !== 0) {
+    if (c.nota) {
+      doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(...GRIS).text(t(c.nota), x + 3, yy + 17);
+    } else if (c.a != null && c.b != null && c.b !== 0) {
       const delta = (c.a - c.b) / Math.abs(c.b);
       const bueno = delta === 0 ? null : (delta > 0) === c.subirEsBueno;
       doc.setFont("helvetica", "normal").setFontSize(7);
@@ -225,13 +311,13 @@ export async function exportarPdf(informe: Informe) {
       doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(...GRIS).text("sin base de comparación", x + 3, yy + 17);
     }
   });
-  y += 2 * 24 + 4;
+  y += Math.ceil(tarjetas.length / 4) * 24 + 4;
 
   // Findings
-  if (informe.insights.length) {
+  if (dp.hallazgos.length) {
     titulo("Hallazgos", "Derivados de los datos del período; cada uno se puede verificar en las tablas de este informe.");
     const niveles: Record<string, string> = { critico: "Crítico", atencion: "Atención", positivo: "Positivo", info: "Información" };
-    for (const ins of informe.insights) {
+    for (const ins of dp.hallazgos) {
       const lineas = doc.splitTextToSize(t(ins.detalle), W - 2 * M - 30);
       espacio(6 + lineas.length * 3.6);
       const nivel = niveles[ins.nivel];
@@ -245,15 +331,12 @@ export async function exportarPdf(informe: Informe) {
   }
 
   // Charts drawn with the same numbers as the tables
-  const mensual = informe.secciones.find((s) => s.id === "mensual")!;
-  barrasVerticales(doc, "Gasto comprometido por mes", mensual.filas.map((f) => [String(f[0]), Number(f[1] ?? 0)]), m);
-  barrasVerticales(doc, "Ahorro por mes", mensual.filas.map((f) => [String(f[0]), Number(f[3] ?? 0)]), m);
-  const cats = informe.secciones.find((s) => s.id === "categorias")!;
-  barrasHorizontales(doc, "Gasto por categoría", cats.filas.slice(0, 8).map((f) => [String(f[0]), Number(f[1] ?? 0)]), m);
-  const provs = informe.secciones.find((s) => s.id === "proveedores")!;
-  barrasHorizontales(doc, "Top proveedores por gasto", provs.filas.slice(0, 8).map((f) => [String(f[0]), Number(f[1] ?? 0)]), m);
+  for (const g of dp.graficas) {
+    if (g.tipo === "vertical") barrasVerticales(doc, g.titulo, g.datos, g.formato);
+    else barrasHorizontales(doc, g.titulo, g.datos, g.formato);
+  }
 
-  function barrasVerticales(d: typeof doc, tituloGrafica: string, datos: [string, number][], moneda: Moneda) {
+  function barrasVerticales(d: typeof doc, tituloGrafica: string, datos: [string, number][], formato: TipoColumna) {
     const alto = 48;
     espacio(alto + 22); // keep the title with its chart
     titulo(tituloGrafica);
@@ -268,7 +351,7 @@ export async function exportarPdf(informe: Informe) {
       const gy = y + (alto * i) / 4;
       d.line(x0, gy, W - M, gy);
       const valor = max - (rango * i) / 4;
-      d.setFont("helvetica", "normal").setFontSize(6).setTextColor(...GRIS).text(t(formatMoneyCompact(valor, moneda)), x0 - 2, gy + 1, { align: "right" });
+      d.setFont("helvetica", "normal").setFontSize(6).setTextColor(...GRIS).text(t(textoCelda(valor, formato, m, true)), x0 - 2, gy + 1, { align: "right" });
     }
     const paso = ancho / Math.max(1, datos.length);
     const bw = Math.min(14, paso * 0.6);
@@ -281,7 +364,7 @@ export async function exportarPdf(informe: Informe) {
     y += alto + 9;
   }
 
-  function barrasHorizontales(d: typeof doc, tituloGrafica: string, datos: [string, number][], moneda: Moneda) {
+  function barrasHorizontales(d: typeof doc, tituloGrafica: string, datos: [string, number][], formato: TipoColumna) {
     if (!datos.length) return;
     const fila = 6;
     espacio(datos.length * fila + 18);
@@ -294,24 +377,14 @@ export async function exportarPdf(informe: Informe) {
       d.setFont("helvetica", "normal").setFontSize(7).setTextColor(...TINTA_2).text(ajustar(t(etq), 44), x0 - 2, yy + 3.2, { align: "right" });
       const w = (Math.max(0, v) / max) * ancho;
       d.setFillColor(...AZUL).rect(x0, yy, Math.max(w, 0.01), 4, "F");
-      d.setTextColor(...TINTA).text(t(formatMoneyCompact(v, moneda)), x0 + w + 2, yy + 3.2);
+      d.setTextColor(...TINTA).text(t(textoCelda(v, formato, m, true)), x0 + w + 2, yy + 3.2);
     });
     y += datos.length * fila + 4;
   }
 
   // Tables
-  const tablas: [string, number][] = [
-    ["categorias", 30],
-    ["proveedores", 20],
-    ["centros", 30],
-    ["embudo", 10],
-    ["vencimientos", 20],
-    ["pagos", 25],
-  ];
-  for (const [id, limite] of tablas) {
-    const s = informe.secciones.find((x) => x.id === id);
-    if (!s || !s.filas.length) continue;
-    tabla(s, limite);
+  for (const { seccion, limite } of dp.tablas) {
+    if (seccion && seccion.filas.length) tabla(seccion, limite);
   }
 
   function tabla(s: Seccion, limite: number) {
@@ -380,7 +453,7 @@ export async function exportarPdf(informe: Informe) {
   // Notes
   titulo("Notas metodológicas");
   doc.setFont("helvetica", "normal").setFontSize(7.5).setTextColor(...TINTA_2);
-  for (const n of informe.notas) {
+  for (const n of dp.notas) {
     const lineas = doc.splitTextToSize(`• ${t(n)}`, W - 2 * M);
     espacio(lineas.length * 3.6 + 1);
     doc.text(lineas, M, y);
@@ -392,9 +465,9 @@ export async function exportarPdf(informe: Informe) {
   for (let i = 1; i <= total; i++) {
     doc.setPage(i);
     doc.setFont("helvetica", "normal").setFontSize(7).setTextColor(...GRIS);
-    doc.text(t(`${informe.empresa} · Analítica de compras`), M, H - 8);
+    doc.text(t(dp.pie), M, H - 8);
     doc.text(`Página ${i} de ${total}`, W - M, H - 8, { align: "right" });
   }
 
-  doc.save(nombreArchivo(informe, "pdf"));
+  doc.save(dp.archivo);
 }

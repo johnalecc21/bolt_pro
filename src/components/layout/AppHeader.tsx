@@ -43,6 +43,7 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
     { label: "Mis ofertas", to: "ofertas" },
     { label: "Subasta en vivo", to: "subasta" },
     { label: "Historial", to: "historial" },
+    { label: "Mi desempeño", to: "desempeno" },
     { label: "Mis Contratos", to: "contratos" },
     { label: "Pagos", to: "pagos" },
     { label: "Perfil empresa", to: "perfil" },

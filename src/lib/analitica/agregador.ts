@@ -425,11 +425,17 @@ export function agrupar(d: DatosFiltrados, metrica: Metrica, dim: Dimension, r: 
  * tail is simply left to the table view there.
  */
 export function plegar(grupos: Grupo[], metrica: Metrica, max = 8): Grupo[] {
+  return plegarGrupos(grupos, !(metrica === "ahorroPct" || metrica === "cicloDias" || metrica === "ofertasPromedio"), max);
+}
+
+export function plegarGrupos(grupos: Grupo[], sumable: boolean, max = 8): Grupo[] {
   if (grupos.length <= max) return grupos;
-  const cabeza = grupos.slice(0, max - 1);
+  if (!sumable) return grupos.slice(0, max);
   const cola = grupos.slice(max - 1);
-  if (metrica === "ahorroPct" || metrica === "cicloDias" || metrica === "ofertasPromedio") return grupos.slice(0, max);
-  return [...cabeza, { clave: "__otros", etiqueta: `Otros (${cola.length})`, valor: suma(cola.map((g) => g.valor)), n: suma(cola.map((g) => g.n)) }];
+  return [
+    ...grupos.slice(0, max - 1),
+    { clave: "__otros", etiqueta: `Otros (${cola.length})`, valor: suma(cola.map((g) => g.valor)), n: suma(cola.map((g) => g.n)) },
+  ];
 }
 
 // --- Concentration, funnel, budget -------------------------------------------

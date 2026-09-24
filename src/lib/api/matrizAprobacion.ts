@@ -65,6 +65,8 @@ export interface ConfigEmpresa {
   umbralContratoMarco: number;
   monedaBase: Moneda;
   pais: string;
+  /** Losing suppliers see their price rank and gap to the awarded price. */
+  feedbackCompetitivo: boolean;
 }
 
 export async function fetchConfigEmpresa(): Promise<ConfigEmpresa> {

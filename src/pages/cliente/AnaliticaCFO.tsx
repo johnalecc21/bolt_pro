@@ -249,8 +249,8 @@ export function AnaliticaCFO() {
                 <GraficaGrupos titulo="Por unidad de negocio" grupos={g("gasto", "unidad")} metrica="gasto" moneda={moneda} tipo="barrasHorizontales" dimension="Unidad" />
                 <GraficaGrupos titulo="Por trimestre" grupos={g("gasto", "trimestre")} metrica="gasto" moneda={moneda} dimension="Trimestre" />
               </div>
-              <TablaSeccion seccion={seccion(vista.informe, "categorias")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
-              <TablaSeccion seccion={seccion(vista.informe, "vencimientos")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
+              <TablaSeccion seccion={seccion(vista.informe, "categorias")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
+              <TablaSeccion seccion={seccion(vista.informe, "vencimientos")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
             </TabsContent>
 
             <TabsContent value="ahorro" className="space-y-4">
@@ -266,7 +266,7 @@ export function AnaliticaCFO() {
                 <GraficaGrupos titulo="Ahorro por negociación, por categoría" grupos={g("ahorroNegociacion", "categoria")} metrica="ahorroNegociacion" moneda={moneda} tipo="barrasHorizontales" dimension="Categoría" />
                 <GraficaGrupos titulo="Ahorro % por centro de costo" grupos={g("ahorroPct", "centroCosto")} metrica="ahorroPct" moneda={moneda} tipo="barrasHorizontales" dimension="Centro de costo" />
               </div>
-              <TablaSeccion seccion={seccion(vista.informe, "mensual")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
+              <TablaSeccion seccion={seccion(vista.informe, "mensual")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
             </TabsContent>
 
             <TabsContent value="eficiencia" className="space-y-4">
@@ -293,12 +293,12 @@ export function AnaliticaCFO() {
                 <KpiTile titulo="Proveedores con contrato" valor={String(vista.k.proveedoresActivos)} actual={vista.k.proveedoresActivos} anterior={vista.kPrev.proveedoresActivos} />
               </div>
               <GraficaGrupos titulo="Gasto por proveedor" grupos={g("gasto", "proveedor")} metrica="gasto" moneda={moneda} tipo="barrasHorizontales" dimension="Proveedor" />
-              <TablaSeccion seccion={seccion(vista.informe, "proveedores")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable />
+              <TablaSeccion seccion={seccion(vista.informe, "proveedores")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable />
             </TabsContent>
 
             <TabsContent value="presupuesto" className="space-y-4">
               <PresupuestoCentros centros={vista.centros} anio={vista.anio} />
-              <TablaSeccion seccion={seccion(vista.informe, "centros")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
+              <TablaSeccion seccion={seccion(vista.informe, "centros")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} />
             </TabsContent>
 
             <TabsContent value="pagos" className="space-y-4">
@@ -311,7 +311,7 @@ export function AnaliticaCFO() {
                 <GraficaGrupos titulo="Pagos pendientes por mes de vencimiento" grupos={g("pagosPendientes", "mes")} metrica="pagosPendientes" moneda={moneda} dimension="Mes" />
                 <GraficaGrupos titulo="Pagos pendientes por proveedor" grupos={g("pagosPendientes", "proveedor")} metrica="pagosPendientes" moneda={moneda} tipo="barrasHorizontales" dimension="Proveedor" />
               </div>
-              <TablaSeccion seccion={seccion(vista.informe, "pagos")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable />
+              <TablaSeccion seccion={seccion(vista.informe, "pagos")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable />
             </TabsContent>
 
             <TabsContent value="graficas">
@@ -319,7 +319,7 @@ export function AnaliticaCFO() {
             </TabsContent>
 
             <TabsContent value="detalle" className="space-y-4">
-              <TablaSeccion seccion={seccion(vista.informe, "procesos")} informe={vista.informe} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable maxFilas={500} />
+              <TablaSeccion seccion={seccion(vista.informe, "procesos")} moneda={moneda} onExportarCsv={(id) => exportarCsv(vista.informe, id)} buscable maxFilas={500} />
               <p className="text-xs text-muted-foreground">
                 {vista.informe.notas.join(" ")} Dimensiones disponibles para tus gráficas: {Object.values(DIMENSIONES).join(", ").toLowerCase()}.
               </p>
