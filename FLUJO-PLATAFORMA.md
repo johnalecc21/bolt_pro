@@ -54,7 +54,12 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 7. **Contratos / POs** — repositorio real de todo lo firmado. Por cada contrato puedes **descargar un PDF** (generado con la plantilla Procurex a partir de los datos reales) o **adjuntar el PO/contrato propio de la empresa** (subida real a Supabase Storage) — si adjuntas uno, la descarga entrega ese archivo en vez de la plantilla, y el proveedor ve el mismo documento adjunto desde su portal.
 8. **Seguimiento** — hitos de cumplimiento post-PO (a tiempo / en riesgo / atrasado) reales, editables; puedes agregar/eliminar hitos y reportar una incidencia (abre una Disputa real referenciando el contrato). Al completar un hito con porcentaje de pago se genera su pago (una sola vez); cuando **todos** los hitos están completados el proceso pasa a **Cerrado**.
 9. **Disputas** — hilo de mediación real por caso.
-10. **Analítica CFO** — gráficas (ahorro reportado vs. auditado, ciclo de tiempo por categoría, concentración de gasto, top proveedores) con colores de marca Procurex.
+10. **Analítica CFO** (`/cliente/analitica`, CFO y Admin) — tablero con una sola fila de filtros (período: 3/6/12 meses, este año, año anterior o personalizado; unidad de negocio; centro de costo; categoría) que aplica a todo:
+    - **Resumen**: 8 indicadores con variación contra el período anterior de igual duración (gasto comprometido, ahorro y ahorro %, ahorro por negociación, procesos adjudicados, ciclo promedio y mediana, ofertas por proceso, entrega a tiempo, pagos vencidos) y **hallazgos** calculados con los datos (pagos vencidos, centros sobre presupuesto, concentración de proveedores, baja competencia, ciclos lentos, entregas tardías, evaluaciones bajas, contratos por vencer, variación del ahorro).
+    - Pestañas **Gasto, Ahorro, Eficiencia** (embudo de procesos, ciclo y competencia por categoría, prioridad y solicitante), **Proveedores** (HHI, participación del principal y del top 5, desempeño y entrega a tiempo por proveedor), **Presupuesto** (ejecución por centro, igual que en Estructura), **Pagos** (por pagar, vencidos, próximos 30 días) y **Detalle** (todos los procesos del período con búsqueda).
+    - **Mis gráficas**: cada usuario arma y guarda gráficas propias cruzando 10 indicadores con 8 dimensiones (mes, trimestre, categoría, proveedor, centro de costo, unidad, prioridad, solicitante), en barras, barras horizontales, líneas o área.
+    - Cada gráfica tiene su vista de **tabla**; cada tabla se descarga en **CSV**; **Exportar** genera el **informe ejecutivo en PDF** (indicadores, hallazgos, gráficas y tablas) y el **Excel** completo (una hoja por sección).
+    - Todo sale de un mismo conjunto de filas (`GET /analitica/cfo`) y de un único cálculo en el frontend, así que pantalla, PDF, Excel y CSV siempre coinciden. Los montos se suman solo en la moneda base de la empresa (lo que está en otra moneda se informa aparte) y las POs emitidas contra un contrato marco no se suman dos veces.
 
 ### Otras pantallas de Cliente
 - **Configurar empresa** (`/cliente/onboarding`, Admin) — checklist real que se marca solo: datos de la empresa, equipo invitado, matriz de aprobación, centros de costo (opcional) y primer requerimiento, cada uno con enlace a su pantalla.
@@ -98,7 +103,7 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 - **RBAC**: cada rol ve un menú distinto; algunas pantallas se muestran en modo solo-lectura según el rol.
 - **Multi-empresa**: si inicias sesión como Admin Cliente y cambias de Acme a TechCorp (menú del avatar), los requerimientos y contratos que ves cambian por completo (filtrado real por `companyId`).
 - **Notificaciones**: la campana del header y el Centro de Notificaciones comparten el mismo estado real (leído/no leído), y cada notificación enlaza a la pantalla donde realmente puedes actuar sobre ella.
-- **Gráficas**: los colores de todas las gráficas (Dashboard, Analítica CFO) están atados a la paleta de marca Procurex, no a colores sueltos.
+- **Gráficas**: la analítica usa una paleta validada para daltonismo y modo oscuro (tokens `--viz-*`), una sola fila de filtros y una vista de tabla por gráfica.
 
 ## Limitaciones conocidas (para tener en cuenta)
 

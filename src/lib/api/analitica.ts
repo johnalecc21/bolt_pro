@@ -1,37 +1,34 @@
 import { api } from "@/lib/api/http";
-import type { Moneda } from "@/lib/moneda";
+import type { DatosCfo } from "@/lib/analitica/tipos";
+import type { Dimension, Metrica } from "@/lib/analitica/agregador";
 
-export interface AhorroMes {
-  mes: string;
-  ahorro: number;
-}
-
-export interface CicloCategoria {
-  categoria: string;
-  dias: number;
-}
-
-export interface GastoCategoria {
-  categoria: string;
-  monto: number;
-  porcentaje: number;
-}
-
-export interface GastoProveedor {
-  proveedor: string;
-  gasto: number;
-}
-
-export interface AnaliticaResumen {
-  /** Company's monedaBase — money aggregates only include amounts in it. */
-  moneda: Moneda;
-  ahorroMensual: AhorroMes[];
-  tiempoCicloCategoria: CicloCategoria[];
-  concentracionGasto: GastoCategoria[];
-  topProveedores: GastoProveedor[];
-}
-
-export async function fetchAnaliticaResumen(): Promise<AnaliticaResumen> {
-  const { data } = await api.get<AnaliticaResumen>("/analitica");
+/** Row-level dataset for [desde, hasta] (YYYY-MM-DD, inclusive) plus the previous period of equal length. */
+export async function fetchDatosCfo(desde: string, hasta: string): Promise<DatosCfo> {
+  const { data } = await api.get<DatosCfo>("/analitica/cfo", { params: { desde, hasta } });
   return data;
+}
+
+export type TipoGrafica = "barras" | "barrasHorizontales" | "lineas" | "area";
+
+export interface GraficaGuardada {
+  id: string;
+  titulo: string;
+  metrica: Metrica;
+  dimension: Dimension;
+  tipo: TipoGrafica;
+  createdAt: string;
+}
+
+export async function fetchGraficas(): Promise<GraficaGuardada[]> {
+  const { data } = await api.get<GraficaGuardada[]>("/analitica/graficas");
+  return data;
+}
+
+export async function crearGrafica(g: Omit<GraficaGuardada, "id" | "createdAt">): Promise<GraficaGuardada> {
+  const { data } = await api.post<GraficaGuardada>("/analitica/graficas", g);
+  return data;
+}
+
+export async function eliminarGrafica(id: string): Promise<void> {
+  await api.delete(`/analitica/graficas/${id}`);
 }

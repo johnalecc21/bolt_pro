@@ -155,6 +155,26 @@
   --chart-4: var(--success);
   --chart-5: var(--muted-foreground);
 
+  /* Data-viz palette for analytics (Analítica CFO). Categorical slots are used
+     in this fixed order and never cycled; single-series charts use --viz-1.
+     Validated (CVD + normal-vision + contrast) against the white card and the
+     dark card surfaces. --viz-ord-* is the ordinal ramp for ordered stages. */
+  --viz-1: #2a78d6;
+  --viz-2: #eb6834;
+  --viz-3: #1baf7a;
+  --viz-4: #eda100;
+  --viz-5: #e87ba4;
+  --viz-6: #008300;
+  --viz-7: #4a3aa7;
+  --viz-8: #e34948;
+  --viz-ord-1: #86b6ef;
+  --viz-ord-2: #5598e7;
+  --viz-ord-3: #2a78d6;
+  --viz-ord-4: #1c5cab;
+  --viz-ord-5: #104281;
+  --viz-grid: #e8e7e1;
+  --viz-track: #e6effb;
+
   /* Sidebar / "menú zona privada" — light shell per the Procurex nav spec
      (transparent/white default, light-blue active state, navy text). */
   --sidebar: #ffffff;
@@ -168,6 +188,21 @@
 }
 
 .dark {
+  --viz-1: #3987e5;
+  --viz-2: #d95926;
+  --viz-3: #199e70;
+  --viz-4: #c98500;
+  --viz-5: #d55181;
+  --viz-6: #008300;
+  --viz-7: #9085e9;
+  --viz-8: #e66767;
+  --viz-ord-1: #184f95;
+  --viz-ord-2: #256abf;
+  --viz-ord-3: #3987e5;
+  --viz-ord-4: #6da7ec;
+  --viz-ord-5: #9ec5f4;
+  --viz-grid: #262d36;
+  --viz-track: #1d2733;
   --background: oklch(0.13 0.015 246);
   --foreground: oklch(0.95 0.006 246);
   --card: oklch(0.17 0.02 246);

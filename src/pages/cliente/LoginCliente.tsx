@@ -27,7 +27,7 @@ export function LoginCliente() {
           <div className="space-y-4">
             {[
               { icon: Zap, title: "Implementación en días", desc: "No meses. Onboarding guiado en vivo." },
-              { icon: TrendingUp, title: "Ahorro certificado", desc: "Success fee — no pagas si no ahorramos." },
+              { icon: TrendingUp, title: "Ahorro medible", desc: "Success fee — no pagas si no ahorramos." },
               { icon: ShieldCheck, title: "Red de proveedores validada", desc: "Base propietaria con scoring de desempeño real." },
             ].map((f) => (
               <div key={f.title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">

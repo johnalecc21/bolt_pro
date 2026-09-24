@@ -56,5 +56,7 @@ export function formatMoneyCompact(monto: number, moneda: Moneda = "USD"): strin
     notation: "compact",
     minimumFractionDigits: 0,
     maximumFractionDigits: 1,
+    // Spanish compact has no "billions" unit, so 7.9e9 COP reads "7901,5 M" without grouping.
+    useGrouping: true,
   }).format(monto);
 }

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { KPICard } from "@/components/shared/KPICard";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Plus, DollarSign, FileText, ShieldCheck, Building2, TrendingUp, ArrowRight, AlertTriangle, History } from "lucide-react";
+import { Plus, DollarSign, FileText, ShieldCheck, Building2, ArrowRight, AlertTriangle, History } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -15,7 +15,9 @@ import { fetchRequerimientos } from "@/lib/api/requerimientos";
 import { fetchAprobaciones } from "@/lib/api/aprobaciones";
 import { fetchProveedores } from "@/lib/api/proveedores";
 import { fetchAuditLog } from "@/lib/api/auditLog";
-import { fetchAnaliticaResumen } from "@/lib/api/analitica";
+import { fetchDatosCfo } from "@/lib/api/analitica";
+import { agrupar, filtrar, rangos } from "@/lib/analitica/agregador";
+import { rangoPreset } from "@/lib/analitica/periodo";
 
 import { formatMoney, formatMoneyCompact } from "@/lib/moneda";
 const chartConfig = {
@@ -35,10 +37,14 @@ export function Dashboard() {
   );
   const { data: proveedores } = useApiData(fetchProveedores);
   const { data: auditLog, loading: loadingActividad } = useApiData(() => fetchAuditLog(1, 5));
-  const { data: analitica } = useApiData(
-    () => (puedeVerAnalitica ? fetchAnaliticaResumen() : Promise.resolve(null)),
-    [puedeVerAnalitica],
-  );
+  const { data: analitica } = useApiData(async () => {
+    if (!puedeVerAnalitica) return null;
+    const { desde, hasta } = rangoPreset("6m");
+    const datos = await fetchDatosCfo(desde, hasta);
+    // Same aggregator as Analítica CFO, so both screens show the same figure.
+    const serie = agrupar(filtrar(datos, {}), "ahorro", "mes", rangos(datos).actual);
+    return { moneda: datos.moneda, ahorroMensual: serie.map((g) => ({ mes: g.etiqueta, ahorro: g.valor })) };
+  }, [puedeVerAnalitica]);
   const loading = loadingReq;
   const hoyBase = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const hoyFormateado = hoyBase.charAt(0).toUpperCase() + hoyBase.slice(1);
@@ -182,9 +188,9 @@ export function Dashboard() {
           <div className="mb-4 flex items-center justify-between">
             <div>
               <h2 className="font-semibold">Ahorro mensual</h2>
-              <p className="text-sm text-muted-foreground">Monto estimado vs. precio final adjudicado (últimos 6 meses)</p>
+              <p className="text-sm text-muted-foreground">Presupuesto vs. precio final de lo firmado, últimos 6 meses</p>
             </div>
-            <TrendingUp className="h-5 w-5 text-success" />
+            <Link to="/cliente/analitica" className="text-sm font-medium text-primary hover:underline">Ver analítica completa</Link>
           </div>
           <ChartContainer config={chartConfig} className="h-[260px] w-full">
             <AreaChart data={analitica?.ahorroMensual ?? []}>
@@ -194,7 +200,7 @@ export function Dashboard() {
                   <stop offset="95%" stopColor="var(--color-ahorro)" stopOpacity={0.1} />
                 </linearGradient>
               </defs>
-              <CartesianGrid vertical={false} strokeDasharray="3 3" />
+              <CartesianGrid vertical={false} />
               <XAxis dataKey="mes" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} tickFormatter={(v) => formatMoneyCompact(v, analitica?.moneda)} />
               <ChartTooltip content={<ChartTooltipContent />} />
