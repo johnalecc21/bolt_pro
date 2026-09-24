@@ -294,7 +294,15 @@ export async function cerrarLicitacion(id: string): Promise<Requerimiento> {
 /** Corrects a rejected (back-to-borrador) requerimiento and sends it to approval again. */
 export async function reenviarRequerimiento(
   id: string,
-  cambios: { titulo?: string; descripcion?: string; montoEstimado?: number; fechaLimite?: string; prioridad?: Prioridad },
+  cambios: {
+    titulo?: string;
+    descripcion?: string;
+    montoEstimado?: number;
+    fechaLimite?: string;
+    prioridad?: Prioridad;
+    /** Replaces the bill of quantities; [] removes it. */
+    items?: ItemRequerimiento[];
+  },
 ): Promise<Requerimiento> {
   const { data } = await api.post<ApiRequerimiento>(`/requerimientos/${id}/reenviar`, {
     ...cambios,

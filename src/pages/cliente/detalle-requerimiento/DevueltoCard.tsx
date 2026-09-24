@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { reenviarRequerimiento, type RequerimientoDetalle } from "@/lib/api/requerimientos";
 import { apiErrorMessage } from "@/lib/api/http";
 import type { Prioridad } from "@/lib/types";
+import { ItemsEditor, itemIncompleto, itemsValidos, type ItemBorrador } from "@/pages/cliente/nuevo-requerimiento/ItemsEditor";
 
 /**
  * A rejected requerimiento comes back as a borrador: this shows why and lets
@@ -23,6 +24,14 @@ export function DevueltoCard({ req, puedeEditar, onReenviado }: { req: Requerimi
   const [monto, setMonto] = useState(String(req.montoEstimado));
   const [fechaLimite, setFechaLimite] = useState(req.fechaLimite);
   const [prioridad, setPrioridad] = useState<Prioridad>(req.prioridad);
+  const itemsOriginales: ItemBorrador[] = req.items.map((i) => ({
+    descripcion: i.descripcion,
+    cantidad: String(i.cantidad),
+    unidad: i.unidad,
+    especificacion: i.especificacion ?? null,
+  }));
+  const [items, setItems] = useState<ItemBorrador[]>(itemsOriginales);
+  const itemsConError = items.some(itemIncompleto);
   const [enviando, setEnviando] = useState(false);
 
   async function reenviar() {
@@ -31,6 +40,13 @@ export function DevueltoCard({ req, puedeEditar, onReenviado }: { req: Requerimi
       toast.error("Revisa el título y el monto.");
       return;
     }
+    if (itemsConError) {
+      toast.error("Hay ítems incompletos.");
+      return;
+    }
+    // Only replace the lines when they actually changed.
+    const nuevos = itemsValidos(items);
+    const cambiaronItems = JSON.stringify(nuevos) !== JSON.stringify(itemsValidos(itemsOriginales));
     setEnviando(true);
     try {
       await reenviarRequerimiento(req.id, {
@@ -39,6 +55,7 @@ export function DevueltoCard({ req, puedeEditar, onReenviado }: { req: Requerimi
         montoEstimado: Math.round(montoNum),
         fechaLimite,
         prioridad,
+        ...(cambiaronItems ? { items: nuevos } : {}),
       });
       toast.success("Requerimiento reenviado a aprobación");
       setOpen(false);
@@ -65,7 +82,7 @@ export function DevueltoCard({ req, puedeEditar, onReenviado }: { req: Requerimi
           <DialogTrigger asChild>
             <Button className="mt-4 w-full">Corregir y reenviar</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
             <DialogHeader>
               <DialogTitle>Corregir y reenviar a aprobación</DialogTitle>
               <DialogDescription>Se vuelve a aplicar la matriz de aprobación y el control de presupuesto con los nuevos valores.</DialogDescription>
@@ -102,10 +119,13 @@ export function DevueltoCard({ req, puedeEditar, onReenviado }: { req: Requerimi
                   </select>
                 </div>
               </div>
+              <div className="border-t pt-3">
+                <ItemsEditor items={items} onChange={setItems} />
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-              <Button onClick={reenviar} disabled={enviando}>{enviando ? "Reenviando..." : "Reenviar a aprobación"}</Button>
+              <Button onClick={reenviar} disabled={enviando || itemsConError}>{enviando ? "Reenviando..." : "Reenviar a aprobación"}</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>

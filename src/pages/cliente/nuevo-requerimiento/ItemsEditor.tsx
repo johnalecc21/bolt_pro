@@ -7,6 +7,8 @@ export interface ItemBorrador {
   descripcion: string;
   cantidad: string;
   unidad: string;
+  /** Kept as-is when editing existing lines (not editable here). */
+  especificacion?: string | null;
 }
 
 export const ITEM_VACIO: ItemBorrador = { descripcion: "", cantidad: "", unidad: "und" };
@@ -21,7 +23,12 @@ export function itemIncompleto(i: ItemBorrador) {
 export function itemsValidos(items: ItemBorrador[]) {
   return items
     .filter((i) => i.descripcion.trim() && Number(i.cantidad) > 0 && i.unidad.trim())
-    .map((i) => ({ descripcion: i.descripcion.trim(), cantidad: Number(i.cantidad), unidad: i.unidad.trim() }));
+    .map((i) => ({
+      descripcion: i.descripcion.trim(),
+      cantidad: Number(i.cantidad),
+      unidad: i.unidad.trim(),
+      ...(i.especificacion ? { especificacion: i.especificacion } : {}),
+    }));
 }
 
 interface Props {
