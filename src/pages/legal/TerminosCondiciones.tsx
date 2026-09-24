@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { LegalLayout, LegalSection } from "@/components/legal/LegalLayout";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function TerminosCondiciones() {
+  usePageMeta({ title: "Términos y condiciones", description: "Términos y condiciones de uso de la plataforma Procurex." });
   return (
     <LegalLayout title="Términos y Condiciones" vigencia="15 de agosto de 2026">
       <p className="text-muted-foreground">

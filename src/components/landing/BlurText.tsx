@@ -1,5 +1,5 @@
 import { useMemo, useRef } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
@@ -27,7 +27,7 @@ export function BlurText({
   return (
     <span ref={ref} className={cn("inline-flex flex-wrap", className)}>
       {words.map((word, i) => (
-        <motion.span
+        <m.span
           key={i}
           className={cn(
             "inline-block will-change-[filter,transform,opacity]",
@@ -39,7 +39,7 @@ export function BlurText({
         >
           {word}
           {i < words.length - 1 ? " " : ""}
-        </motion.span>
+        </m.span>
       ))}
     </span>
   );

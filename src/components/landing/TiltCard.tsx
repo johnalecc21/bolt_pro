@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
+import { m, useMotionValue, useSpring, useTransform } from "framer-motion";
 
 /** 3D tilt tracking the cursor. Pointer tracking stays in motion values (never
  * useState) so hovering doesn't trigger React re-renders. */
@@ -23,7 +23,7 @@ export function TiltCard({ children, className }: { children: ReactNode; classNa
   }
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -31,6 +31,6 @@ export function TiltCard({ children, className }: { children: ReactNode; classNa
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

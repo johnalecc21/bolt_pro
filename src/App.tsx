@@ -3,20 +3,20 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RequireRole } from "@/components/auth/RequireRole";
-import { ClienteLayout } from "@/layouts/ClienteLayout";
-import { ProveedorLayout } from "@/layouts/ProveedorLayout";
-import { InternoLayout } from "@/layouts/InternoLayout";
-
 import { Landing } from "@/pages/Landing";
-import { SetPassword } from "@/pages/SetPassword";
-import { TerminosCondiciones } from "@/pages/legal/TerminosCondiciones";
-import { AvisoPrivacidad } from "@/pages/legal/AvisoPrivacidad";
 
-import { LoginCliente } from "@/pages/cliente/LoginCliente";
-import { LoginProveedor } from "@/pages/proveedor/LoginProveedor";
-import { LoginInterno } from "@/pages/interno/LoginInterno";
-import { RegistroProveedor } from "@/pages/proveedor/RegistroProveedor";
-
+// Everything except the landing is split out so the first visit only downloads
+// what the public home page needs.
+const ClienteLayout = lazy(() => import("@/layouts/ClienteLayout").then((m) => ({ default: m.ClienteLayout })));
+const ProveedorLayout = lazy(() => import("@/layouts/ProveedorLayout").then((m) => ({ default: m.ProveedorLayout })));
+const InternoLayout = lazy(() => import("@/layouts/InternoLayout").then((m) => ({ default: m.InternoLayout })));
+const SetPassword = lazy(() => import("@/pages/SetPassword").then((m) => ({ default: m.SetPassword })));
+const TerminosCondiciones = lazy(() => import("@/pages/legal/TerminosCondiciones").then((m) => ({ default: m.TerminosCondiciones })));
+const AvisoPrivacidad = lazy(() => import("@/pages/legal/AvisoPrivacidad").then((m) => ({ default: m.AvisoPrivacidad })));
+const LoginCliente = lazy(() => import("@/pages/cliente/LoginCliente").then((m) => ({ default: m.LoginCliente })));
+const LoginProveedor = lazy(() => import("@/pages/proveedor/LoginProveedor").then((m) => ({ default: m.LoginProveedor })));
+const LoginInterno = lazy(() => import("@/pages/interno/LoginInterno").then((m) => ({ default: m.LoginInterno })));
+const RegistroProveedor = lazy(() => import("@/pages/proveedor/RegistroProveedor").then((m) => ({ default: m.RegistroProveedor })));
 const VitrinaProveedor = lazy(() => import("@/pages/publico/VitrinaProveedor").then((m) => ({ default: m.VitrinaProveedor })));
 const OnboardingWizard = lazy(() => import("@/pages/cliente/OnboardingWizard").then((m) => ({ default: m.OnboardingWizard })));
 const Dashboard = lazy(() => import("@/pages/cliente/Dashboard").then((m) => ({ default: m.Dashboard })));

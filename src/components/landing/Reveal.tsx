@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { motion, useInView, type Variants } from "framer-motion";
+import { m, useInView, type Variants } from "framer-motion";
 
 const easeOut = [0.22, 1, 0.36, 1] as const;
 
@@ -15,7 +15,7 @@ export function Reveal({
   className?: string;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
@@ -23,7 +23,7 @@ export function Reveal({
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -41,7 +41,7 @@ export const staggerItem: Variants = {
 
 export function StaggerGroup({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
+    <m.div
       variants={staggerContainer}
       initial="hidden"
       whileInView="show"
@@ -49,7 +49,7 @@ export function StaggerGroup({ children, className }: { children: ReactNode; cla
       className={className}
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }
 

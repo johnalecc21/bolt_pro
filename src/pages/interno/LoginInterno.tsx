@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Users2, ShieldAlert, LineChart } from "lucide-react";
 import { PortalLoginForm } from "@/components/shared/PortalLoginForm";
 import { LogoFull } from "@/components/shared/Logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function LoginInterno() {
+  usePageMeta({ title: "Ingreso equipo interno", noindex: true });
   return (
     <div className="flex min-h-screen">
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border bg-muted/30 p-12 lg:flex">

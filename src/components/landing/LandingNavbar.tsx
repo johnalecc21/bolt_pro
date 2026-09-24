@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Building2, Truck, Users2, ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -61,7 +61,7 @@ export function LandingNavbar() {
             </Button>
             <AnimatePresence>
               {portalOpen && (
-                <motion.div
+                <m.div
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 8 }}
@@ -78,7 +78,7 @@ export function LandingNavbar() {
                       {p.label}
                     </Link>
                   ))}
-                </motion.div>
+                </m.div>
               )}
             </AnimatePresence>
           </div>
@@ -94,7 +94,7 @@ export function LandingNavbar() {
 
       <AnimatePresence>
         {mobileOpen && (
-          <motion.div
+          <m.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -114,7 +114,7 @@ export function LandingNavbar() {
                 </Link>
               ))}
             </div>
-          </motion.div>
+          </m.div>
         )}
       </AnimatePresence>
     </header>

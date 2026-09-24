@@ -1,5 +1,5 @@
 import { useRef, type ReactNode, type MouseEvent } from "react";
-import { motion, useMotionValue, useMotionTemplate } from "framer-motion";
+import { m, useMotionValue, useMotionTemplate } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 export function SpotlightCard({
@@ -33,7 +33,7 @@ export function SpotlightCard({
       onMouseLeave={() => opacity.set(0)}
       className={cn("group relative overflow-hidden", className)}
     >
-      <motion.div
+      <m.div
         className="pointer-events-none absolute inset-0 transition-opacity duration-300 ease-out"
         style={{ background, opacity }}
       />

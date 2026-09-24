@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
 import { SpotlightCard } from "./SpotlightCard";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 const plans = [
@@ -64,7 +64,7 @@ export function LandingPricing() {
 
         <StaggerGroup className="mt-16 grid gap-6 lg:grid-cols-3 lg:items-start">
           {plans.map((p) => (
-            <motion.div key={p.name} variants={staggerItem}>
+            <m.div key={p.name} variants={staggerItem}>
               <SpotlightCard
                 spotlightColor={p.highlighted ? "white" : "var(--primary)"}
                 className={cn(
@@ -103,7 +103,7 @@ export function LandingPricing() {
                   <a href="mailto:ventas@procureos.com?subject=Quiero%20una%20demo%20de%20Procurex">Hablar con ventas</a>
                 </Button>
               </SpotlightCard>
-            </motion.div>
+            </m.div>
           ))}
         </StaggerGroup>
 

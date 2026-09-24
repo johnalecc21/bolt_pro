@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { LegalLayout, LegalSection } from "@/components/legal/LegalLayout";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function AvisoPrivacidad() {
+  usePageMeta({ title: "Aviso de privacidad", description: "Cómo Procurex recopila, usa y protege los datos personales." });
   return (
     <LegalLayout title="Aviso de Privacidad" vigencia="15 de agosto de 2026">
       <p className="text-muted-foreground">

@@ -1,7 +1,7 @@
 import { Reveal, StaggerGroup, staggerItem, AnimatedCounter } from "./Reveal";
 import { BlurText } from "./BlurText";
 import { FloatingOrbs } from "./FloatingOrbs";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 const timeline = [
   {
@@ -50,12 +50,12 @@ export function LandingAboutUs() {
 
             <StaggerGroup className="relative mt-16 space-y-10 border-l border-border pl-8 sm:pl-10">
               {timeline.map((t) => (
-                <motion.div key={t.stage} variants={staggerItem} className="relative">
+                <m.div key={t.stage} variants={staggerItem} className="relative">
                   <span className="absolute -left-[calc(2rem+5px)] top-1.5 h-2.5 w-2.5 rounded-full border-2 border-primary bg-card sm:-left-[calc(2.5rem+5px)]" />
                   <span className="text-xs font-semibold uppercase tracking-widest text-primary">{t.stage}</span>
                   <h3 className="mt-1.5 text-lg font-semibold text-foreground">{t.title}</h3>
                   <p className="mt-1.5 max-w-xl text-sm text-muted-foreground">{t.description}</p>
-                </motion.div>
+                </m.div>
               ))}
             </StaggerGroup>
 

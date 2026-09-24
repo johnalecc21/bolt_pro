@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { motion, useScroll, useTransform, useReducedMotion } from "framer-motion";
+import { m, useScroll, useTransform, useReducedMotion } from "framer-motion";
 
 type Orb = { size: number; top: string; left?: string; right?: string; color: string; parallax: number };
 
@@ -46,7 +46,7 @@ function OrbShape({
 }) {
   const y = useTransform(progress, [0, 1], reduceMotion ? [0, 0] : [-orb.parallax, orb.parallax]);
   return (
-    <motion.div
+    <m.div
       style={{
         y,
         width: orb.size,

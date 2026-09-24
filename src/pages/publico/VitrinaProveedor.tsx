@@ -8,11 +8,18 @@ import {
 } from "@/components/vitrina/SeccionesVitrina";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchVitrina } from "@/lib/api/vitrina";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 /** Public, shareable profile of a homologated proveedor — verified facts plus the content it manages itself. */
 export function VitrinaProveedor() {
   const { id = "" } = useParams();
   const { data: p, loading, error } = useApiData(() => fetchVitrina(id), [id]);
+  usePageMeta({
+    title: p ? `${p.nombre} · Proveedor homologado` : "Vitrina de proveedores",
+    description: p
+      ? (p.descripcion?.slice(0, 155) ?? `${p.nombre}: proveedor homologado en Procurex${p.categorias.length ? ` (${p.categorias.join(", ")})` : ""}.`)
+      : undefined,
+  });
 
   return (
     <div className="min-h-screen bg-muted/30">

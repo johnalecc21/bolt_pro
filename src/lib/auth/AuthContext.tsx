@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Resolve whatever session Supabase already has cached (survives refresh) —
-  // supabase-js persists + auto-refreshes it, we just load our app profile on top.
+  // The Supabase auth client persists + auto-refreshes it, we just load our app profile on top.
   useEffect(() => {
     let cancelled = false;
     (async () => {

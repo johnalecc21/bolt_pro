@@ -2,8 +2,10 @@ import { Link } from "react-router-dom";
 import { Zap, ShieldCheck, TrendingUp } from "lucide-react";
 import { PortalLoginForm } from "@/components/shared/PortalLoginForm";
 import { LogoFull } from "@/components/shared/Logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function LoginCliente() {
+  usePageMeta({ title: "Ingreso clientes", noindex: true });
   return (
     <div className="flex min-h-screen">
       {/* Left hero */}

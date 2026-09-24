@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { Magnetic } from "./Magnetic";
@@ -12,7 +12,7 @@ export function LandingHero() {
       <FloatingOrbs variant="hero" />
       <div className="relative mx-auto grid max-w-6xl items-center gap-16 px-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div className="text-center lg:text-left">
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
@@ -20,7 +20,7 @@ export function LandingHero() {
           >
             <span className="h-1.5 w-1.5 rounded-full bg-primary" />
             Procurement-as-a-Service para empresas
-          </motion.div>
+          </m.div>
 
           <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-foreground sm:text-6xl">
             <BlurText
@@ -31,17 +31,14 @@ export function LandingHero() {
             />
           </h1>
 
-          <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2 }}
-            className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground lg:mx-0"
-          >
+          {/* Static on purpose: this paragraph is the page's largest text block (the
+              LCP element), so fading it in would push LCP back by the animation. */}
+          <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground lg:mx-0">
             Automatiza requerimientos, homologa proveedores con verificación real, negocia en vivo
             y cierra contratos, con trazabilidad completa y expertos humanos detrás de cada decisión.
-          </motion.p>
+          </p>
 
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.3 }}
@@ -59,17 +56,17 @@ export function LandingHero() {
                 <PlayCircle className="h-4 w-4" /> Ver cómo funciona
               </a>
             </Button>
-          </motion.div>
+          </m.div>
         </div>
 
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.94 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.3, ease: [0.22, 1, 0.36, 1] }}
           className="hidden pt-6 lg:block"
         >
           <LandingHeroShowcase />
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

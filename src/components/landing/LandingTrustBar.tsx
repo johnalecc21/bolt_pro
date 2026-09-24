@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Reveal, StaggerGroup, staggerItem, AnimatedCounter } from "./Reveal";
 
 const companies = [
@@ -26,12 +26,12 @@ export function LandingTrustBar() {
       <div className="mx-auto max-w-5xl px-6">
         <StaggerGroup className="grid grid-cols-2 gap-8 sm:grid-cols-4">
           {stats.map((s) => (
-            <motion.div key={s.label} variants={staggerItem} className="flex flex-col items-center gap-1 text-center">
+            <m.div key={s.label} variants={staggerItem} className="flex flex-col items-center gap-1 text-center">
               <span className="text-3xl font-bold text-foreground sm:text-4xl">
                 <AnimatedCounter value={s.value} suffix={s.suffix} />
               </span>
               <span className="text-xs text-muted-foreground">{s.label}</span>
-            </motion.div>
+            </m.div>
           ))}
         </StaggerGroup>
       </div>
@@ -44,17 +44,17 @@ export function LandingTrustBar() {
       <div className="relative mt-6 overflow-hidden">
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-muted/40 to-transparent" />
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-muted/40 to-transparent" />
-        <motion.div
+        <m.div
           className="flex w-max gap-12"
           animate={{ x: ["0%", "-50%"] }}
           transition={{ duration: 28, repeat: Infinity, ease: "linear" }}
         >
           {loop.map((name, i) => (
-            <span key={`${name}-${i}`} className="whitespace-nowrap text-lg font-semibold text-muted-foreground/50">
+            <span key={`${name}-${i}`} className="whitespace-nowrap text-lg font-semibold text-muted-foreground">
               {name}
             </span>
           ))}
-        </motion.div>
+        </m.div>
       </div>
     </section>
   );

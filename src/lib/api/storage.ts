@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase/client";
+import { getStorageClient } from "@/lib/supabase/client";
 
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
@@ -13,6 +13,7 @@ export function assertFileSizeOk(file: File) {
 }
 
 export async function uploadToSignedUrl(bucket: string, path: string, token: string, file: File) {
-  const { error } = await supabase.storage.from(bucket).uploadToSignedUrl(path, token, file);
+  const storage = await getStorageClient();
+  const { error } = await storage.from(bucket).uploadToSignedUrl(path, token, file);
   if (error) throw error;
 }

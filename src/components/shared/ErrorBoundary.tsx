@@ -1,5 +1,5 @@
-import type { ReactNode } from "react"
-import * as Sentry from "@sentry/react"
+import { Component, type ErrorInfo, type ReactNode } from "react"
+import { reportError } from "@/lib/monitoring"
 
 interface ErrorFallbackProps {
   /** Root-level fallback takes over the whole viewport; a scoped one (e.g. inside
@@ -37,10 +37,19 @@ interface AppErrorBoundaryProps {
   fullScreen?: boolean
 }
 
-export function AppErrorBoundary({ children, fullScreen = true }: AppErrorBoundaryProps) {
-  return (
-    <Sentry.ErrorBoundary fallback={<ErrorFallback fullScreen={fullScreen} />}>
-      {children}
-    </Sentry.ErrorBoundary>
-  )
+export class AppErrorBoundary extends Component<AppErrorBoundaryProps, { failed: boolean }> {
+  state = { failed: false }
+
+  static getDerivedStateFromError() {
+    return { failed: true }
+  }
+
+  componentDidCatch(error: Error, info: ErrorInfo) {
+    reportError(error, { componentStack: info.componentStack })
+  }
+
+  render() {
+    if (this.state.failed) return <ErrorFallback fullScreen={this.props.fullScreen ?? true} />
+    return this.props.children
+  }
 }

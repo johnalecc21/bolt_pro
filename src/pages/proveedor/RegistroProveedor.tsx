@@ -9,8 +9,10 @@ import { Loader2, CheckCircle2, Building2 } from "lucide-react";
 import { simulateProcess } from "@/lib/mock/simulate";
 import { apiRegisterProveedor } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function RegistroProveedor() {
+  usePageMeta({ title: "Registro de proveedores", description: "Registra tu empresa como proveedor en Procurex, homológate y recibe invitaciones a licitaciones de empresas compradoras." });
   const navigate = useNavigate();
   const [step, setStep] = useState<"form" | "verifying" | "done">("form");
   const [razonSocial, setRazonSocial] = useState("");

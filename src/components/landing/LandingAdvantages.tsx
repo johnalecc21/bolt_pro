@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useReducedMotion } from "framer-motion";
+import { m, useInView, useReducedMotion } from "framer-motion";
 import { TrendingUp, ShieldCheck, Users2, Rocket, Lock, Eye, CheckCircle2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "./Reveal";
@@ -37,7 +37,7 @@ function CellShell({
   spotlightColor?: string;
 }) {
   return (
-    <motion.div
+    <m.div
       initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-10% 0px -10% 0px" }}
@@ -50,7 +50,7 @@ function CellShell({
       <SpotlightCard spotlightColor={spotlightColor} className="flex h-full flex-col p-7">
         {children}
       </SpotlightCard>
-    </motion.div>
+    </m.div>
   );
 }
 
@@ -98,7 +98,7 @@ function SavingsCell() {
             Cada negociación queda registrada con su línea base y ahorro real, listo para auditoría del CFO.
           </p>
           <svg viewBox="0 0 280 60" className="mt-6 w-full max-w-xs" fill="none">
-            <motion.path
+            <m.path
               d="M2 48 C 40 44, 60 50, 90 36 S 150 18, 180 22 S 230 8, 278 4"
               stroke="white"
               strokeOpacity="0.85"

@@ -10,10 +10,12 @@ import { supabase } from "@/lib/supabase/client";
 import { apiMe } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
 import { LogoFull } from "@/components/shared/Logo";
+import { usePageMeta } from "@/hooks/usePageMeta";
 
 type Status = "checking" | "ready" | "invalid" | "saving" | "done";
 
 export function SetPassword() {
+  usePageMeta({ title: "Crear contraseña", noindex: true });
   const [status, setStatus] = useState<Status>("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");

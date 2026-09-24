@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Building2, Truck, Users2, ArrowRight } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Reveal, StaggerGroup, staggerItem } from "./Reveal";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { TiltCard } from "./TiltCard";
 
 const portals = [
@@ -40,7 +40,7 @@ export function LandingPortals() {
 
         <StaggerGroup className="mt-14 grid gap-6 sm:grid-cols-3">
           {portals.map((p) => (
-            <motion.div key={p.title} variants={staggerItem} className={p.offset}>
+            <m.div key={p.title} variants={staggerItem} className={p.offset}>
               <TiltCard className="h-full">
                 <Link to={p.to} className="group block h-full">
                   <Card className="flex h-full flex-col items-start gap-4 p-7 transition-shadow hover:border-primary/40 hover:shadow-xl hover:shadow-primary/10">
@@ -57,7 +57,7 @@ export function LandingPortals() {
                   </Card>
                 </Link>
               </TiltCard>
-            </motion.div>
+            </m.div>
           ))}
         </StaggerGroup>
       </div>

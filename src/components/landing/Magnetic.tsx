@@ -1,5 +1,5 @@
 import { useRef, type ReactNode } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { m, useMotionValue, useSpring } from "framer-motion";
 
 /** Wraps a CTA so it pulls slightly toward the cursor on hover. Pointer tracking uses
  * motion values (not useState) so it never re-renders React on mousemove. */
@@ -23,7 +23,7 @@ export function Magnetic({ children, strength = 18 }: { children: ReactNode; str
   }
 
   return (
-    <motion.div
+    <m.div
       ref={ref}
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
@@ -31,6 +31,6 @@ export function Magnetic({ children, strength = 18 }: { children: ReactNode; str
       className="inline-block"
     >
       {children}
-    </motion.div>
+    </m.div>
   );
 }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { m, useReducedMotion } from "framer-motion";
 import {
   ShieldCheck,
   Gavel,
@@ -93,7 +93,7 @@ export function LandingServices() {
                 )}
               >
                 {active === i && (
-                  <motion.div
+                  <m.div
                     layoutId="service-active-indicator"
                     className="absolute inset-y-2 left-0 w-0.5 rounded-full bg-primary"
                     transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
@@ -167,7 +167,7 @@ function HomologacionPreview() {
     <PreviewShell label="Homologación · Storage Test SAS">
       <div className="space-y-2.5">
         {docs.map((d, i) => (
-          <motion.div
+          <m.div
             key={d.name}
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
@@ -181,18 +181,18 @@ function HomologacionPreview() {
             <Badge variant={d.state === "Validado" ? "default" : "outline"} className={d.state !== "Validado" ? "border-warning/40 text-warning-foreground" : ""}>
               {d.state}
             </Badge>
-          </motion.div>
+          </m.div>
         ))}
       </div>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.4 }}
-        className="mt-6 flex items-center gap-2.5 rounded-lg bg-success/10 px-3.5 py-3 text-sm text-success"
+        className="mt-6 flex items-center gap-2.5 rounded-lg bg-success/5 px-3.5 py-3 text-sm text-success"
       >
         <ShieldCheck className="h-4 w-4 shrink-0 text-success" />
         Sin coincidencias en la lista OFAC/SDN
-      </motion.div>
+      </m.div>
     </PreviewShell>
   );
 }
@@ -214,7 +214,7 @@ function NegociacionPreview() {
       </div>
       <div className="space-y-2.5">
         {rows.map((r, i) => (
-          <motion.div
+          <m.div
             key={r.label}
             initial={{ opacity: 0, scale: 0.97 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -230,7 +230,7 @@ function NegociacionPreview() {
             <span className="flex-1 text-sm font-medium">{r.label}</span>
             <span className="font-mono text-sm">{r.price}</span>
             {r.pos === 1 && <Crown className="h-4 w-4 text-warning" />}
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </PreviewShell>
@@ -244,16 +244,16 @@ function AprobacionesPreview() {
       <div className="flex items-center gap-2">
         {steps.map((s, i) => (
           <div key={s} className="flex flex-1 items-center gap-2">
-            <motion.div
+            <m.div
               initial={{ scale: 0.6, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ delay: 0.2 + i * 0.35, duration: 0.35 }}
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground"
             >
               {i + 1}
-            </motion.div>
+            </m.div>
             {i < steps.length - 1 && (
-              <motion.div
+              <m.div
                 initial={{ scaleX: 0 }}
                 animate={{ scaleX: 1 }}
                 style={{ originX: 0 }}
@@ -269,14 +269,14 @@ function AprobacionesPreview() {
           <span key={s} className="w-9 text-center">{s}</span>
         ))}
       </div>
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.1, duration: 0.4 }}
         className="mt-7 rounded-lg border border-border bg-muted/40 px-3.5 py-3 text-sm text-muted-foreground"
       >
         Enrutado automáticamente a <span className="font-medium text-foreground">Aprobador CFO</span> por superar el umbral de categoría.
-      </motion.div>
+      </m.div>
     </PreviewShell>
   );
 }
@@ -290,7 +290,7 @@ function AuditoriaPreview() {
       </div>
       <div className="mt-8 flex h-32 items-end gap-3">
         {bars.map((h, i) => (
-          <motion.div
+          <m.div
             key={i}
             initial={{ height: 0 }}
             animate={{ height: `${h}%` }}
@@ -313,30 +313,30 @@ function DisputasPreview() {
         {[
           { from: "Proveedor", text: "El retraso fue por un paro de transporte en la vía.", icon: MessageSquare },
           { from: "Compliance", text: "Solicitamos evidencia documental del hecho.", icon: ShieldAlert },
-        ].map((m, i) => (
-          <motion.div
+        ].map((msg, i) => (
+          <m.div
             key={i}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 + i * 0.15, duration: 0.4 }}
             className="flex gap-3 rounded-lg border border-border px-3.5 py-3"
           >
-            <m.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <msg.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
             <div>
-              <p className="text-xs font-medium text-muted-foreground">{m.from}</p>
-              <p className="mt-0.5 text-sm">{m.text}</p>
+              <p className="text-xs font-medium text-muted-foreground">{msg.from}</p>
+              <p className="mt-0.5 text-sm">{msg.text}</p>
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5, duration: 0.4 }}
         className="mt-5"
       >
         <Badge variant="outline" className="border-info/40 text-info">En mediación</Badge>
-      </motion.div>
+      </m.div>
     </PreviewShell>
   );
 }

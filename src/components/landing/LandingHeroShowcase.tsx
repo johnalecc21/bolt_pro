@@ -1,4 +1,4 @@
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { Crown, TrendingUp, ShieldCheck } from "lucide-react";
 import { AnimatedCounter } from "./Reveal";
 
@@ -13,7 +13,7 @@ export function LandingHeroShowcase() {
     <div className="relative mx-auto w-full max-w-md lg:mx-0">
       <div className="absolute -inset-x-10 -inset-y-16 -z-10 bg-primary/[0.07] blur-3xl" />
 
-      <motion.div
+      <m.div
         animate={{ y: [0, -10, 0] }}
         transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
         className="relative z-10 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/[0.08]"
@@ -30,7 +30,7 @@ export function LandingHeroShowcase() {
         </div>
         <div className="mt-4 space-y-2.5">
           {rows.map((r, i) => (
-            <motion.div
+            <m.div
               key={r.label}
               initial={{ opacity: 0, x: -12 }}
               animate={{ opacity: 1, x: 0 }}
@@ -46,12 +46,12 @@ export function LandingHeroShowcase() {
               <span className="flex-1 truncate text-sm font-medium">{r.label}</span>
               <span className="font-mono text-sm">{r.price}</span>
               {r.pos === 1 && <Crown className="h-4 w-4 shrink-0 text-warning" />}
-            </motion.div>
+            </m.div>
           ))}
         </div>
-      </motion.div>
+      </m.div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.9, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: [0, 8, 0] }}
         transition={{
@@ -68,9 +68,9 @@ export function LandingHeroShowcase() {
           <AnimatedCounter value={42} suffix="%" />
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground">Ahorro certificado</p>
-      </motion.div>
+      </m.div>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, scale: 0.9, y: -10 }}
         animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
         transition={{
@@ -84,7 +84,7 @@ export function LandingHeroShowcase() {
           <ShieldCheck className="h-3.5 w-3.5" />
         </div>
         <span className="text-xs font-medium text-foreground">OFAC/SDN verificado</span>
-      </motion.div>
+      </m.div>
     </div>
   );
 }
