@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
-import { Sparkles, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
+import type { Prioridad } from "@/lib/types";
 
 interface PasoInfoBasicaProps {
   titulo: string;
@@ -12,10 +11,12 @@ interface PasoInfoBasicaProps {
   onDescripcionChange: (value: string) => void;
   categoria: string;
   onCategoriaChange: (value: string) => void;
+  prioridad: Prioridad;
+  onPrioridadChange: (value: Prioridad) => void;
   esCatalogo: boolean;
 }
 
-export function PasoInfoBasica({ titulo, onTituloChange, descripcion, onDescripcionChange, categoria, onCategoriaChange, esCatalogo }: PasoInfoBasicaProps) {
+export function PasoInfoBasica({ titulo, onTituloChange, descripcion, onDescripcionChange, categoria, onCategoriaChange, prioridad, onPrioridadChange, esCatalogo }: PasoInfoBasicaProps) {
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-semibold">¿Qué necesitas?</h2>
@@ -25,23 +26,12 @@ export function PasoInfoBasica({ titulo, onTituloChange, descripcion, onDescripc
       </div>
       <div className="space-y-2">
         <Label>Descripción del requerimiento</Label>
-        <div className="relative">
-          <Textarea
-            placeholder="Ej: Servicios de migración a la nube para 15 servidores..."
-            rows={4}
-            value={descripcion}
-            onChange={(e) => onDescripcionChange(e.target.value)}
-          />
-          <CopilotoPanel
-            context="nuevo-requerimiento"
-            onInsert={(text) => onDescripcionChange(descripcion ? `${descripcion}\n\n${text}` : text)}
-            trigger={
-              <Button size="sm" variant="outline" className="absolute bottom-2 right-2 gap-1">
-                <Sparkles className="h-3.5 w-3.5 text-primary" /> Ayuda con IA
-              </Button>
-            }
-          />
-        </div>
+        <Textarea
+          placeholder="Ej: Servicios de migración a la nube para 15 servidores..."
+          rows={4}
+          value={descripcion}
+          onChange={(e) => onDescripcionChange(e.target.value)}
+        />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -55,10 +45,14 @@ export function PasoInfoBasica({ titulo, onTituloChange, descripcion, onDescripc
         </div>
         <div className="space-y-2">
           <Label>Prioridad</Label>
-          <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm">
-            <option>Normal</option>
-            <option>Alta</option>
-            <option>Urgente</option>
+          <select
+            className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm"
+            value={prioridad}
+            onChange={(e) => onPrioridadChange(e.target.value as Prioridad)}
+          >
+            <option value="normal">Normal</option>
+            <option value="alta">Alta</option>
+            <option value="urgente">Urgente</option>
           </select>
         </div>
       </div>

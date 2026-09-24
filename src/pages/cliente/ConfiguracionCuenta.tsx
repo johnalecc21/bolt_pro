@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Bell, KeyRound, Globe, ArrowRight } from "lucide-react";
+import { Bell, KeyRound, ArrowRight } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { roleLabels } from "@/lib/mock/users";
 import { TwoFactorSettingsCard } from "@/components/shared/TwoFactorSettingsCard";
@@ -17,15 +17,28 @@ import { supabase } from "@/lib/supabase/client";
 import { apiErrorMessage } from "@/lib/api/http";
 
 export function ConfiguracionCuenta({ portal = "cliente" }: { portal?: "cliente" | "proveedor" | "interno" }) {
-  const { currentUser, activeCompany } = useAuth();
+  const { currentUser, activeCompany, updateProfile } = useAuth();
   const [nombre, setNombre] = useState(currentUser?.nombre ?? "");
-  const [idioma, setIdioma] = useState("es");
+  const [cargo, setCargo] = useState(currentUser?.cargo ?? "");
+  const [guardando, setGuardando] = useState(false);
   const [actual, setActual] = useState("");
   const [nueva, setNueva] = useState("");
   const [cambiando, setCambiando] = useState(false);
 
-  function guardarPerfil() {
-    toast.success("Perfil actualizado");
+  async function guardarPerfil() {
+    if (nombre.trim().length < 2) {
+      toast.error("Escribe tu nombre completo.");
+      return;
+    }
+    setGuardando(true);
+    try {
+      await updateProfile({ nombre: nombre.trim(), cargo: cargo.trim() });
+      toast.success("Perfil actualizado");
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo guardar el perfil."));
+    } finally {
+      setGuardando(false);
+    }
   }
 
   async function cambiarPassword() {
@@ -80,18 +93,10 @@ export function ConfiguracionCuenta({ portal = "cliente" }: { portal?: "cliente"
           </div>
           <div className="space-y-1.5">
             <Label>Cargo</Label>
-            <Input value={currentUser?.cargo ?? ""} disabled />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> Idioma</Label>
-            <select className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm" value={idioma} onChange={(e) => setIdioma(e.target.value)}>
-              <option value="es">Español</option>
-              <option value="en">English</option>
-              <option value="pt">Português</option>
-            </select>
+            <Input value={cargo} onChange={(e) => setCargo(e.target.value)} placeholder="Ej: Jefe de compras" />
           </div>
         </div>
-        <Button className="mt-4" onClick={guardarPerfil}>Guardar cambios</Button>
+        <Button className="mt-4" onClick={guardarPerfil} disabled={guardando}>{guardando ? "Guardando..." : "Guardar cambios"}</Button>
       </Card>
 
       <Card className="p-5">

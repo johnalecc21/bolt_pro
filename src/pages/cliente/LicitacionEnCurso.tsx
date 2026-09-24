@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,14 +9,14 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Send, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, type InvitacionRequerimiento } from "@/lib/api/requerimientos";
+import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, cerrarLicitacion, type InvitacionRequerimiento } from "@/lib/api/requerimientos";
 import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
 import { fetchPreguntas, responderPregunta } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
-function calcularTiempoRestante(fechaLimite: string | undefined) {
-  if (!fechaLimite) return { dias: 0, horas: 0, min: 0, vencido: true };
-  const objetivo = new Date(`${fechaLimite}T23:59:59`).getTime();
+function calcularTiempoRestante(cierre: string | undefined) {
+  if (!cierre) return { dias: 0, horas: 0, min: 0, vencido: true };
+  const objetivo = new Date(cierre).getTime();
   const diffMs = Math.max(0, objetivo - Date.now());
   return {
     dias: Math.floor(diffMs / 86_400_000),
@@ -43,19 +43,18 @@ export function LicitacionEnCurso() {
     [requerimientoId],
   );
   const mode = usePermissionMode();
-  const [tiempo, setTiempo] = useState(() => calcularTiempoRestante(requerimiento?.fechaLimite));
-  const [cerrada, setCerrada] = useState(false);
+  const [tiempo, setTiempo] = useState(() => calcularTiempoRestante(requerimiento?.cierre));
   const [borradores, setBorradores] = useState<Record<string, string>>({});
   const [respondiendoId, setRespondiendoId] = useState<string | null>(null);
 
   useEffect(() => {
-    setTiempo(calcularTiempoRestante(requerimiento?.fechaLimite));
-    if (!requerimiento?.fechaLimite) return;
+    setTiempo(calcularTiempoRestante(requerimiento?.cierre));
+    if (!requerimiento?.cierre) return;
     const intervalo = setInterval(() => {
-      setTiempo(calcularTiempoRestante(requerimiento.fechaLimite));
+      setTiempo(calcularTiempoRestante(requerimiento.cierre));
     }, 30_000);
     return () => clearInterval(intervalo);
-  }, [requerimiento?.fechaLimite]);
+  }, [requerimiento?.cierre]);
 
   if (cargandoRequerimiento) {
     return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
@@ -68,6 +67,11 @@ export function LicitacionEnCurso() {
       </div>
     );
   }
+
+  // Closed = past the deadline (the API rejects offers from then on) or already
+  // moved on to negotiation/adjudication.
+  const enLicitacion = requerimiento.estado === "en_licitacion";
+  const cerrada = !enLicitacion || tiempo.vencido;
 
   // Real invited-provider status: derived from the actual Invitacion + Oferta
   // records for this proceso, not padded with unrelated providers.
@@ -99,10 +103,14 @@ export function LicitacionEnCurso() {
     }
   }
 
-  function cerrarAnticipadamente() {
-    setCerrada(true);
-    toast.success("Licitación cerrada", { description: "Ya puedes revisar el cuadro comparativo." });
-    navigate(`/cliente/licitaciones/${requerimientoId}/comparativo`);
+  async function cerrarAnticipadamente() {
+    try {
+      await cerrarLicitacion(requerimientoId);
+      toast.success("Licitación cerrada", { description: "Ya no se reciben ofertas. Revisa el cuadro comparativo." });
+      navigate(`/cliente/licitaciones/${requerimientoId}/comparativo`);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo cerrar la licitación."));
+    }
   }
 
   async function responder(preguntaId: string) {
@@ -146,10 +154,10 @@ export function LicitacionEnCurso() {
             <div>
               <p className="text-sm text-white/70">
                 {cerrada
-                  ? "Licitación cerrada — no se aceptan nuevas ofertas"
-                  : tiempo.vencido
-                    ? "Plazo vencido — extiéndelo o cierra la licitación"
-                    : "Tiempo restante para cierre"}
+                  ? enLicitacion
+                    ? "Licitación cerrada — no se aceptan nuevas ofertas. Puedes extender el plazo si necesitas más ofertas."
+                    : "Licitación cerrada — el proceso ya avanzó a negociación o adjudicación"
+                  : "Tiempo restante para cierre"}
               </p>
               <div className="mt-2 flex items-end gap-3">
                 <div className="text-center">
@@ -257,8 +265,8 @@ export function LicitacionEnCurso() {
       </div>
 
       {/* Actions */}
-      {!cerrada && mode === "full" && (
-        <div className="flex gap-3">
+      {enLicitacion && mode === "full" && (
+        <div className="flex flex-wrap gap-3">
           <ConfirmDialog
             trigger={<Button variant="outline" className="gap-2"><Calendar className="h-4 w-4" /> Extender plazo</Button>}
             title="Extender plazo de la licitación"
@@ -267,14 +275,19 @@ export function LicitacionEnCurso() {
             confirmLabel="Extender 2 días"
             onConfirm={(motivo) => extenderPlazo(motivo)}
           />
-          <ConfirmDialog
-            trigger={<Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">Cerrar anticipadamente</Button>}
-            title="Cerrar licitación anticipadamente"
-            description="No se aceptarán más ofertas y se generará el cuadro comparativo con las ofertas recibidas hasta ahora."
-            destructive
-            confirmLabel="Cerrar licitación"
-            onConfirm={cerrarAnticipadamente}
-          />
+          {!cerrada && (
+            <ConfirmDialog
+              trigger={<Button variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10">Cerrar anticipadamente</Button>}
+              title="Cerrar licitación anticipadamente"
+              description="No se aceptarán más ofertas y se generará el cuadro comparativo con las ofertas recibidas hasta ahora."
+              destructive
+              confirmLabel="Cerrar licitación"
+              onConfirm={cerrarAnticipadamente}
+            />
+          )}
+          <Button asChild variant={cerrada ? "default" : "ghost"}>
+            <Link to={`/cliente/licitaciones/${requerimientoId}/comparativo`}>Ver cuadro comparativo</Link>
+          </Button>
         </div>
       )}
     </div>

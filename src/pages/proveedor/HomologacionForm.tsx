@@ -7,7 +7,6 @@ import {
   Loader2, Upload, FileCheck, CheckCircle2, AlertTriangle, Lock, Save, ArrowLeft, ArrowRight, Info, Check,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { simulateProcess } from "@/lib/mock/simulate";
 import { useApiData } from "@/hooks/useApiData";
 import {
   fetchMiHomologacion,
@@ -147,8 +146,6 @@ export function HomologacionForm() {
       if (!ok) return;
     }
     setEnviando(true);
-    setPasoActual(stepsValidacion[0].label);
-    await simulateProcess([{ duration: 500, label: stepsValidacion[0].label }]);
     setPasoActual(stepsValidacion[1].label);
     try {
       const resultado = await apiEnviar();

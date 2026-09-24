@@ -1,9 +1,10 @@
 import { api } from "@/lib/api/http";
 import { assertFileSizeOk, uploadToSignedUrl } from "@/lib/api/storage";
 import { formatRequerimientoCodigo } from "@/lib/codigo";
-import type { EstadoReq, Requerimiento } from "@/lib/types";
+import type { EstadoReq, Prioridad, Requerimiento } from "@/lib/types";
 import type { Moneda } from "@/lib/moneda";
 import { mapPaginado, type Paginado } from "@/lib/api/paginacion";
+import { fechaLocal } from "@/lib/fecha";
 
 const BUCKET = "requerimientos-documentos";
 
@@ -62,6 +63,7 @@ interface ApiRequerimiento {
   montoEstimado: number;
   moneda: Moneda;
   fechaLimite: string;
+  prioridad?: "NORMAL" | "ALTA" | "URGENTE";
   progreso: number;
   proveedoresInvitados: number;
   ofertasRecibidas: number;
@@ -91,7 +93,9 @@ function toRequerimiento(r: ApiRequerimiento): Requerimiento {
     estado: r.estado.toLowerCase() as EstadoReq,
     montoEstimado: r.montoEstimado,
     moneda: r.moneda,
-    fechaLimite: r.fechaLimite.slice(0, 10),
+    fechaLimite: fechaLocal(r.fechaLimite),
+    cierre: r.fechaLimite,
+    prioridad: (r.prioridad ?? "NORMAL").toLowerCase() as Prioridad,
     progreso: r.progreso,
     proveedoresInvitados: r.proveedoresInvitados,
     ofertasRecibidas: r.ofertasRecibidas,
@@ -171,10 +175,11 @@ export async function createRequerimiento(payload: {
   especificaciones?: Especificacion[];
   proveedorIds?: string[];
   centroCostoId?: string;
+  prioridad?: Prioridad;
 }): Promise<CreateRequerimientoResultado> {
   const { data } = await api.post<
     ApiRequerimiento & { excluidosPorHomologacion?: ProveedorExcluido[]; presupuesto?: EvaluacionPresupuesto | null }
-  >("/requerimientos", payload);
+  >("/requerimientos", { ...payload, prioridad: payload.prioridad?.toUpperCase() });
   return {
     requerimiento: toRequerimiento(data),
     excluidos: data.excluidosPorHomologacion ?? [],
@@ -262,4 +267,22 @@ export async function subirDocumentoRequerimiento(id: string, file: File) {
 export async function obtenerUrlDescargaDocumento(id: string, docId: string): Promise<{ url: string; nombre: string }> {
   const { data } = await api.get<{ url: string; nombre: string }>(`/requerimientos/${id}/documentos/${docId}/url`);
   return data;
+}
+
+/** Ends the tender now; the API rejects new or edited offers from this moment. */
+export async function cerrarLicitacion(id: string): Promise<Requerimiento> {
+  const { data } = await api.post<ApiRequerimiento>(`/requerimientos/${id}/cerrar-licitacion`);
+  return toRequerimiento(data);
+}
+
+/** Corrects a rejected (back-to-borrador) requerimiento and sends it to approval again. */
+export async function reenviarRequerimiento(
+  id: string,
+  cambios: { titulo?: string; descripcion?: string; montoEstimado?: number; fechaLimite?: string; prioridad?: Prioridad },
+): Promise<Requerimiento> {
+  const { data } = await api.post<ApiRequerimiento>(`/requerimientos/${id}/reenviar`, {
+    ...cambios,
+    prioridad: cambios.prioridad?.toUpperCase(),
+  });
+  return toRequerimiento(data);
 }

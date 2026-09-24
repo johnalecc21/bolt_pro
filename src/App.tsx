@@ -56,8 +56,6 @@ const MiVitrina = lazy(() => import("@/pages/proveedor/MiVitrina").then((m) => (
 
 const DashboardConsultor = lazy(() => import("@/pages/interno/DashboardConsultor").then((m) => ({ default: m.DashboardConsultor })));
 const ColaHomologacion = lazy(() => import("@/pages/interno/ColaHomologacion").then((m) => ({ default: m.ColaHomologacion })));
-const AsistenteRFP = lazy(() => import("@/pages/interno/AsistenteRFP").then((m) => ({ default: m.AsistenteRFP })));
-const AuditoriaAhorro = lazy(() => import("@/pages/interno/AuditoriaAhorro").then((m) => ({ default: m.AuditoriaAhorro })));
 const MediacionDisputas = lazy(() => import("@/pages/interno/MediacionDisputas").then((m) => ({ default: m.MediacionDisputas })));
 const AdminClientes = lazy(() => import("@/pages/interno/AdminClientes").then((m) => ({ default: m.AdminClientes })));
 const BenchmarkMercado = lazy(() => import("@/pages/interno/BenchmarkMercado").then((m) => ({ default: m.BenchmarkMercado })));
@@ -158,8 +156,6 @@ export default function App() {
           >
             <Route path="dashboard" element={<DashboardConsultor />} />
             <Route path="homologacion" element={<RequireRole allow={["compliance_ops"]}><ColaHomologacion /></RequireRole>} />
-            <Route path="editor-rfp" element={<AsistenteRFP />} />
-            <Route path="auditoria" element={<AuditoriaAhorro />} />
             <Route path="mediacion" element={<MediacionDisputas />} />
             <Route path="clientes" element={<RequireRole allow={["compliance_ops"]}><AdminClientes /></RequireRole>} />
             <Route path="benchmark" element={<BenchmarkMercado />} />

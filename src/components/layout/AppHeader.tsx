@@ -50,8 +50,6 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
   interno: [
     { label: "Casos activos", to: "dashboard" },
     { label: "Cola de homologación", to: "homologacion", roles: ["compliance_ops"] },
-    { label: "Editor RFP", to: "editor-rfp" },
-    { label: "Auditoría de ahorro", to: "auditoria" },
     { label: "Mediación de disputas", to: "mediacion", roles: ["compliance_ops"] },
     { label: "Admin clientes", to: "clientes", roles: ["compliance_ops"] },
     { label: "Benchmark de mercado", to: "benchmark", roles: ["compliance_ops"] },

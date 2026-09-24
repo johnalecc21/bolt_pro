@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Trophy, FileText, PenTool, ShieldAlert, ShieldCheck, Check, Send, Loader2, FileQuestion, FileDown } from "lucide-react";
-import { simulateProcess } from "@/lib/mock/simulate";
 import { useApiData } from "@/hooks/useApiData";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { fetchRequerimiento } from "@/lib/api/requerimientos";
@@ -20,7 +19,6 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 
 import { formatMoney } from "@/lib/moneda";
-const UMBRAL_LEGAL = 50000;
 
 export function Adjudicacion() {
   const { id } = useParams();
@@ -29,9 +27,8 @@ export function Adjudicacion() {
   const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
   const { data: adjudicacion, loading: loadingAdj, reload } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
   const [notificarPerdedores, setNotificarPerdedores] = useState(true);
-  const [firmando, setFirmando] = useState<string | null>(null);
+  const [firmando, setFirmando] = useState(false);
   const [firmaError, setFirmaError] = useState<string | null>(null);
-  const [firmaIntentos, setFirmaIntentos] = useState(0);
 
   if (loadingReq || loadingAdj) {
     return <div className="p-6 text-sm text-muted-foreground">Cargando adjudicación...</div>;
@@ -43,8 +40,15 @@ export function Adjudicacion() {
         <EmptyState
           icon={FileQuestion}
           title="Este requerimiento aún no tiene adjudicación"
-          description="La adjudicación solo está disponible después de comparar ofertas o cerrar una ronda de negociación."
+          description="Elige al ganador desde el cuadro comparativo, o cierra la ronda de negociación para adjudicar a la mejor puja."
         />
+        {requerimientoId && (
+          <div className="mt-4 flex justify-center">
+            <Button asChild variant="outline">
+              <Link to={`/cliente/licitaciones/${requerimientoId}/comparativo`}>Ir al cuadro comparativo</Link>
+            </Button>
+          </div>
+        )}
       </div>
     );
   }
@@ -52,7 +56,7 @@ export function Adjudicacion() {
   const presupuestoInicial = requerimiento.montoEstimado;
   const ahorro = presupuestoInicial - adjudicacion.precioFinal;
   const ahorroPct = Math.round((ahorro / presupuestoInicial) * 100);
-  const requiereLegal = adjudicacion.precioFinal > UMBRAL_LEGAL;
+  const requiereLegal = adjudicacion.requiereRevisionLegal;
   const puedeFirmar = adjudicacion.confirmada && (!requiereLegal || adjudicacion.revisionLegal);
 
   async function confirmarAdjudicacionClick() {
@@ -90,35 +94,21 @@ export function Adjudicacion() {
     }
   }
 
-  async function enviarAFirma() {
-    setFirmando("Preparando documento...");
+  async function firmarContrato() {
+    setFirmando(true);
     setFirmaError(null);
-    await simulateProcess([{ label: "Enviando a DocuSign...", duration: 700 }], (label) => setFirmando(label));
-    // First attempt deterministically fails so the error path is easy to demo/QA.
-    if (firmaIntentos === 0) {
-      setFirmaIntentos(1);
-      setFirmando(null);
-      setFirmaError("No pudimos conectar con DocuSign. Verifica tu conexión e inténtalo de nuevo en unos minutos.");
-      return;
-    }
-    await simulateProcess(
-      [
-        { label: "Recolectando firmas...", duration: 900 },
-      ],
-      (label) => setFirmando(label)
-    );
     try {
       await apiFirmar(requerimientoId, notificarPerdedores);
-      setFirmando(null);
       reload();
-      if (notificarPerdedores) {
-        toast.success("Contrato firmado", { description: "Se notificó a los proveedores no ganadores con feedback estructurado." });
-      } else {
-        toast.success("Contrato firmado");
-      }
+      toast.success("Contrato firmado", {
+        description: notificarPerdedores
+          ? "Se generó el contrato con sus hitos y se notificó a los proveedores no ganadores."
+          : "Se generó el contrato con sus hitos de seguimiento.",
+      });
     } catch (err) {
-      setFirmando(null);
       setFirmaError(apiErrorMessage(err, "No se pudo firmar el contrato."));
+    } finally {
+      setFirmando(false);
     }
   }
 
@@ -226,7 +216,7 @@ export function Adjudicacion() {
                   <strong>Revisión legal completada</strong>
                 ) : (
                   <>
-                    <strong>Requiere revisión legal</strong> — El monto supera $50,000. El contrato quedará bloqueado hasta la aprobación del equipo legal.
+                    <strong>Requiere revisión legal</strong> — El monto supera {formatMoney(adjudicacion.umbralRevisionLegal, requerimiento.moneda)}. El contrato quedará bloqueado hasta la aprobación del equipo legal.
                   </>
                 )}
               </p>
@@ -242,7 +232,7 @@ export function Adjudicacion() {
       <Card className="p-6">
         <div className="mb-4 flex items-center gap-2">
           <PenTool className="h-5 w-5 text-primary" />
-          <h2 className="font-semibold">Contrato — Vista previa editable</h2>
+          <h2 className="font-semibold">Contrato — Vista previa</h2>
         </div>
         <div className="rounded-lg border border-border p-5 text-sm">
           <p className="mb-3 font-medium">Contrato de Prestación de Servicios</p>
@@ -260,33 +250,33 @@ export function Adjudicacion() {
           <span className="flex items-center gap-2 text-sm font-medium text-success"><ShieldCheck className="h-4 w-4" /> Contrato firmado</span>
         ) : firmando ? (
           <Button disabled>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> {firmando}
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Generando contrato...
           </Button>
         ) : (
           <ConfirmDialog
             trigger={
               <Button disabled={!puedeFirmar}>
-                <Send className="mr-2 h-4 w-4" /> Enviar a firma electrónica
+                <Send className="mr-2 h-4 w-4" /> Firmar y generar contrato
               </Button>
             }
-            title="Enviar a firma electrónica"
-            description="Se generará el contrato final y se enviará a DocuSign para firma. Esta acción no se puede deshacer."
-            confirmLabel="Enviar"
-            onConfirm={enviarAFirma}
+            title="Firmar y generar contrato"
+            description="Se registra la firma, se genera el contrato con sus hitos de seguimiento y el proceso pasa a cumplimiento. Esta acción no se puede deshacer."
+            confirmLabel="Firmar"
+            onConfirm={firmarContrato}
           />
         )}
       </div>
       {firmaError && (
         <div className="flex items-center justify-between gap-3 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">
           <span>{firmaError}</span>
-          <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 shrink-0" onClick={enviarAFirma}>
+          <Button size="sm" variant="outline" className="border-destructive/30 text-destructive hover:bg-destructive/10 shrink-0" onClick={firmarContrato}>
             Reintentar
           </Button>
         </div>
       )}
       {!puedeFirmar && !adjudicacion.yaFirmado && (
         <p className="text-right text-xs text-muted-foreground">
-          {!adjudicacion.confirmada ? "Confirma la adjudicación antes de enviar a firma." : "Completa la revisión legal antes de enviar a firma."}
+          {!adjudicacion.confirmada ? "Confirma la adjudicación antes de firmar." : "Completa la revisión legal antes de firmar."}
         </p>
       )}
     </div>

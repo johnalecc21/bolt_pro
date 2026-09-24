@@ -9,6 +9,8 @@ export type EstadoReq =
 
 import type { Moneda } from "@/lib/moneda";
 
+export type Prioridad = "normal" | "alta" | "urgente";
+
 export interface Requerimiento {
   id: string;
   /** Human-readable sequential code (REQ-0001, ...) — show this, not `id`. */
@@ -18,7 +20,11 @@ export interface Requerimiento {
   estado: EstadoReq;
   montoEstimado: number;
   moneda: Moneda;
+  /** Local calendar date, for display. */
   fechaLimite: string;
+  /** Exact tender closing timestamp (ISO). */
+  cierre: string;
+  prioridad: Prioridad;
   progreso: number;
   proveedoresInvitados: number;
   ofertasRecibidas: number;

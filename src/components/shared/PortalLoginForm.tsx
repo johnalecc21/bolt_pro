@@ -10,7 +10,6 @@ import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp
 import { Mail, Lock, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import type { Portal } from "@/lib/mock/users";
-import { sleep } from "@/lib/mock/simulate";
 import { apiErrorMessage } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
 
@@ -93,14 +92,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
     }
   }
 
-  async function handleSSO(provider: string) {
-    if (provider !== "Google") {
-      setSsoLoading(provider);
-      await sleep(900);
-      setSsoLoading(null);
-      toast.info(`Autenticación con ${provider} no disponible en este entorno de demostración.`);
-      return;
-    }
+  async function handleSSO(provider: "Google") {
     setSsoLoading(provider);
     const { error } = await loginWithGoogle(portal);
     if (error) {
@@ -210,17 +202,15 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         <span className="text-xs text-muted-foreground">o continúa con</span>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <Button variant="outline" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
-          {ssoLoading === "Google" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Google"}
-        </Button>
-        <Button variant="outline" onClick={() => handleSSO("Microsoft")} disabled={!!ssoLoading}>
-          {ssoLoading === "Microsoft" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Microsoft"}
-        </Button>
-      </div>
-      <div className="mt-6 rounded-lg bg-muted p-3 text-center text-xs text-muted-foreground">
-        <span className="font-medium text-foreground">Demo:</span> {demoHint}
-      </div>
+      <Button variant="outline" className="w-full" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
+        {ssoLoading === "Google" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Google"}
+      </Button>
+      {/* Only for demo environments: never show shared credentials on a real deployment. */}
+      {import.meta.env.VITE_MOSTRAR_CREDENCIALES_DEMO === "true" && (
+        <div className="mt-6 rounded-lg bg-muted p-3 text-center text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">Demo:</span> {demoHint}
+        </div>
+      )}
       {footer && <div className="mt-6">{footer}</div>}
 
       <Dialog open={forgotOpen} onOpenChange={setForgotOpen}>

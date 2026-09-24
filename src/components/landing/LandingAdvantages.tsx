@@ -92,10 +92,13 @@ function SavingsCell() {
           <TrendingUp className="h-5 w-5" />
         </div>
         <div>
-          <div className="text-5xl font-bold tabular-nums">+{pct}%</div>
-          <h3 className="mt-3 text-lg font-semibold">Ahorro certificado y medible</h3>
+          <div className="flex items-baseline gap-2">
+            <span className="text-5xl font-bold tabular-nums">+{pct}%</span>
+            <span className="text-xs text-white/60">ejemplo</span>
+          </div>
+          <h3 className="mt-3 text-lg font-semibold">Ahorro medido en cada proceso</h3>
           <p className="mt-2 max-w-sm text-sm text-white/75">
-            Cada negociación queda registrada con su línea base y ahorro real, listo para auditoría del CFO.
+            Cada adjudicación compara el precio final con el presupuesto aprobado, y la analítica del CFO suma el ahorro real.
           </p>
           <svg viewBox="0 0 280 60" className="mt-6 w-full max-w-xs" fill="none">
             <m.path

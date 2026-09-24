@@ -17,6 +17,7 @@ import { fetchPreguntas, preguntar as apiPreguntar } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
 import { formatMoney } from "@/lib/moneda";
+import { haVencido } from "@/lib/fecha";
 export function CargaOferta() {
   const { requerimientoId } = useParams();
   return requerimientoId ? <OfertaDetalle requerimientoId={requerimientoId} /> : <MisOfertasList />;
@@ -188,6 +189,10 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
         {oferta.enviada ? (
           <div className="flex items-center gap-2 rounded-lg bg-success/10 p-4 text-sm text-success">
             <CheckCircle2 className="h-5 w-5" /> Tu oferta fue enviada y está en revisión. Ya no es editable.
+          </div>
+        ) : invitacion && haVencido(invitacion.cierre) ? (
+          <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
+            La licitación cerró el {invitacion.fechaLimite}. Ya no se reciben ofertas para este proceso.
           </div>
         ) : (
           <>

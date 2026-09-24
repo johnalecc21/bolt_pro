@@ -1,26 +1,28 @@
 import { m } from "framer-motion";
 import { Reveal, StaggerGroup, staggerItem, AnimatedCounter } from "./Reveal";
 
-const companies = [
-  "CloudSphere Technologies",
-  "EcoPack Industrial",
-  "LogiFleet LATAM",
-  "AuditTrust Asociados",
-  "NovaTech Consulting",
-  "GlobalChem Supplies",
-  "TalentHub Solutions",
-  "SoftDesign Studio",
+// What the product actually does on every process — no invented customer
+// logos or savings figures until there are real, verifiable ones to show.
+const controles = [
+  "OFAC / SDN",
+  "Lista consolidada ONU",
+  "Procuraduría",
+  "Contraloría",
+  "Policía Nacional",
+  "SARLAFT",
+  "OCR de documentos",
+  "Bitácora auditable",
 ];
 
 const stats = [
-  { value: 42, suffix: "%", label: "Ahorro promedio certificado" },
-  { value: 65, suffix: "%", label: "Menos tiempo de ciclo" },
-  { value: 100, suffix: "%", label: "Trazabilidad de cada decisión" },
-  { value: 24, suffix: "/7", label: "Compliance automatizado" },
+  { value: 3, suffix: "", label: "Portales: comprador, proveedor y equipo interno" },
+  { value: 13, suffix: "", label: "Documentos evaluados en la homologación" },
+  { value: 6, suffix: "", label: "Monedas de la región soportadas" },
+  { value: 100, suffix: "%", label: "Decisiones registradas en auditoría" },
 ];
 
 export function LandingTrustBar() {
-  const loop = [...companies, ...companies];
+  const loop = [...controles, ...controles];
   return (
     <section className="border-y border-border bg-muted/40 py-14">
       <div className="mx-auto max-w-5xl px-6">
@@ -38,7 +40,7 @@ export function LandingTrustBar() {
 
       <Reveal className="mx-auto mt-14 max-w-3xl px-6 text-center">
         <p className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-          Con la confianza de equipos de compras en toda Latinoamérica
+          Controles incluidos en cada homologación
         </p>
       </Reveal>
       <div className="relative mt-6 overflow-hidden">

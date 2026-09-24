@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import type { Company, MockUser, Portal } from "@/lib/mock/users";
-import { apiAceptarTerminos, apiMe, toCompany, toMockUser } from "@/lib/api/auth";
+import { apiAceptarTerminos, apiActualizarPerfil, apiMe, toCompany, toMockUser } from "@/lib/api/auth";
 import { setActiveCompanyId, setUnauthorizedHandler } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
 import type { AuthContextValue, LoginResult, LoginStep, PendingUser } from "@/lib/auth/types";
@@ -203,9 +203,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCurrentUser((prev) => (prev ? { ...prev, terminosAceptadosEn: updated.terminosAceptadosEn } : prev));
   }
 
+  async function updateProfile(cambios: { nombre?: string; cargo?: string }) {
+    const actualizado = await apiActualizarPerfil(cambios);
+    setCurrentUser((prev) => (prev ? { ...prev, nombre: actualizado.nombre, iniciales: actualizado.iniciales, cargo: actualizado.cargo ?? "" } : prev));
+  }
+
   const value = useMemo<AuthContextValue>(() => ({
     currentUser, activeCompany, loginStep, pendingUser, sessionLoading, oauthError,
-    login, loginWithGoogle, verify2FA, selectCompany, switchCompany, logout, clearOauthError, acceptTerms,
+    login, loginWithGoogle, verify2FA, selectCompany, switchCompany, logout, clearOauthError, acceptTerms, updateProfile,
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [currentUser, activeCompany, loginStep, pendingUser, sessionLoading, oauthError]);
 

@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import type { Moneda } from "@/lib/moneda";
+import { fechaLocal } from "@/lib/fecha";
 
 export interface OfertaProceso {
   id: string;
@@ -46,7 +47,10 @@ export interface MiOfertaResumen {
   titulo: string;
   cliente: string;
   categoria: string;
+  /** Local calendar date, for display. */
   fechaLimite: string;
+  /** Exact closing timestamp (ISO). */
+  cierre: string;
   moneda: Moneda;
   enviada: boolean;
   precioTotal: number | null;
@@ -69,7 +73,8 @@ export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
     titulo: o.titulo,
     cliente: o.cliente,
     categoria: o.categoria,
-    fechaLimite: o.fechaLimite.slice(0, 10),
+    fechaLimite: fechaLocal(o.fechaLimite),
+    cierre: o.fechaLimite,
     moneda: o.moneda,
     enviada: o.oferta?.enviada ?? false,
     precioTotal: o.oferta?.precioTotal ?? null,

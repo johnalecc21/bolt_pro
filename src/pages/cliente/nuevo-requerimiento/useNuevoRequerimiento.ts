@@ -9,6 +9,7 @@ import { createRequerimiento, describirExcluidos } from "@/lib/api/requerimiento
 import { useMonedaBase } from "@/hooks/useMonedaBase";
 import type { Moneda } from "@/lib/moneda";
 import { apiErrorMessage } from "@/lib/api/http";
+import type { Prioridad } from "@/lib/types";
 
 export const CATEGORIAS_CATALOGO = ["Servicios Generales", "Materia Prima"];
 export const TOTAL_STEPS = 6;
@@ -19,6 +20,7 @@ export function useNuevoRequerimiento() {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [categoria, setCategoria] = useState("Tecnología");
+  const [prioridad, setPrioridad] = useState<Prioridad>("normal");
   const [presupuesto, setPresupuesto] = useState("");
   const monedaBase = useMonedaBase();
   const [moneda, setMoneda] = useState<Moneda>(monedaBase);
@@ -77,6 +79,7 @@ export function useNuevoRequerimiento() {
         titulo: titulo.trim(),
         descripcion: descripcionCompleta || undefined,
         categoria,
+        prioridad,
         montoEstimado: Number(presupuesto),
         moneda,
         centroCostoId: centroCostoId || undefined,
@@ -112,6 +115,7 @@ export function useNuevoRequerimiento() {
     titulo, setTitulo,
     descripcion, setDescripcion,
     categoria, setCategoria,
+    prioridad, setPrioridad,
     presupuesto, setPresupuesto,
     moneda, setMoneda,
     centroCostoId, setCentroCostoId, centrosCosto, exigeCentroCosto,

@@ -7,7 +7,6 @@ import { Slider } from "@/components/ui/slider";
 import { Trophy, AlertTriangle, Download, Settings, ArrowRight, SlidersHorizontal, FileQuestion } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { usePermissionMode } from "@/components/auth/RequireRole";
-import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
@@ -74,9 +73,9 @@ export function CuadroComparativo() {
   const ofertasBase = (ofertasData ?? []).filter((o) => o.enviada);
   const ofertas = useMemo(() => computeScores(ofertasBase, appliedWeights), [ofertasBase, appliedWeights]);
   const sorted = [...ofertas].sort((a, b) => b.score - a.score);
-  // Once a proceso is already adjudicado y firmado, the actual signed winner
-  // takes precedence over whatever the live weight sliders currently compute.
-  const winner = adjudicacion?.yaFirmado
+  // Once a proceso has an adjudicación, the chosen winner takes precedence
+  // over whatever the live weight sliders currently compute.
+  const winner = adjudicacion
     ? ofertas.find((o) => o.proveedorId === adjudicacion.proveedorId) ?? sorted[0]
     : sorted[0];
   const minPrecio = ofertasBase.length ? Math.min(...ofertasBase.map((o) => o.precio)) : 0;
@@ -110,14 +109,7 @@ export function CuadroComparativo() {
     setAdjudicando(true);
     try {
       if (!adjudicacion) {
-        await crearAdjudicacion({
-          requerimientoId,
-          proveedorId: winner.proveedorId,
-          precioFinal: winner.precio,
-          plazoDias: winner.plazo,
-          condicionesPagoDias: winner.pago,
-          garantiaMeses: 12,
-        });
+        await crearAdjudicacion({ requerimientoId, proveedorId: winner.proveedorId });
       }
       navigate(`/cliente/adjudicacion/${requerimientoId}`);
     } catch (err) {
@@ -282,34 +274,30 @@ export function CuadroComparativo() {
         <strong>Precio promedio de las ofertas recibidas:</strong> <strong>{formatMoney(benchmarkEstimado, requerimiento.moneda)}</strong>. La oferta de {winner.proveedor} está <strong className={brechaBenchmark >= 0 ? "text-success" : "text-destructive"}>{Math.abs(brechaBenchmark)}% {brechaBenchmark >= 0 ? "por debajo" : "por encima"}</strong> del promedio.
       </div>
 
-      {/* Consultant Note */}
-      <Card className="p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-semibold">AC</div>
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <p className="text-sm font-medium">Ana Consultora</p>
-              <Badge variant="secondary" className="text-[10px]">Consultora de sourcing</Badge>
-            </div>
-            <p className="mt-2 text-sm text-muted-foreground">Revisa esta comparación con tu equipo de sourcing antes de adjudicar — {winner.proveedor} lidera con el mejor balance entre precio, plazo y calidad según los pesos configurados.</p>
-          </div>
-        </div>
-      </Card>
-
       {/* Actions */}
-      {mode === "full" && (
+      {mode === "full" && adjudicacion && (
         <div className="flex gap-3">
-          <Link to={`/cliente/negociacion/${requerimientoId}`}>
-            <Button variant="outline" className="gap-2">
-              <Settings className="h-4 w-4" /> Iniciar negociación
-            </Button>
-          </Link>
-          <Button className="gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
-            <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : "Adjudicar directamente"}
+          <Button asChild className="gap-2">
+            <Link to={`/cliente/adjudicacion/${requerimientoId}`}>
+              <ArrowRight className="h-4 w-4" /> Ver adjudicación
+            </Link>
           </Button>
         </div>
       )}
-      <CopilotoPanel context="comparativo" />
+      {mode === "full" && !adjudicacion && ofertas.length > 0 && (
+        <div className="flex flex-wrap gap-3">
+          {ofertas.length >= 2 && (
+            <Button asChild variant="outline" className="gap-2">
+              <Link to={`/cliente/negociacion/${requerimientoId}`}>
+                <Settings className="h-4 w-4" /> Iniciar negociación
+              </Link>
+            </Button>
+          )}
+          <Button className="gap-2" onClick={adjudicarDirectamente} disabled={adjudicando}>
+            <ArrowRight className="h-4 w-4" /> {adjudicando ? "Adjudicando..." : `Adjudicar a ${winner?.proveedor ?? "la mejor oferta"}`}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

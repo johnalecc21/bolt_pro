@@ -86,6 +86,11 @@ export function Requerimientos() {
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground">{r.codigo}</span>
                     <StatusBadge estado={r.estado} />
+                    {r.prioridad !== "normal" && (
+                      <span className={r.prioridad === "urgente" ? "text-xs font-medium text-destructive" : "text-xs font-medium text-warning-foreground"}>
+                        {r.prioridad === "urgente" ? "Urgente" : "Prioridad alta"}
+                      </span>
+                    )}
                   </div>
                   <p className="mt-1 truncate text-sm font-medium">{r.titulo}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -93,7 +98,7 @@ export function Requerimientos() {
                     <span>•</span>
                     <span>{formatMoneyCompact(r.montoEstimado, r.moneda)}</span>
                     <span>•</span>
-                    <span>Vence {r.fechaLimite}</span>
+                    <span>Cierra {r.fechaLimite}</span>
                     <span>•</span>
                     <span>Solicitante: {r.solicitante}</span>
                     {r.centroCosto && (

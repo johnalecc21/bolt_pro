@@ -1,6 +1,3 @@
-import { Button } from "@/components/ui/button";
-import { CopilotoPanel } from "@/components/shared/CopilotoPanel";
-import { Sparkles } from "lucide-react";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 
 interface Criterios {
@@ -44,14 +41,6 @@ export function PasoRevision({ titulo, descripcion, categoria, presupuesto, mone
           </div>
         ))}
       </div>
-      <CopilotoPanel
-        context="nuevo-requerimiento"
-        trigger={
-          <Button variant="outline" className="w-full">
-            <Sparkles className="mr-2 h-4 w-4 text-primary" /> Solicitar ayuda de consultor
-          </Button>
-        }
-      />
     </div>
   );
 }

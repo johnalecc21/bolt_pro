@@ -14,6 +14,9 @@ export interface Adjudicacion {
   poId: string;
   confirmada: boolean;
   revisionLegal: boolean;
+  /** Decided server-side from the amount and the requerimiento's currency. */
+  requiereRevisionLegal: boolean;
+  umbralRevisionLegal: number;
   yaFirmado: boolean;
 }
 
@@ -27,6 +30,8 @@ const apiAdjudicacionSchema = z.object({
   confirmada: z.boolean(),
   revisionLegal: z.boolean(),
   firmado: z.boolean(),
+  requiereRevisionLegal: z.boolean(),
+  umbralRevisionLegal: z.number(),
 });
 
 const firmarResponseSchema = z.object({ ok: z.boolean(), poId: z.string() });
@@ -48,18 +53,14 @@ export async function fetchAdjudicacion(requerimientoId: string): Promise<Adjudi
     poId: data.poId,
     confirmada: data.confirmada,
     revisionLegal: data.revisionLegal,
+    requiereRevisionLegal: data.requiereRevisionLegal,
+    umbralRevisionLegal: data.umbralRevisionLegal,
     yaFirmado: data.firmado,
   };
 }
 
-export async function crearAdjudicacion(payload: {
-  requerimientoId: string;
-  proveedorId: string;
-  precioFinal: number;
-  plazoDias: number;
-  condicionesPagoDias: number;
-  garantiaMeses: number;
-}) {
+/** Price and terms are set by the server from the offer (or the final negotiated bid). */
+export async function crearAdjudicacion(payload: { requerimientoId: string; proveedorId: string }) {
   const { data } = await api.post("/adjudicacion", payload);
   return data;
 }

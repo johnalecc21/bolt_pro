@@ -41,8 +41,8 @@ const services = [
   {
     key: "auditoria",
     icon: LineChart,
-    title: "Auditoría de ahorro",
-    description: "Ahorro certificado contra la línea base, listo para el reporte del CFO.",
+    title: "Analítica de ahorro",
+    description: "Ahorro contra el presupuesto aprobado en cada adjudicación, consolidado para el CFO.",
   },
   {
     key: "disputas",

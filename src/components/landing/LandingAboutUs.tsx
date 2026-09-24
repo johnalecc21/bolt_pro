@@ -22,9 +22,9 @@ const timeline = [
 ];
 
 const milestones = [
-  { value: 500, suffix: "+", label: "Proveedores homologados" },
-  { value: 12, suffix: "", label: "Países con operación activa" },
-  { value: 98, suffix: "%", label: "Satisfacción de clientes" },
+  { value: 2, suffix: "", label: "Listas internacionales verificadas automáticamente" },
+  { value: 6, suffix: "", label: "Monedas de Latinoamérica" },
+  { value: 7, suffix: "", label: "Etapas trazadas, de la solicitud al cierre" },
 ];
 
 export function LandingAboutUs() {

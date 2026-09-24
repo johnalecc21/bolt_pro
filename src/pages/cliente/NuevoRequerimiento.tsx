@@ -17,6 +17,7 @@ export function NuevoRequerimiento() {
     titulo, setTitulo,
     descripcion, setDescripcion,
     categoria, setCategoria,
+    prioridad, setPrioridad,
     presupuesto, setPresupuesto,
     moneda, setMoneda,
     centroCostoId, setCentroCostoId, centrosCosto, exigeCentroCosto,
@@ -57,6 +58,8 @@ export function NuevoRequerimiento() {
             descripcion={descripcion}
             onDescripcionChange={setDescripcion}
             categoria={categoria}
+            prioridad={prioridad}
+            onPrioridadChange={setPrioridad}
             onCategoriaChange={setCategoria}
             esCatalogo={esCatalogo}
           />

@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, CheckCircle2, Building2 } from "lucide-react";
-import { simulateProcess } from "@/lib/mock/simulate";
 import { apiRegisterProveedor } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
 import { usePageMeta } from "@/hooks/usePageMeta";
@@ -26,14 +25,14 @@ export function RegistroProveedor() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setStep("verifying");
     try {
       await apiRegisterProveedor({ razonSocial, email, password, categoria, pais });
     } catch (err) {
       setError(apiErrorMessage(err, "No se pudo crear la cuenta."));
+      setStep("form");
       return;
     }
-    setStep("verifying");
-    await simulateProcess([{ label: "Enviando verificación...", duration: 700 }]);
     setStep("done");
     toast.success("Cuenta creada", { description: email });
   }
@@ -109,7 +108,7 @@ export function RegistroProveedor() {
         {step === "verifying" && (
           <div className="flex flex-col items-center gap-3 py-8">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Enviando verificación...</p>
+            <p className="text-sm text-muted-foreground">Creando tu cuenta...</p>
           </div>
         )}
 

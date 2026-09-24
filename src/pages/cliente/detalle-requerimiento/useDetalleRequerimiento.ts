@@ -113,6 +113,7 @@ export function useDetalleRequerimiento(id: string | undefined) {
   return {
     req,
     loading,
+    reload,
     comentario,
     setComentario,
     sending,

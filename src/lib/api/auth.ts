@@ -62,3 +62,8 @@ export async function apiRegisterProveedor(payload: {
   const { data } = await api.post<{ id: string; email: string }>("/auth/registro-proveedor", payload);
   return data;
 }
+
+export async function apiActualizarPerfil(cambios: { nombre?: string; cargo?: string }) {
+  const { data } = await api.patch<{ id: string; nombre: string; iniciales: string; cargo: string | null }>("/auth/me", cambios);
+  return data;
+}

@@ -1,5 +1,6 @@
 import { api } from "@/lib/api/http";
 import type { Moneda } from "@/lib/moneda";
+import { fechaLocal } from "@/lib/fecha";
 
 export type EstadoInvitacion = "nueva" | "vista" | "respondida" | "vencida" | "declinada";
 
@@ -9,7 +10,10 @@ export interface Invitacion {
   titulo: string;
   categoria: string;
   cliente: string;
+  /** Local calendar date, for display. */
   fechaLimite: string;
+  /** Exact closing timestamp (ISO). */
+  cierre: string;
   estado: EstadoInvitacion;
   moneda: Moneda;
 }
@@ -31,7 +35,8 @@ function toInvitacion(i: ApiInvitacion): Invitacion {
     titulo: i.requerimiento?.titulo ?? "",
     categoria: i.categoria,
     cliente: i.company.nombre,
-    fechaLimite: i.fechaLimite.slice(0, 10),
+    fechaLimite: fechaLocal(i.fechaLimite),
+    cierre: i.fechaLimite,
     estado: i.estado.toLowerCase() as EstadoInvitacion,
     moneda: i.requerimiento?.moneda ?? "USD",
   };

@@ -11,12 +11,7 @@ import { useSubasta } from "@/lib/api/subasta";
 import { formatMoney } from "@/lib/moneda";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchInvitaciones } from "@/lib/api/invitaciones";
-function formatCountdown(deadlineMs: number) {
-  const remaining = Math.max(0, deadlineMs - Date.now());
-  const min = Math.floor(remaining / 60000);
-  const sec = Math.floor((remaining % 60000) / 1000);
-  return `${String(min).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
-}
+import { cuentaRegresiva } from "@/lib/fecha";
 
 export function SubastaVivo() {
   const { requerimientoId } = useParams();
@@ -65,7 +60,7 @@ export function SubastaVivo() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-white/70">{auction.status === "activa" ? "Tiempo restante" : "Subasta cerrada"}</p>
-              <p className="text-3xl font-bold">{auction.status === "activa" ? formatCountdown(auction.deadlineMs) : "00:00"}</p>
+              <p className="text-3xl font-bold">{auction.status === "activa" ? cuentaRegresiva(auction.deadlineMs) : "00:00"}</p>
             </div>
             {auction.status === "activa" && (
               <span className="flex items-center gap-2 text-sm font-medium">

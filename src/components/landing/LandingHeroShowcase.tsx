@@ -67,7 +67,7 @@ export function LandingHeroShowcase() {
         <div className="mt-2.5 text-2xl font-bold text-foreground">
           <AnimatedCounter value={42} suffix="%" />
         </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">Ahorro certificado</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">Ahorro vs. presupuesto</p>
       </m.div>
 
       <m.div

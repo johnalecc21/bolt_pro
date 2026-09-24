@@ -37,4 +37,6 @@ export interface AuthContextValue {
   switchCompany: (companyId: string) => Promise<void>;
   logout: () => Promise<void>;
   acceptTerms: () => Promise<void>;
+  /** Applies the user's own profile edits (name, job title) to the session. */
+  updateProfile: (cambios: { nombre?: string; cargo?: string }) => Promise<void>;
 }
