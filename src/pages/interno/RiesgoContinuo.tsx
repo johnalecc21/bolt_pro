@@ -85,7 +85,7 @@ export function RiesgoContinuo() {
         </Button>
       </div>
 
-      <div className="inline-flex rounded-lg border border-border p-0.5" role="tablist" aria-label="Estado de las alertas">
+      <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-sm" role="tablist" aria-label="Estado de las alertas">
         {(["ABIERTA", "RESUELTA"] as const).map((e) => (
           <button
             key={e}

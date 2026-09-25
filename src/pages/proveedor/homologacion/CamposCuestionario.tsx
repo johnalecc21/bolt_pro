@@ -133,10 +133,10 @@ export function CampoOpciones<T extends string>({
             type="button"
             onClick={() => onChange(o.value)}
             className={cn(
-              "rounded-md border px-3 py-1.5 text-sm transition-colors",
+              "rounded-md border px-3 py-1.5 text-sm font-medium transition-colors",
               value === o.value
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:text-foreground",
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-foreground/20 bg-card text-foreground hover:border-primary hover:text-primary",
             )}
           >
             {o.label}

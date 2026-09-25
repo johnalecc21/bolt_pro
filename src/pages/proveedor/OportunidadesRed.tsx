@@ -113,7 +113,7 @@ export function OportunidadesRed() {
       )}
 
       <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-lg border border-border p-0.5" role="tablist" aria-label="Filtro de oportunidades">
+        <div className="inline-flex rounded-lg border border-border bg-card p-0.5 shadow-sm" role="tablist" aria-label="Filtro de oportunidades">
           {([[false, "Mis categorías"], [true, "Todas"]] as const).map(([v, label]) => (
             <button
               key={label}

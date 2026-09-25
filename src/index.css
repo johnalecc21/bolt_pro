@@ -115,13 +115,16 @@
   --primary-foreground: #ffffff;
   --secondary: #ffffff;
   --secondary-foreground: #001635;
-  --muted: #f0f0f0;
+  /* Distinct from --background so tab bars, table heads and chips sitting
+     on the page (not on a card) stay visible. */
+  --muted: #e3e9f1;
   --muted-foreground: #314b70;
   --accent: #f0faff;
   --accent-foreground: #0b7dbb;
   --destructive: #e62f27;
   --destructive-foreground: #ffffff;
-  --border: #f2f7ff;
+  /* Visible on both the #f0f0f0 page and white cards. */
+  --border: #d5deea;
   --input: #001635;
   --ring: #5dbaeb;
 
