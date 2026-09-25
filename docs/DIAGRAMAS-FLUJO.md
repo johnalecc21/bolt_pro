@@ -448,7 +448,7 @@ Con ítems, las líneas del ganador se escalan en la proporción puja / oferta.
 
 ```mermaid
 flowchart TD
-    A["/cliente/adjudicacion/:id: una tarjeta por ganador"] --> B["Confirmar decisión"]
+    A["Ficha del proceso, pestaña Adjudicación: una tarjeta por ganador"] --> B["Confirmar decisión"]
     B --> C["Requerimiento ADJUDICADO + notificación a cada ganador"]
     C --> D{"Por cada contrato: ¿supera el umbral legal de su moneda?"}
     D -->|"Sí"| E["Bloqueado hasta marcar revisión legal"] --> F
