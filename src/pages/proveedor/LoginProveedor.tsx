@@ -1,67 +1,66 @@
 import { Link } from "react-router-dom";
-import { Gavel, Star, Wallet } from "lucide-react";
+import { BadgeCheck, Network, Truck, Wallet } from "lucide-react";
 import { PortalLoginForm } from "@/components/shared/PortalLoginForm";
-import { LogoFull } from "@/components/shared/Logo";
+import { AuthLayout } from "@/components/shared/AuthLayout";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function LoginProveedor() {
   usePageMeta({ title: "Ingreso proveedores", noindex: true });
   return (
-    <div className="flex min-h-screen">
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border bg-muted/30 p-12 lg:flex">
-        <div>
-          <Link to="/" className="inline-flex items-center">
-            <LogoFull className="h-8" />
-          </Link>
+    <AuthLayout
+      panel={{
+        etiqueta: "Portal Proveedores",
+        titulo: "Homológate una vez, vende a todas las empresas",
+        texto:
+          "Participa en los procesos de las empresas de Procurex y sigue tus contratos y pagos.",
+        puntos: [
+          {
+            icon: Network,
+            titulo: "Procesos abiertos",
+            texto: "Invitaciones directas y convocatorias de tus categorías.",
+          },
+          {
+            icon: BadgeCheck,
+            titulo: "Una sola homologación",
+            texto: "Tus documentos quedan vigentes para toda la red.",
+          },
+          {
+            icon: Wallet,
+            titulo: "Contratos y pagos",
+            texto: "Estado de tus entregas, facturas y pagos en un lugar.",
+          },
+        ],
+      }}
+      portal={{ icon: Truck, nombre: "Portal Proveedores" }}
+      titulo="Ingresa a tu cuenta"
+      subtitulo="Gestiona tus procesos, ofertas y contratos."
+      pie={
+        <div className="space-y-2 text-center text-sm text-muted-foreground">
+          <p>
+            ¿Aún no estás en la red?{" "}
+            <Link
+              to="/proveedor/registro"
+              className="font-medium text-primary hover:underline"
+            >
+              Regístrate gratis
+            </Link>
+          </p>
+          <p>
+            ¿Eres comprador?{" "}
+            <Link
+              to="/cliente/login"
+              className="font-medium text-primary hover:underline"
+            >
+              Ingresa al portal cliente
+            </Link>
+          </p>
         </div>
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold leading-tight text-foreground">Portal de Proveedores</h1>
-            <p className="mt-3 text-lg text-muted-foreground">
-              Únete a una red validada de compradores y cotiza procesos reales con feedback estructurado.
-            </p>
-          </div>
-          <div className="space-y-4">
-            {[
-              { icon: Gavel, title: "Invitaciones directas", desc: "Recibe licitaciones alineadas a tu categoría." },
-              { icon: Star, title: "Score de desempeño", desc: "Tu reputación construida en cada proceso." },
-              { icon: Wallet, title: "Centro de pagos", desc: "Sigue el estado de cobro de tus órdenes de compra." },
-            ].map((f) => (
-              <div key={f.title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-                <f.icon className="h-6 w-6 shrink-0 text-info" />
-                <div>
-                  <p className="font-semibold text-foreground">{f.title}</p>
-                  <p className="text-sm text-muted-foreground">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">© 2026 Procurex. Todos los derechos reservados.</p>
-      </div>
-
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-20">
-        <div className="mx-auto w-full max-w-sm mb-8">
-          <h2 className="text-2xl font-bold">Portal de Proveedores</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Ingresa para gestionar tus procesos</p>
-        </div>
-        <PortalLoginForm
-          portal="proveedor"
-          demoHint="contacto@cloudsphere.com / demo123"
-          footer={
-            <div className="space-y-3 text-center text-sm text-muted-foreground">
-              <p>
-                ¿Aún no estás en la red?{" "}
-                <Link to="/proveedor/registro" className="font-medium text-primary hover:underline">Regístrate como proveedor</Link>
-              </p>
-              <p>
-                ¿Eres comprador?{" "}
-                <Link to="/cliente/login" className="font-medium text-primary hover:underline">Ingresa al portal cliente</Link>
-              </p>
-            </div>
-          }
-        />
-      </div>
-    </div>
+      }
+    >
+      <PortalLoginForm
+        portal="proveedor"
+        demoHint="contacto@cloudsphere.com / demo123"
+      />
+    </AuthLayout>
   );
 }

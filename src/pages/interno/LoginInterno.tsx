@@ -1,61 +1,43 @@
-import { Link } from "react-router-dom";
-import { Users2, ShieldAlert, LineChart } from "lucide-react";
+import { Building2, LineChart, ShieldCheck, Users2 } from "lucide-react";
 import { PortalLoginForm } from "@/components/shared/PortalLoginForm";
-import { LogoFull } from "@/components/shared/Logo";
+import { AuthLayout } from "@/components/shared/AuthLayout";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
 export function LoginInterno() {
   usePageMeta({ title: "Ingreso equipo interno", noindex: true });
   return (
-    <div className="flex min-h-screen">
-      <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden border-r border-border bg-muted/30 p-12 lg:flex">
-        <div>
-          <Link to="/" className="inline-flex items-center">
-            <LogoFull className="h-8" />
-          </Link>
-        </div>
-        <div className="space-y-8">
-          <div>
-            <h1 className="text-4xl font-bold leading-tight text-foreground">Panel Interno</h1>
-            <p className="mt-3 text-lg text-muted-foreground">
-              Seguimiento de las empresas clientes y homologación de proveedores.
-            </p>
-          </div>
-          <div className="space-y-4">
-            {[
-              { icon: Users2, title: "Empresas", desc: "Cómo va cada empresa cliente y alta de nuevas empresas." },
-              { icon: ShieldAlert, title: "Homologación", desc: "Revisión de proveedores con listas restrictivas y documentos." },
-              { icon: LineChart, title: "Riesgo continuo", desc: "Monitoreo de los proveedores homologados." },
-            ].map((f) => (
-              <div key={f.title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
-                <f.icon className="h-6 w-6 shrink-0 text-warning-foreground" />
-                <div>
-                  <p className="font-semibold text-foreground">{f.title}</p>
-                  <p className="text-sm text-muted-foreground">{f.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <p className="text-sm text-muted-foreground">© 2026 Procurex. Todos los derechos reservados.</p>
-      </div>
-
-      <div className="flex w-full flex-col justify-center px-6 py-12 lg:w-1/2 lg:px-20">
-        <div className="mx-auto w-full max-w-sm mb-8">
-          <h2 className="text-2xl font-bold">Panel Interno</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Acceso exclusivo para el equipo Procurex</p>
-        </div>
-        <PortalLoginForm
-          portal="interno"
-          demoHint="ana.consultora@procureos.com / demo123"
-          footer={
-            <p className="text-center text-sm text-muted-foreground">
-              ¿No trabajas en Procurex?{" "}
-              <Link to="/" className="font-medium text-primary hover:underline">Volver al inicio</Link>
-            </p>
-          }
-        />
-      </div>
-    </div>
+    <AuthLayout
+      panel={{
+        etiqueta: "Panel Interno",
+        titulo: "Equipo Procurex",
+        texto:
+          "Seguimiento de las empresas clientes y homologación de proveedores.",
+        puntos: [
+          {
+            icon: Building2,
+            titulo: "Empresas",
+            texto: "Cómo va cada empresa cliente y alta de nuevas empresas.",
+          },
+          {
+            icon: ShieldCheck,
+            titulo: "Homologación",
+            texto: "Revisión de documentos y listas restrictivas.",
+          },
+          {
+            icon: LineChart,
+            titulo: "Riesgo continuo",
+            texto: "Monitoreo diario de los proveedores homologados.",
+          },
+        ],
+      }}
+      portal={{ icon: Users2, nombre: "Panel Interno" }}
+      titulo="Acceso del equipo"
+      subtitulo="Exclusivo para el equipo de Procurex."
+    >
+      <PortalLoginForm
+        portal="interno"
+        demoHint="ana.consultora@procureos.com / demo123"
+      />
+    </AuthLayout>
   );
 }

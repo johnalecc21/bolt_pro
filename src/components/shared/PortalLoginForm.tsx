@@ -4,7 +4,6 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Mail, Lock, Loader2, ShieldCheck, Eye, EyeOff } from "lucide-react";
@@ -114,9 +113,9 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
 
   if (step === "2fa" && pendingUser) {
     return (
-      <div className="mx-auto w-full max-w-sm space-y-5">
+      <div className="w-full space-y-5">
         <div>
-          <h2 className="text-2xl font-bold">Verificación en dos pasos</h2>
+          <h3 className="text-lg font-semibold">Verificación en dos pasos</h3>
           <p className="mt-1 text-sm text-muted-foreground">Ingresa el código de tu app autenticadora para confirmar que eres {pendingUser.nombre}.</p>
         </div>
         <div className="flex flex-col items-center gap-3">
@@ -139,9 +138,9 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
 
   if (step === "company" && pendingUser) {
     return (
-      <div className="mx-auto w-full max-w-sm space-y-5">
+      <div className="w-full space-y-5">
         <div>
-          <h2 className="text-2xl font-bold">Elige tu empresa</h2>
+          <h3 className="text-lg font-semibold">Elige tu empresa</h3>
           <p className="mt-1 text-sm text-muted-foreground">Tu usuario tiene acceso a varias empresas.</p>
         </div>
         <div className="space-y-2">
@@ -160,13 +159,13 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
   }
 
   return (
-    <div className="mx-auto w-full max-w-sm">
+    <div className="w-full">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
           <Label htmlFor="email">Correo electrónico</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="email" type="email" className="pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
+            <Input id="email" type="email" autoComplete="email" placeholder="nombre@empresa.com" className="h-11 pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
         </div>
         <div className="space-y-2">
@@ -176,24 +175,21 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input id="password" type={showPassword ? "text" : "password"} className="pl-9 pr-9" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <Input id="password" type={showPassword ? "text" : "password"} autoComplete="current-password" className="h-11 pl-9 pr-10" value={password} onChange={(e) => setPassword(e.target.value)} required />
             <button
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               tabIndex={-1}
               title={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Checkbox id="remember" />
-          <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">Recordarme</Label>
-        </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
-        <Button type="submit" className="w-full" disabled={loading}>
+        <Button type="submit" className="h-11 w-full gradient-brand text-white shadow-md shadow-primary/20" disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Iniciar sesión"}
         </Button>
       </form>
@@ -202,8 +198,8 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         <span className="text-xs text-muted-foreground">o continúa con</span>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <Button variant="outline" className="w-full" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
-        {ssoLoading === "Google" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Google"}
+      <Button variant="outline" className="h-11 w-full gap-2.5" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
+        {ssoLoading === "Google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><IconoGoogle /> Google</>}
       </Button>
       {/* Only for demo environments: never show shared credentials on a real deployment. */}
       {import.meta.env.VITE_MOSTRAR_CREDENCIALES_DEMO === "true" && (
@@ -232,5 +228,17 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Google's "G", in its brand colors. */
+function IconoGoogle() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <path fill="#4285F4" d="M23.5 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.46a5.52 5.52 0 0 1-2.4 3.62v3h3.88c2.27-2.09 3.56-5.17 3.56-8.81Z" />
+      <path fill="#34A853" d="M12 24c3.24 0 5.96-1.07 7.94-2.92l-3.88-3a7.2 7.2 0 0 1-10.72-3.78H1.34v3.1A12 12 0 0 0 12 24Z" />
+      <path fill="#FBBC05" d="M5.34 14.3a7.2 7.2 0 0 1 0-4.6V6.6H1.34a12 12 0 0 0 0 10.8l4-3.1Z" />
+      <path fill="#EA4335" d="M12 4.77c1.76 0 3.34.6 4.59 1.8l3.44-3.44A11.97 11.97 0 0 0 1.34 6.6l4 3.1A7.17 7.17 0 0 1 12 4.77Z" />
+    </svg>
   );
 }
