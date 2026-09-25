@@ -6,8 +6,9 @@ import { cn } from "@/lib/utils";
 import { TableSkeleton, KpiRowSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchMiHistorial, type ProcesoHistorial } from "@/lib/api/ofertas";
-import { fetchMiPerfil } from "@/lib/api/proveedores";
-import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
+import { toast } from "sonner";
+import { descargarMiCartaAdjudicacion } from "@/lib/api/plantillas";
+import { apiErrorMessage } from "@/lib/api/http";
 
 import { formatMoney } from "@/lib/moneda";
 import { MisEvaluacionesCard } from "@/components/proveedor/MisEvaluacionesCard";
@@ -22,22 +23,13 @@ const resultadoConfig: Record<ProcesoHistorial["resultado"], { label: string; ic
 export function HistorialProveedor() {
   const incrustado = useIncrustado();
   const { data, loading } = useApiData(fetchMiHistorial);
-  const { data: miPerfil } = useApiData(fetchMiPerfil);
   const historialProcesos = data?.procesos ?? [];
 
+  // The buyer's letter, in its own format when it has one.
   function descargarCarta(p: ProcesoHistorial) {
-    if (!p.poId || !p.precioFinal || !miPerfil) return;
-    generateCartaAdjudicacionPdf({
-      poId: p.poId,
-      cliente: p.cliente,
-      proveedor: miPerfil.nombre,
-      tituloProceso: p.titulo,
-      precioFinal: p.precioFinal,
-      moneda: p.moneda,
-      plazoDias: p.plazoDias ?? 0,
-      condicionesPagoDias: p.condicionesPagoDias ?? 0,
-      garantiaMeses: p.garantiaMeses ?? 0,
-    });
+    descargarMiCartaAdjudicacion(p.requerimientoId).catch((err) =>
+      toast.error(apiErrorMessage(err, "No se pudo generar la carta de adjudicación.")),
+    );
   }
   const competitividad = data?.competitividad ?? { tuOfertaPromedioVsMercado: 0 };
   const ganados = historialProcesos.filter((p) => p.resultado === "ganado").length;

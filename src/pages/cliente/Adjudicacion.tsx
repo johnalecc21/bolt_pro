@@ -17,7 +17,7 @@ import {
   type Adjudicacion as AdjudicacionProveedor, type AdjudicacionProceso,
 } from "@/lib/api/adjudicacion";
 import { apiErrorMessage } from "@/lib/api/http";
-import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
+import { descargarCartaAdjudicacion } from "@/lib/api/plantillas";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 import { useIncrustado } from "@/components/layout/Incrustado";
 import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
@@ -147,7 +147,6 @@ export function Adjudicacion() {
         <TarjetaAdjudicacion
           key={a.id}
           requerimientoId={requerimientoId}
-          titulo={requerimiento.titulo}
           adjudicacion={a}
           proceso={proceso}
           moneda={moneda}
@@ -170,10 +169,9 @@ export function Adjudicacion() {
 }
 
 function TarjetaAdjudicacion({
-  requerimientoId, titulo, adjudicacion: a, proceso, moneda, notificarPerdedores, esUltimaFirma, onCambio,
+  requerimientoId, adjudicacion: a, proceso, moneda, notificarPerdedores, esUltimaFirma, onCambio,
 }: {
   requerimientoId: string;
-  titulo: string;
   adjudicacion: AdjudicacionProveedor;
   proceso: AdjudicacionProceso;
   moneda: Moneda;
@@ -186,18 +184,19 @@ function TarjetaAdjudicacion({
   const [firmaError, setFirmaError] = useState<string | null>(null);
   const puedeFirmar = a.confirmada && (!a.requiereRevisionLegal || a.revisionLegal);
 
-  function descargarCarta() {
-    generateCartaAdjudicacionPdf({
-      poId: a.poId,
-      cliente: activeCompany?.nombre ?? "",
-      proveedor: a.proveedor,
-      tituloProceso: a.lineas.length ? `${titulo} (${a.lineas.length} ítem(s))` : titulo,
-      precioFinal: a.precioFinal,
-      moneda,
-      plazoDias: a.plazoDias,
-      condicionesPagoDias: a.condicionesPagoDias,
-      garantiaMeses: a.garantiaMeses,
-    });
+  const [generandoCarta, setGenerandoCarta] = useState(false);
+
+  // Built on the server with the company's letter template (Plantillas y
+  // documentos) or, without one, Procurex's format with the company's data.
+  async function descargarCarta() {
+    setGenerandoCarta(true);
+    try {
+      await descargarCartaAdjudicacion(requerimientoId, a.id);
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo generar la carta de adjudicación."));
+    } finally {
+      setGenerandoCarta(false);
+    }
   }
 
   async function completarRevisionLegal() {
@@ -246,8 +245,8 @@ function TarjetaAdjudicacion({
             <span className="text-sm text-muted-foreground">Pendiente de confirmar</span>
           )}
           {a.confirmada && (
-            <Button size="sm" variant="outline" className="gap-1.5" onClick={descargarCarta}>
-              <FileDown className="h-3.5 w-3.5" /> Carta de adjudicación
+            <Button size="sm" variant="outline" className="gap-1.5" onClick={descargarCarta} disabled={generandoCarta}>
+              {generandoCarta ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <FileDown className="h-3.5 w-3.5" />} Carta de adjudicación
             </Button>
           )}
         </div>

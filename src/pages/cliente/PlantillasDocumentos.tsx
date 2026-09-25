@@ -25,7 +25,13 @@ import {
   type CamposMarca, type GrupoMarcadores, type Marca, type Plantilla, type TipoPlantilla,
 } from "@/lib/api/plantillas";
 
-const TIPOS: TipoPlantilla[] = ["ORDEN_COMPRA", "CONTRATO_MARCO"];
+const TIPOS: TipoPlantilla[] = ["ORDEN_COMPRA", "CONTRATO_MARCO", "CARTA_ADJUDICACION"];
+
+const PARA_QUE: Record<TipoPlantilla, string> = {
+  ORDEN_COMPRA: "Para las POs directas y las emitidas bajo un contrato marco.",
+  CONTRATO_MARCO: "Para los contratos marco (adjudicaciones sobre el umbral de la empresa).",
+  CARTA_ADJUDICACION: "La que se descarga en la adjudicación para comunicarle al proveedor que ganó, antes de firmar.",
+};
 
 /**
  * The company's own contract / PO templates (Word with placeholders, filled
@@ -77,7 +83,7 @@ function Plantillas({ datos, onCambio, onGuia }: { datos: Awaited<ReturnType<typ
           {[
             ["1. Prepara tu Word", "Toma tu formato actual y reemplaza los datos variables por marcadores como {{proveedor.nit}} o {{contrato.valor}}. Puedes partir de nuestro ejemplo."],
             ["2. Súbela y revisa", "Procurex la valida (marcadores mal escritos, llaves sin cerrar) y la puedes ver llena con tu último contrato real."],
-            ["3. Actívala", "Desde ahí, cada firma o PO emitida genera el documento con tu formato; las prórrogas y cambios de valor generan una versión nueva."],
+            ["3. Actívala", "Desde ahí, cada carta de adjudicación, firma o PO emitida sale con tu formato; las prórrogas y cambios de valor generan una versión nueva."],
           ].map(([t, d]) => (
             <li key={t} className="rounded-lg bg-muted/50 p-3">
               <p className="font-medium">{t}</p>
@@ -86,11 +92,7 @@ function Plantillas({ datos, onCambio, onGuia }: { datos: Awaited<ReturnType<typ
           ))}
         </ol>
         <div className="flex flex-wrap items-center gap-2">
-          {TIPOS.map((t) => (
-            <Button key={t} variant="outline" size="sm" className="gap-1.5" onClick={() => descargarEjemplo(t).catch((e) => toast.error(apiErrorMessage(e)))}>
-              <Download className="h-4 w-4" aria-hidden="true" /> Ejemplo de {TIPO_PLANTILLA_LABEL[t].toLowerCase()}
-            </Button>
-          ))}
+          <p className="text-sm text-muted-foreground">Cada tipo trae el formato de Procurex en Word para que lo edites y lo subas como tuyo.</p>
           <Button variant="link" size="sm" onClick={onGuia}>Ver todos los marcadores</Button>
         </div>
         {!datos.pdfDisponible && (
@@ -109,11 +111,15 @@ function Plantillas({ datos, onCambio, onGuia }: { datos: Awaited<ReturnType<typ
               <div>
                 <h2 className="font-semibold">{TIPO_PLANTILLA_LABEL[tipo]}</h2>
                 <p className="text-sm text-muted-foreground">
-                  {tipo === "ORDEN_COMPRA" ? "Para las POs directas y las emitidas bajo un contrato marco." : "Para los contratos marco (adjudicaciones sobre el umbral de la empresa)."}
-                  {" "}Sin plantilla activa se usa el formato de Procurex con tu marca.
+                  {PARA_QUE[tipo]} Sin plantilla activa se usa el formato de Procurex con los datos de tu empresa.
                 </p>
               </div>
-              <Button className="gap-1.5" onClick={() => setSubiendo(tipo)}><Upload className="h-4 w-4" aria-hidden="true" /> Subir plantilla</Button>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" className="gap-1.5" onClick={() => descargarEjemplo(tipo).catch((e) => toast.error(apiErrorMessage(e)))}>
+                  <Download className="h-4 w-4" aria-hidden="true" /> Formato de Procurex (Word)
+                </Button>
+                <Button className="gap-1.5" onClick={() => setSubiendo(tipo)}><Upload className="h-4 w-4" aria-hidden="true" /> Subir plantilla</Button>
+              </div>
             </div>
             {lista.length === 0 ? (
               <p className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">Aún no has subido plantillas de {TIPO_PLANTILLA_LABEL[tipo].toLowerCase()}.</p>
