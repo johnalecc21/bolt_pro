@@ -144,7 +144,12 @@ Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Ora
 ## Lo que conecta todo
 
 - **Log de auditoría** (visible en Contratos e Interno › Admin Clientes): cada aprobación, rechazo, cambio de score, impersonación o documento adjuntado queda ahí, sin importar desde qué portal se generó — todo backend-real.
-- **RBAC**: cada rol ve un menú distinto; algunas pantallas se muestran en modo solo-lectura según el rol.
+- **Menú por etapas**: el menú del cliente se agrupa en Inicio · Compras · Contratos · Finanzas · Directorio, con **Configuración** aparte al fondo. El del proveedor se agrupa en Inicio · Oportunidades · Contratos y pagos · Mi empresa.
+  - Los grupos se despliegan y se recuerdan; el de la pantalla actual siempre está abierto. Con el menú colapsado, cada grupo es un ícono que abre sus opciones.
+  - Los **contadores** muestran lo que espera al usuario: aprobaciones por aprobar, facturas o pronto pagos por revisar, invitaciones sin responder, pagos por facturar y la cola de homologación. Salen de `GET /navegacion/contadores` y se refrescan al navegar y cada minuto.
+  - "Primeros pasos" sale del menú cuando la configuración inicial está completa.
+  - En celular, el menú es un panel que se abre con el botón ☰.
+- **RBAC**: cada rol ve un menú distinto (un grupo con una sola opción se muestra plano); algunas pantallas se muestran en modo solo-lectura según el rol.
 - **Multi-empresa**: si inicias sesión como Admin Cliente y cambias de Acme a TechCorp (menú del avatar), los requerimientos y contratos que ves cambian por completo (filtrado real por `companyId`).
 - **Notificaciones**: la campana del header y el Centro de Notificaciones comparten el mismo estado real (leído/no leído), y cada notificación enlaza a la pantalla donde realmente puedes actuar sobre ella.
 - **Gráficas**: la analítica usa una paleta validada para daltonismo y modo oscuro (tokens `--viz-*`), una sola fila de filtros y una vista de tabla por gráfica.

@@ -1,25 +1,22 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { AppHeader } from "@/components/layout/AppHeader";
-import { LogOut, Settings, ChevronsLeft, ChevronsRight, type LucideIcon } from "lucide-react";
+import { LogOut, Settings, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { MenuLateral, hojas, visibles, type PortalNavEntry } from "@/components/layout/MenuLateral";
+import { useContadoresNav } from "@/hooks/useContadoresNav";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useSidebarCollapsed } from "@/hooks/useSidebarCollapsed";
 import { LogoFull, LogoIcon } from "@/components/shared/Logo";
 import { AppErrorBoundary } from "@/components/shared/ErrorBoundary";
-import type { Role } from "@/lib/mock/users";
 import { usePageMeta } from "@/hooks/usePageMeta";
 
-export interface PortalNavItem {
-  to: string;
-  label: string;
-  icon: LucideIcon;
-  roles?: Role[];
-}
+export type { PortalNavEntry, PortalNavGroup, PortalNavItem } from "@/components/layout/MenuLateral";
 
 interface PortalShellLayoutProps {
   portal: "cliente" | "proveedor" | "interno";
-  navItems: PortalNavItem[];
+  navItems: PortalNavEntry[];
   /** Small colored pill under the logo — omit for portals that don't show one. */
   badge?: { label: string; className: string };
   avatarClassName: string;
@@ -66,8 +63,12 @@ export function PortalShellLayout({
   const crumbs = segments
     .slice(2)
     .map((s) => (/^c[a-z0-9]{20,}$/.test(s) || /^[A-Z]+-\d+$/.test(s) ? "Detalle" : s.charAt(0).toUpperCase() + s.slice(1)));
-  const visibleItems = navItems.filter((item) => !item.roles || (currentUser && item.roles.includes(currentUser.role)));
-  const section = navItems.find((item) => segments[1] === item.to.split("/")[0])?.label;
+  const contadores = useContadoresNav(!!currentUser);
+  const menu = visibles(navItems, currentUser?.role, contadores);
+  const section = hojas(navItems).find((item) => segments[1] === item.to.split("/")[0])?.label;
+  // Mobile: the menu is a drawer, closed again after every navigation.
+  const [menuMovil, setMenuMovil] = useState(false);
+  useEffect(() => setMenuMovil(false), [location.pathname]);
   usePageMeta({ title: section ?? crumbs.at(-1) ?? portal.charAt(0).toUpperCase() + portal.slice(1), noindex: true });
 
   function handleLogout() {
@@ -78,7 +79,7 @@ export function PortalShellLayout({
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       {topSlot}
-      <aside className={cn("flex shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200", collapsed ? "w-16" : "w-64")}>
+      <aside className={cn("hidden shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-all duration-200 md:flex", collapsed ? "w-16" : "w-64")}>
         <div className={cn("flex h-16 items-center gap-2", collapsed ? "justify-center px-2" : "px-6")}>
           {collapsed ? <LogoIcon className="h-8 w-8" /> : <LogoFull className="h-7" />}
         </div>
@@ -87,27 +88,7 @@ export function PortalShellLayout({
             <span className={cn("rounded-md px-2 py-1 text-xs font-medium", badge.className)}>{badge.label}</span>
           </div>
         )}
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
-          {visibleItems.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              title={collapsed ? item.label : undefined}
-              className={({ isActive }) =>
-                cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  collapsed && "justify-center px-0",
-                  isActive
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )
-              }
-            >
-              <item.icon className="h-4 w-4 shrink-0" />
-              {!collapsed && item.label}
-            </NavLink>
-          ))}
-        </nav>
+        <MenuLateral portal={portal} entries={menu} contadores={contadores} compacto={collapsed} />
         <div className="border-t border-sidebar-border p-3">
           <button
             onClick={toggle}
@@ -139,8 +120,32 @@ export function PortalShellLayout({
           </div>
         </div>
       </aside>
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <AppHeader breadcrumbs={crumbs} portal={portal} />
+      <Sheet open={menuMovil} onOpenChange={setMenuMovil}>
+        <SheetContent side="left" className="flex w-72 flex-col gap-0 bg-sidebar p-0 text-sidebar-foreground">
+          <SheetTitle className="sr-only">Menú</SheetTitle>
+          <div className="flex h-16 items-center px-6">
+            <LogoFull className="h-7" />
+          </div>
+          {badge && (
+            <div className="px-6 pb-2">
+              <span className={cn("rounded-md px-2 py-1 text-xs font-medium", badge.className)}>{badge.label}</span>
+            </div>
+          )}
+          <MenuLateral portal={portal} entries={menu} contadores={contadores} compacto={false} onNavegar={() => setMenuMovil(false)} />
+          <div className="flex items-center gap-3 border-t border-sidebar-border p-4">
+            <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold", avatarClassName)}>{currentUser?.iniciales}</div>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium">{identityPrimary}</p>
+              <p className="truncate text-xs text-muted-foreground">{identitySecondary}</p>
+            </div>
+            <button onClick={handleLogout} className="text-muted-foreground hover:text-destructive" title="Cerrar sesión" aria-label="Cerrar sesión">
+              <LogOut className="h-4 w-4" />
+            </button>
+          </div>
+        </SheetContent>
+      </Sheet>
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <AppHeader breadcrumbs={crumbs} portal={portal} onAbrirMenu={() => setMenuMovil(true)} />
         <main key={remountKey} className="flex-1 overflow-y-auto">
           <AppErrorBoundary fullScreen={false}>
             <Outlet />

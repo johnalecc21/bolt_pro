@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Search, ChevronRight, Settings, LogOut, Building2, Check, FileText, ShieldCheck } from "lucide-react";
+import { Search, ChevronRight, Settings, LogOut, Building2, Check, FileText, ShieldCheck, Menu } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -60,7 +60,7 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
   ],
 };
 
-export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumbs?: string[]; portal?: Portal }) {
+export function AppHeader({ breadcrumbs = [], portal = "cliente", onAbrirMenu }: { breadcrumbs?: string[]; portal?: Portal; onAbrirMenu?: () => void }) {
   const routeBase = `/${portal}`;
   const navigate = useNavigate();
   const { currentUser, activeCompany, switchCompany, logout } = useAuth();
@@ -99,8 +99,13 @@ export function AppHeader({ breadcrumbs = [], portal = "cliente" }: { breadcrumb
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-background/80 px-6 backdrop-blur-md">
-      <div className="flex items-center gap-2 text-sm">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-2 border-b border-border bg-background/80 px-4 backdrop-blur-md md:px-6">
+      <div className="flex min-w-0 items-center gap-2 text-sm">
+        {onAbrirMenu && (
+          <Button variant="ghost" size="icon" className="-ml-2 shrink-0 md:hidden" onClick={onAbrirMenu} aria-label="Abrir menú">
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
         <Link to={`${routeBase}/dashboard`} className="text-muted-foreground hover:text-foreground">Inicio</Link>
         {breadcrumbs.map((crumb, i) => (
           <span key={i} className="flex items-center gap-2">

@@ -1,24 +1,45 @@
 import { Navigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, ShieldCheck, Inbox, FileText,
-  Trophy, Wallet, User, Gavel, FileCheck2, Store, BarChart3 } from "lucide-react";
+  LayoutDashboard, ShieldCheck, Inbox, FileText, Trophy, Wallet, User, Gavel, FileCheck2, Store, BarChart3, Target, Building,
+} from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchMiPerfil } from "@/lib/api/proveedores";
-import { PortalShellLayout, type PortalNavItem } from "@/components/layout/PortalShellLayout";
+import { PortalShellLayout, type PortalNavEntry } from "@/components/layout/PortalShellLayout";
 
-const navItems: PortalNavItem[] = [
-  { to: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "homologacion", label: "Homologación", icon: ShieldCheck },
-  { to: "invitaciones", label: "Invitaciones", icon: Inbox },
-  { to: "ofertas", label: "Mis Ofertas", icon: FileText },
-  { to: "subasta", label: "Subasta en Vivo", icon: Gavel },
-  { to: "historial", label: "Historial", icon: Trophy },
-  { to: "desempeno", label: "Mi desempeño", icon: BarChart3 },
-  { to: "contratos", label: "Mis Contratos", icon: FileCheck2 },
-  { to: "pagos", label: "Pagos", icon: Wallet },
-  { to: "perfil", label: "Perfil Empresa", icon: User },
-  { to: "vitrina", label: "Mi Vitrina", icon: Store },
+const navItems: PortalNavEntry[] = [
+  { to: "dashboard", label: "Inicio", icon: LayoutDashboard },
+  {
+    grupo: "oportunidades",
+    label: "Oportunidades",
+    icon: Target,
+    items: [
+      { to: "invitaciones", label: "Invitaciones", icon: Inbox, contador: "invitaciones", contadorTitulo: "sin responder" },
+      { to: "ofertas", label: "Mis ofertas", icon: FileText },
+      { to: "subasta", label: "Subasta en vivo", icon: Gavel },
+      { to: "historial", label: "Historial", icon: Trophy },
+    ],
+  },
+  {
+    grupo: "contratos",
+    label: "Contratos y pagos",
+    icon: FileCheck2,
+    items: [
+      { to: "contratos", label: "Mis contratos", icon: FileCheck2 },
+      { to: "pagos", label: "Pagos", icon: Wallet, contador: "pagos", contadorTitulo: "por facturar" },
+    ],
+  },
+  {
+    grupo: "empresa",
+    label: "Mi empresa",
+    icon: Building,
+    items: [
+      { to: "perfil", label: "Perfil", icon: User },
+      { to: "homologacion", label: "Homologación", icon: ShieldCheck },
+      { to: "vitrina", label: "Mi vitrina", icon: Store },
+      { to: "desempeno", label: "Mi desempeño", icon: BarChart3 },
+    ],
+  },
 ];
 
 export function ProveedorLayout() {
