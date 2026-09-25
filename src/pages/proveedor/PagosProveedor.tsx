@@ -8,13 +8,13 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
-import { Wallet, Upload, Zap, FileDown, Loader2 } from "lucide-react";
+import { Wallet, Upload, FileDown, Loader2 } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { apiErrorMessage } from "@/lib/api/http";
 import { formatMoney } from "@/lib/moneda";
 import {
-  etapaPago, fetchMisPagos, radicarFactura, simularProntoPago, solicitarProntoPago,
-  urlFacturaProveedor, urlSoporteProveedor, type PagoPO, type SimulacionProntoPago,
+  etapaPago, fetchMisPagos, radicarFactura,
+  urlFacturaProveedor, urlSoporteProveedor, type PagoPO,
 } from "@/lib/api/pagos";
 import { abrirEnlace, EtapaBadge, fecha, HistorialFacturas, hoyISO } from "@/components/pagos/comun";
 
@@ -22,7 +22,7 @@ import { abrirEnlace, EtapaBadge, fecha, HistorialFacturas, hoyISO } from "@/com
  * The proveedor's side of getting paid: file the invoice for each released
  * payment, follow its review, and optionally ask to be paid early.
  */
-export function PagosFactoring() {
+export function PagosProveedor() {
   const { data, loading, reload } = useApiData(fetchMisPagos);
   const pagos = data ?? [];
   const [params, setParams] = useSearchParams();
@@ -37,10 +37,10 @@ export function PagosFactoring() {
     const enMoneda = (l: PagoPO[]) => l.filter((p) => p.moneda === moneda);
     return {
       moneda,
-      porCobrar: enMoneda(abiertos).reduce((s, p) => s + p.montoNeto, 0),
-      vencido: enMoneda(abiertos.filter((p) => p.estado === "vencido")).reduce((s, p) => s + p.montoNeto, 0),
+      porCobrar: enMoneda(abiertos).reduce((s, p) => s + p.monto, 0),
+      vencido: enMoneda(abiertos.filter((p) => p.estado === "vencido")).reduce((s, p) => s + p.monto, 0),
       sinFactura: abiertos.filter((p) => ["sin_factura", "factura_rechazada"].includes(etapaPago(p))).length,
-      cobrado: enMoneda(pagos.filter((p) => p.estado === "pagado")).reduce((s, p) => s + (p.montoPagado ?? p.montoNeto), 0),
+      cobrado: enMoneda(pagos.filter((p) => p.estado === "pagado")).reduce((s, p) => s + (p.montoPagado ?? p.monto), 0),
     };
   }, [pagos]);
 
@@ -50,7 +50,7 @@ export function PagosFactoring() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Centro de Pagos</h1>
-        <p className="text-sm text-muted-foreground">Radica tus facturas, sigue su revisión y solicita pronto pago</p>
+        <p className="text-sm text-muted-foreground">Radica tus facturas y sigue su revisión y su pago</p>
       </div>
 
       {!loading && pagos.length > 0 && (
@@ -99,8 +99,7 @@ export function PagosFactoring() {
                       </td>
                       <td className="p-4 text-muted-foreground">{p.cliente}</td>
                       <td className="p-4 text-right font-semibold tabular-nums">
-                        {formatMoney(p.montoNeto, p.moneda)}
-                        {p.descuentoProntoPago > 0 && <span className="block text-xs font-normal text-muted-foreground">pronto pago</span>}
+                        {formatMoney(p.monto, p.moneda)}
                       </td>
                       <td className="p-4 text-muted-foreground">{p.estado === "pagado" ? `Pagado ${fecha(p.fechaPago)}` : fecha(p.fechaPagoPactada)}</td>
                       <td className="p-4"><EtapaBadge etapa={etapa} /></td>
@@ -126,9 +125,6 @@ export function PagosFactoring() {
 function DetallePago({ pago, onCambio }: { pago: PagoPO; onCambio: () => void }) {
   const etapa = etapaPago(pago);
   const puedeRadicar = etapa === "sin_factura" || etapa === "factura_rechazada";
-  const pp = pago.prontoPago;
-  const puedeProntoPago =
-    pago.estado !== "pagado" && pago.facturaVigente?.estado === "aprobada" && pago.descuentoProntoPago === 0 && pp?.estado !== "solicitada";
 
   return (
     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
@@ -137,10 +133,9 @@ function DetallePago({ pago, onCambio }: { pago: PagoPO; onCambio: () => void })
         <DialogDescription>{pago.cliente} · {pago.categoria}</DialogDescription>
       </DialogHeader>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
           ["Monto", formatMoney(pago.monto, pago.moneda)],
-          ["A recibir", formatMoney(pago.montoNeto, pago.moneda)],
           [pago.estado === "pagado" ? "Pagado el" : "Pago pactado", pago.estado === "pagado" ? fecha(pago.fechaPago) : fecha(pago.fechaPagoPactada)],
           ["Plazo de pago", `${pago.condicionesPagoDias} días`],
         ].map(([k, v]) => (
@@ -154,7 +149,7 @@ function DetallePago({ pago, onCambio }: { pago: PagoPO; onCambio: () => void })
 
       {pago.estado === "pagado" && (
         <div className="rounded-lg border border-success/30 bg-success/5 p-3 text-sm">
-          <p>Pago de <strong>{formatMoney(pago.montoPagado ?? pago.montoNeto, pago.moneda)}</strong> registrado el {fecha(pago.fechaPago)} · referencia <strong>{pago.referenciaPago}</strong></p>
+          <p>Pago de <strong>{formatMoney(pago.montoPagado ?? pago.monto, pago.moneda)}</strong> registrado el {fecha(pago.fechaPago)} · referencia <strong>{pago.referenciaPago}</strong></p>
           {pago.soporteNombre && (
             <Button size="sm" variant="ghost" className="mt-1 gap-1 px-0" onClick={() => abrirEnlace(() => urlSoporteProveedor(pago.id))}>
               <FileDown className="h-3.5 w-3.5" /> Soporte de pago
@@ -169,19 +164,6 @@ function DetallePago({ pago, onCambio }: { pago: PagoPO; onCambio: () => void })
         {puedeRadicar && <FormRadicar pago={pago} onHecho={onCambio} />}
       </section>
 
-      {pp && (
-        <section className="rounded-lg border border-border p-3 text-sm">
-          <p className="font-medium">Pronto pago {pp.estado === "solicitada" ? "solicitado — en revisión" : pp.estado === "aceptada" ? "aceptado" : "rechazado"}</p>
-          <p className="text-muted-foreground">
-            {formatMoney(pp.montoNeto, pago.moneda)} el {fecha(pp.fechaPropuesta)} ({(pp.descuentoPct * 100).toLocaleString("es-CO", { maximumFractionDigits: 2 })}% de descuento)
-          </p>
-          {pp.estado === "rechazada" && pp.motivo && <p className="mt-1 text-xs text-destructive">Motivo: {pp.motivo}</p>}
-        </section>
-      )}
-      {puedeProntoPago && <FormProntoPago pago={pago} onHecho={onCambio} />}
-      {pago.estado !== "pagado" && pago.facturaVigente?.estado !== "aprobada" && (
-        <p className="text-xs text-muted-foreground">El pronto pago se habilita cuando el comprador aprueba tu factura.</p>
-      )}
     </DialogContent>
   );
 }
@@ -227,63 +209,5 @@ function FormRadicar({ pago, onHecho }: { pago: PagoPO; onHecho: () => void }) {
         {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Radicar factura
       </Button>
     </div>
-  );
-}
-
-function FormProntoPago({ pago, onHecho }: { pago: PagoPO; onHecho: () => void }) {
-  const [propuesta, setPropuesta] = useState(hoyISO());
-  const [simulacion, setSimulacion] = useState<SimulacionProntoPago | null>(null);
-  const [cargando, setCargando] = useState(false);
-  const maxFecha = (() => {
-    const d = new Date(pago.fechaPagoPactada);
-    d.setDate(d.getDate() - 1);
-    return d.toISOString().slice(0, 10);
-  })();
-
-  async function simular() {
-    setCargando(true);
-    try {
-      setSimulacion(await simularProntoPago(pago.id, propuesta));
-    } catch (err) {
-      setSimulacion(null);
-      toast.error(apiErrorMessage(err));
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  async function solicitar() {
-    setCargando(true);
-    try {
-      await solicitarProntoPago(pago.id, propuesta);
-      toast.success("Solicitud de pronto pago enviada", { description: "El área financiera del cliente la revisará." });
-      onHecho();
-    } catch (err) {
-      toast.error(apiErrorMessage(err));
-    } finally {
-      setCargando(false);
-    }
-  }
-
-  return (
-    <section className="space-y-3 rounded-lg border border-border p-3">
-      <div className="flex items-center gap-2 text-sm font-semibold"><Zap className="h-4 w-4 text-primary" /> Solicitar pronto pago</div>
-      <p className="text-xs text-muted-foreground">Recibe el dinero antes de la fecha pactada con un descuento de 1,5% por cada 30 días de adelanto.</p>
-      <div className="flex flex-wrap items-end gap-2">
-        <div className="space-y-1.5">
-          <Label htmlFor="fecha-pp">Fecha en que quieres recibirlo</Label>
-          <Input id="fecha-pp" type="date" value={propuesta} min={hoyISO()} max={maxFecha} onChange={(e) => { setPropuesta(e.target.value); setSimulacion(null); }} />
-        </div>
-        <Button variant="outline" onClick={simular} disabled={cargando || !propuesta}>Calcular</Button>
-      </div>
-      {simulacion && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/50 p-3 text-sm">
-          <p>
-            {simulacion.dias} días antes · descuento {formatMoney(simulacion.descuento, pago.moneda)} ({(simulacion.descuentoPct * 100).toLocaleString("es-CO", { maximumFractionDigits: 2 })}%) · recibes <strong className="tabular-nums">{formatMoney(simulacion.montoNeto, pago.moneda)}</strong>
-          </p>
-          <Button size="sm" onClick={solicitar} disabled={cargando}>Enviar solicitud</Button>
-        </div>
-      )}
-    </section>
   );
 }

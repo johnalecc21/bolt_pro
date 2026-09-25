@@ -24,7 +24,6 @@ function inicial(c: ConfigSiigo): Form {
     impuestoId: c.impuestoId ?? null,
     documentoEgresoId: c.documentoEgresoId ?? null,
     formaPagoEgresoId: c.formaPagoEgresoId ?? null,
-    descuentoProntoPagoId: c.descuentoProntoPagoId ?? null,
     departamento: c.departamento ?? "11",
     ciudad: c.ciudad ?? "11001",
     responsabilidadFiscal: c.responsabilidadFiscal ?? "R-99-PN",
@@ -114,8 +113,6 @@ export function ConexionSiigo({ cfg, guardar, onCambio }: {
       setLeyendo(false);
     }
   }
-
-  const descuentos = catalogos?.descuentosEgreso.filter((d) => !form.documentoEgresoId || d.documentoId === form.documentoEgresoId);
 
   return (
     <div className="space-y-6">
@@ -212,7 +209,6 @@ export function ConexionSiigo({ cfg, guardar, onCambio }: {
           <div className="grid gap-3 sm:grid-cols-2">
             <SelectSiigo id="siigo-rp" label="Tipo de comprobante de egreso" valor={form.documentoEgresoId} opciones={catalogos?.documentosEgreso} vacio="Elige el comprobante RP" onChange={(v) => set("documentoEgresoId", v)} />
             <SelectSiigo id="siigo-banco" label="Cuenta o forma de pago del egreso" valor={form.formaPagoEgresoId} opciones={catalogos?.formasPagoEgreso} vacio="Elige el banco o caja" onChange={(v) => set("formaPagoEgresoId", v)} />
-            <SelectSiigo id="siigo-desc" label="Descuento por pronto pago (opcional)" valor={form.descuentoProntoPagoId} opciones={descuentos} vacio="Sin descuento configurado" onChange={(v) => set("descuentoProntoPagoId", v)} ayuda="Sin él, un pago con descuento deja ese saldo abierto en Siigo." />
           </div>
         ) : (
           <div className="flex flex-wrap items-center gap-3">

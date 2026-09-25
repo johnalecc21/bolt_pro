@@ -329,7 +329,7 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
                     alinear={[false, true, false, false, false]}
                     filas={c.pagos.map((p) => [
                       p.concepto ?? "—",
-                      formatMoney(p.montoNeto, c.moneda),
+                      formatMoney(p.monto, c.moneda),
                       p.factura ? `${p.factura.numero} (${p.factura.estado})` : "Sin factura",
                       p.estado === "pagado" ? `Pagado ${p.fechaPago}` : p.fechaPagoPactada,
                       <StatusBadge key="e" estado={p.estado === "pagado" ? "Pagado" : p.estado === "vencido" ? "Vencido" : "Por pagar"} />,

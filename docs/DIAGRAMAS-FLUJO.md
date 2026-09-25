@@ -17,7 +17,7 @@ Todos los flujos de la plataforma, sacados del código actual (frontend `bolt_pr
 10. [Adjudicación y firma](#10-adjudicación-y-firma)
 11. [Contratos, contrato marco y modificaciones](#11-contratos-contrato-marco-y-modificaciones)
 12. [Ejecución: hitos y entregas](#12-ejecución-hitos-y-entregas)
-13. [Facturación, pagos y pronto pago](#13-facturación-pagos-y-pronto-pago)
+13. [Facturación y pagos](#13-facturación-y-pagos)
 14. [Evaluación de desempeño](#14-evaluación-de-desempeño)
 15. [Cierre del proceso: ciclo de vida del requerimiento](#15-cierre-del-proceso-ciclo-de-vida-del-requerimiento)
 16. [Plantillas y documentos](#16-plantillas-y-documentos)
@@ -556,7 +556,7 @@ Los % de pago de un contrato no pueden sumar más de 100%.
 
 ---
 
-## 13. Facturación, pagos y pronto pago
+## 13. Facturación y pagos
 
 ```mermaid
 sequenceDiagram
@@ -575,14 +575,9 @@ sequenceDiagram
         API->>ERP: Factura aprobada
         Note over API: El plazo de pago cuenta desde la radicación
     end
-    opt Pronto pago
-        P->>API: Solicita fecha anticipada, 1,5% por cada 30 días
-        C->>API: Admin / CFO acepta o rechaza
-        API-->>P: Nueva fecha y descuento
-    end
     C->>API: Admin / CFO registra el pago: fecha, referencia, soporte
     API->>ERP: Pago
-    API-->>P: Pagado: fecha, monto neto, referencia
+    API-->>P: Pagado: fecha, monto, referencia
 ```
 
 ```mermaid
@@ -787,7 +782,7 @@ flowchart TD
         N2["Invitación, convocatoria de la red, pregunta, respuesta"]
         N3["Oferta recibida, proveedor se unió desde la red"]
         N4["Subasta iniciada, adjudicación, contrato firmado"]
-        N5["Avance de hito, recepción, factura, pago, pronto pago"]
+        N5["Avance de hito, recepción, factura y pago"]
         N6["Modificaciones de contrato y vencimientos"]
         N7["Homologación resuelta, documentos por vencer, alertas de riesgo"]
     end
@@ -813,6 +808,5 @@ flowchart TD
 | Hito | PENDIENTE · EN_RIESGO · ATRASADO · COMPLETADO |
 | Pago | PENDIENTE · VENCIDO · PAGADO |
 | Factura | RADICADA · APROBADA · RECHAZADA |
-| Pronto pago | SOLICITADA · ACEPTADA · RECHAZADA |
 | Evento ERP | PENDIENTE · ENVIADO · ERROR · FALLIDO · DESCARTADO |
 | Alerta de riesgo | ABIERTA · RESUELTA (tipos: lista restrictiva, documento vencido, revalidación) |

@@ -19,7 +19,6 @@ export interface ConfigSiigo {
   impuestoId?: number | null;
   documentoEgresoId?: number | null;
   formaPagoEgresoId?: number | null;
-  descuentoProntoPagoId?: number | null;
   departamento?: string;
   ciudad?: string;
   responsabilidadFiscal?: string;
@@ -35,7 +34,6 @@ export interface OpcionSiigo {
 export interface CatalogosSiigo {
   documentosCompra: OpcionSiigo[];
   documentosEgreso: OpcionSiigo[];
-  descuentosEgreso: (OpcionSiigo & { documentoId: number })[];
   formasPagoCompra: (OpcionSiigo & { tipo: string | null; conVencimiento: boolean })[];
   formasPagoEgreso: (OpcionSiigo & { tipo: string | null })[];
   centrosCosto: OpcionSiigo[];

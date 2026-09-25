@@ -39,7 +39,7 @@ const navItems: PortalNavEntry[] = [
     label: "Finanzas",
     icon: Wallet,
     items: [
-      { to: "pagos", label: "Cuentas por pagar", icon: Receipt, roles: ["comprador", "admin_cliente", "aprobador_cfo"], contador: "cuentasPorPagar", contadorTitulo: "facturas o pronto pagos por revisar" },
+      { to: "pagos", label: "Cuentas por pagar", icon: Receipt, roles: ["comprador", "admin_cliente", "aprobador_cfo"], contador: "cuentasPorPagar", contadorTitulo: "facturas por revisar" },
       { to: "analitica", label: "Analítica", icon: BarChart3, roles: ["aprobador_cfo", "admin_cliente"] },
       { to: "estructura", label: "Estructura y presupuestos", icon: Landmark, roles: ["admin_cliente", "aprobador_cfo"] },
     ],

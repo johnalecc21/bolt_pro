@@ -154,7 +154,6 @@ export interface FichaContrato extends Contrato {
     id: string;
     concepto: string | null;
     monto: number;
-    montoNeto: number;
     estado: "pendiente" | "pagado" | "vencido";
     fechaPagoPactada: string;
     fechaPago: string | null;

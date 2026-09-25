@@ -6,7 +6,6 @@ import { monedaSchema, type Moneda } from "@/lib/moneda";
 const BUCKET = "facturas-pagos";
 
 export type EstadoFactura = "radicada" | "aprobada" | "rechazada";
-export type EstadoProntoPago = "solicitada" | "aceptada" | "rechazada";
 
 export interface Factura {
   id: string;
@@ -21,16 +20,6 @@ export interface Factura {
   radicada: string;
 }
 
-export interface SolicitudProntoPago {
-  id: string;
-  fechaPropuesta: string;
-  descuentoPct: number;
-  montoNeto: number;
-  estado: EstadoProntoPago;
-  motivo: string | null;
-  solicitada: string;
-}
-
 /** One payment released by a completed milestone — same shape for both portals. */
 export interface PagoPO {
   id: string;
@@ -41,9 +30,6 @@ export interface PagoPO {
   categoria: string;
   concepto: string | null;
   monto: number;
-  /** After any early-payment discount. */
-  montoNeto: number;
-  descuentoProntoPago: number;
   moneda: Moneda;
   fechaEmision: string;
   fechaPagoPactada: string;
@@ -56,7 +42,6 @@ export interface PagoPO {
   pagadoPor: string | null;
   facturaVigente: Factura | null;
   facturas: Factura[];
-  prontoPago: SolicitudProntoPago | null;
 }
 
 const facturaSchema = z.object({
@@ -72,16 +57,6 @@ const facturaSchema = z.object({
   createdAt: z.string(),
 });
 
-const solicitudSchema = z.object({
-  id: z.string(),
-  fechaPropuesta: z.string(),
-  descuentoPct: z.number(),
-  montoNeto: z.number(),
-  estado: z.enum(["SOLICITADA", "ACEPTADA", "RECHAZADA"]),
-  motivo: z.string().nullable(),
-  createdAt: z.string(),
-});
-
 const apiPagoSchema = z.object({
   id: z.string(),
   contratoId: z.string(),
@@ -91,8 +66,6 @@ const apiPagoSchema = z.object({
   categoria: z.string(),
   concepto: z.string().nullable(),
   monto: z.number(),
-  montoNeto: z.number(),
-  descuentoProntoPago: z.number(),
   moneda: monedaSchema,
   fechaEmision: z.string(),
   fechaPagoPactada: z.string(),
@@ -105,7 +78,6 @@ const apiPagoSchema = z.object({
   pagadoPor: z.string().nullable(),
   facturaVigente: facturaSchema.nullable(),
   facturas: z.array(facturaSchema),
-  prontoPago: solicitudSchema.nullable(),
 });
 type ApiPago = z.infer<typeof apiPagoSchema>;
 
@@ -132,8 +104,6 @@ function toPago(p: ApiPago): PagoPO {
     categoria: p.categoria,
     concepto: p.concepto,
     monto: p.monto,
-    montoNeto: p.montoNeto,
-    descuentoProntoPago: p.descuentoProntoPago,
     moneda: p.moneda,
     fechaEmision: p.fechaEmision,
     fechaPagoPactada: p.fechaPagoPactada,
@@ -146,17 +116,6 @@ function toPago(p: ApiPago): PagoPO {
     pagadoPor: p.pagadoPor,
     facturaVigente: p.facturaVigente ? toFactura(p.facturaVigente) : null,
     facturas: p.facturas.map(toFactura),
-    prontoPago: p.prontoPago
-      ? {
-          id: p.prontoPago.id,
-          fechaPropuesta: p.prontoPago.fechaPropuesta,
-          descuentoPct: p.prontoPago.descuentoPct,
-          montoNeto: p.prontoPago.montoNeto,
-          estado: p.prontoPago.estado.toLowerCase() as EstadoProntoPago,
-          motivo: p.prontoPago.motivo,
-          solicitada: p.prontoPago.createdAt,
-        }
-      : null,
   };
 }
 
@@ -212,24 +171,6 @@ export async function urlSoporteProveedor(pagoId: string): Promise<{ url: string
   return data;
 }
 
-export interface SimulacionProntoPago {
-  montoOriginal: number;
-  dias: number;
-  descuentoPct: number;
-  montoNeto: number;
-  descuento: number;
-}
-
-export async function simularProntoPago(pagoId: string, fechaPropuesta: string): Promise<SimulacionProntoPago> {
-  const { data } = await api.post(`/pagos/${pagoId}/pronto-pago/simular`, { fechaPropuesta });
-  return data;
-}
-
-export async function solicitarProntoPago(pagoId: string, fechaPropuesta: string) {
-  const { data } = await api.post(`/pagos/${pagoId}/pronto-pago`, { fechaPropuesta });
-  return data;
-}
-
 // ------------------------------------------------------------------ cliente
 
 export async function fetchCuentasPorPagar(): Promise<PagoPO[]> {
@@ -274,10 +215,5 @@ export async function registrarPago(pagoId: string, pago: { fechaPago: string; r
     soportePath,
     soporteNombre: pago.soporte?.name,
   });
-  return data;
-}
-
-export async function responderProntoPago(solicitudId: string, aceptar: boolean, motivo?: string) {
-  const { data } = await api.post(`/cuentas-por-pagar/pronto-pago/${solicitudId}/${aceptar ? "aceptar" : "rechazar"}`, aceptar ? undefined : { motivo });
   return data;
 }

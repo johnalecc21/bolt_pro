@@ -11,13 +11,13 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { SearchInput } from "@/components/shared/SearchInput";
-import { Banknote, Check, FileDown, Loader2, Receipt, X, Zap } from "lucide-react";
+import { Banknote, Check, FileDown, Loader2, Receipt, X } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { apiErrorMessage } from "@/lib/api/http";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 import {
-  aprobarFactura, etapaPago, fetchCuentasPorPagar, rechazarFactura, registrarPago, responderProntoPago,
+  aprobarFactura, etapaPago, fetchCuentasPorPagar, rechazarFactura, registrarPago,
   urlFacturaCliente, urlSoporteCliente, type EtapaPago, type PagoPO,
 } from "@/lib/api/pagos";
 import { abrirEnlace, EtapaBadge, fecha, HistorialFacturas, hoyISO } from "@/components/pagos/comun";
@@ -26,7 +26,7 @@ import { LineaErp, useEstadoErp } from "@/components/integraciones/EstadoErp";
 type Filtro = "accion" | "por_pagar" | "pagados" | "todos";
 
 const FILTROS: { id: Filtro; label: string; incluye: (e: EtapaPago, p: PagoPO) => boolean }[] = [
-  { id: "accion", label: "Requieren acción", incluye: (e, p) => e === "factura_en_revision" || p.prontoPago?.estado === "solicitada" || e === "vencido" },
+  { id: "accion", label: "Requieren acción", incluye: (e) => e === "factura_en_revision" || e === "vencido" },
   { id: "por_pagar", label: "Por pagar", incluye: (e) => e === "por_pagar" || e === "vencido" },
   { id: "pagados", label: "Pagados", incluye: (e) => e === "pagado" },
   { id: "todos", label: "Todos", incluye: () => true },
@@ -56,9 +56,9 @@ export function CuentasPorPagar() {
     const en30 = Date.now() + 30 * 86_400_000;
     return {
       moneda,
-      porPagar: abiertos.reduce((s, p) => s + p.montoNeto, 0),
-      vencido: abiertos.filter((p) => p.estado === "vencido").reduce((s, p) => s + p.montoNeto, 0),
-      proximos30: abiertos.filter((p) => p.estado !== "vencido" && new Date(p.fechaPagoPactada).getTime() <= en30).reduce((s, p) => s + p.montoNeto, 0),
+      porPagar: abiertos.reduce((s, p) => s + p.monto, 0),
+      vencido: abiertos.filter((p) => p.estado === "vencido").reduce((s, p) => s + p.monto, 0),
+      proximos30: abiertos.filter((p) => p.estado !== "vencido" && new Date(p.fechaPagoPactada).getTime() <= en30).reduce((s, p) => s + p.monto, 0),
       facturasPorRevisar: pagos.filter((p) => etapaPago(p) === "factura_en_revision").length,
       otrasMonedas: conteo.size > 1,
     };
@@ -74,7 +74,7 @@ export function CuentasPorPagar() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Cuentas por pagar</h1>
-        <p className="text-sm text-muted-foreground">Revisa las facturas de tus proveedores, registra los pagos y responde solicitudes de pronto pago</p>
+        <p className="text-sm text-muted-foreground">Revisa las facturas de tus proveedores y registra los pagos</p>
       </div>
 
       {!loading && pagos.length > 0 && (
@@ -137,14 +137,11 @@ export function CuentasPorPagar() {
                       {p.concepto && <span className="block text-xs text-muted-foreground">{p.concepto}</span>}
                     </td>
                     <td className="p-4 text-muted-foreground">{p.facturaVigente?.numero ?? "—"}</td>
-                    <td className="p-4 text-right font-semibold tabular-nums">{formatMoney(p.montoNeto, p.moneda)}</td>
+                    <td className="p-4 text-right font-semibold tabular-nums">{formatMoney(p.monto, p.moneda)}</td>
                     <td className="p-4 text-muted-foreground">{p.estado === "pagado" ? `Pagado ${fecha(p.fechaPago)}` : fecha(p.fechaPagoPactada)}</td>
                     <td className="p-4">
                       <div className="flex flex-col items-start gap-1">
                         <EtapaBadge etapa={etapaPago(p)} />
-                        {p.prontoPago?.estado === "solicitada" && (
-                          <span className="inline-flex items-center gap-1 text-xs font-medium text-primary"><Zap className="h-3 w-3" aria-hidden="true" /> Pronto pago solicitado</span>
-                        )}
                       </div>
                     </td>
                     <td className="p-4 text-right"><Button size="sm" variant="outline" onClick={() => abrir(p.id)}>Gestionar</Button></td>
@@ -165,10 +162,8 @@ export function CuentasPorPagar() {
 
 function GestionPago({ pago, puedePagar, onCambio }: { pago: PagoPO; puedePagar: boolean; onCambio: () => void }) {
   const factura = pago.facturaVigente;
-  const pp = pago.prontoPago;
   const erp = useEstadoErp([...(factura ? [factura.id] : []), pago.id]);
   const [motivo, setMotivo] = useState("");
-  const [motivoPP, setMotivoPP] = useState("");
 
   async function accion(fn: () => Promise<unknown>, ok: string) {
     try {
@@ -187,10 +182,9 @@ function GestionPago({ pago, puedePagar, onCambio }: { pago: PagoPO; puedePagar:
         <DialogDescription>{pago.concepto ? `${pago.concepto} · ` : ""}{pago.categoria}</DialogDescription>
       </DialogHeader>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {[
           ["Monto", formatMoney(pago.monto, pago.moneda)],
-          ["A pagar", formatMoney(pago.montoNeto, pago.moneda)],
           ["Vence", fecha(pago.fechaPagoPactada)],
           ["Plazo", `${pago.condicionesPagoDias} días desde radicación`],
         ].map(([k, v]) => (
@@ -232,27 +226,10 @@ function GestionPago({ pago, puedePagar, onCambio }: { pago: PagoPO; puedePagar:
         )}
       </section>
 
-      {pp?.estado === "solicitada" && (
-        <section className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 p-3 text-sm">
-          <p className="flex items-center gap-1.5 font-semibold"><Zap className="h-4 w-4 text-primary" /> Solicitud de pronto pago</p>
-          <p>
-            Pagar <strong className="tabular-nums">{formatMoney(pp.montoNeto, pago.moneda)}</strong> el <strong>{fecha(pp.fechaPropuesta)}</strong> en lugar de {formatMoney(pago.monto, pago.moneda)} el {fecha(pago.fechaPagoPactada)} — ahorro de {formatMoney(pago.monto - pp.montoNeto, pago.moneda)} ({(pp.descuentoPct * 100).toLocaleString("es-CO", { maximumFractionDigits: 2 })}%).
-          </p>
-          {puedePagar ? (
-            <div className="flex flex-wrap items-end gap-2">
-              <Button size="sm" onClick={() => accion(() => responderProntoPago(pp.id, true), "Pronto pago aceptado")}>Aceptar</Button>
-              <Input aria-label="Motivo para rechazar el pronto pago" className="h-8 max-w-xs" value={motivoPP} onChange={(e) => setMotivoPP(e.target.value)} placeholder="Motivo si lo rechazas" />
-              <Button size="sm" variant="outline" disabled={motivoPP.trim().length < 3} onClick={() => accion(() => responderProntoPago(pp.id, false, motivoPP.trim()), "Pronto pago rechazado")}>Rechazar</Button>
-            </div>
-          ) : (
-            <p className="text-xs text-muted-foreground">Responde el área financiera (CFO o administrador).</p>
-          )}
-        </section>
-      )}
 
       {pago.estado === "pagado" ? (
         <section className="rounded-lg border border-success/30 bg-success/5 p-3 text-sm">
-          <p>Pagado <strong>{formatMoney(pago.montoPagado ?? pago.montoNeto, pago.moneda)}</strong> el {fecha(pago.fechaPago)} · ref. <strong>{pago.referenciaPago}</strong>{pago.pagadoPor ? ` · registrado por ${pago.pagadoPor}` : ""}</p>
+          <p>Pagado <strong>{formatMoney(pago.montoPagado ?? pago.monto, pago.moneda)}</strong> el {fecha(pago.fechaPago)} · ref. <strong>{pago.referenciaPago}</strong>{pago.pagadoPor ? ` · registrado por ${pago.pagadoPor}` : ""}</p>
           {pago.soporteNombre && (
             <Button size="sm" variant="ghost" className="mt-1 gap-1 px-0" onClick={() => abrirEnlace(() => urlSoporteCliente(pago.id))}>
               <FileDown className="h-3.5 w-3.5" /> Soporte de pago
@@ -289,7 +266,7 @@ function FormPago({ pago, onHecho }: { pago: PagoPO; onHecho: () => void }) {
 
   return (
     <section className="space-y-3 rounded-lg border border-border p-3">
-      <p className="flex items-center gap-1.5 text-sm font-semibold"><Banknote className="h-4 w-4 text-primary" /> Registrar pago de {formatMoney(pago.montoNeto, pago.moneda)}</p>
+      <p className="flex items-center gap-1.5 text-sm font-semibold"><Banknote className="h-4 w-4 text-primary" /> Registrar pago de {formatMoney(pago.monto, pago.moneda)}</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
           <Label htmlFor="fecha-pago">Fecha de pago</Label>
@@ -311,7 +288,7 @@ function FormPago({ pago, onHecho }: { pago: PagoPO; onHecho: () => void }) {
           </Button>
         }
         title="Registrar pago"
-        description={`Se marca como pagado ${formatMoney(pago.montoNeto, pago.moneda)} a ${pago.proveedor} (ref. ${referencia.trim()}). No se puede deshacer.`}
+        description={`Se marca como pagado ${formatMoney(pago.monto, pago.moneda)} a ${pago.proveedor} (ref. ${referencia.trim()}). No se puede deshacer.`}
         confirmLabel="Registrar"
         onConfirm={pagar}
       />

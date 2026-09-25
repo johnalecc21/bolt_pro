@@ -54,7 +54,7 @@ const SubastaVivo = lazy(() => import("@/pages/proveedor/SubastaVivo").then((m) 
 const MiContratoDetalle = lazy(() => import("@/pages/proveedor/MiContratoDetalle").then((m) => ({ default: m.MiContratoDetalle })));
 const ContratoDetalle = lazy(() => import("@/pages/cliente/ContratoDetalle").then((m) => ({ default: m.ContratoDetalle })));
 const MisContratos = lazy(() => import("@/pages/proveedor/MisContratos").then((m) => ({ default: m.MisContratos })));
-const PagosFactoring = lazy(() => import("@/pages/proveedor/PagosFactoring").then((m) => ({ default: m.PagosFactoring })));
+const PagosProveedor = lazy(() => import("@/pages/proveedor/PagosProveedor").then((m) => ({ default: m.PagosProveedor })));
 const PerfilEmpresa = lazy(() => import("@/pages/proveedor/PerfilEmpresa").then((m) => ({ default: m.PerfilEmpresa })));
 const MiDesempeno = lazy(() => import("@/pages/proveedor/MiDesempeno").then((m) => ({ default: m.MiDesempeno })));
 const RiesgoContinuo = lazy(() => import("@/pages/interno/RiesgoContinuo").then((m) => ({ default: m.RiesgoContinuo })));
@@ -167,7 +167,7 @@ export default function App() {
             <Route path="desempeno" element={<MiDesempeno />} />
             <Route path="contratos" element={<MisContratos />} />
             <Route path="contratos/:id" element={<MiContratoDetalle />} />
-            <Route path="pagos" element={<PagosFactoring />} />
+            <Route path="pagos" element={<PagosProveedor />} />
             <Route path="perfil" element={<PerfilEmpresa />} />
             <Route path="notificaciones" element={<CentroNotificaciones />} />
             <Route path="configuracion" element={<ConfiguracionCuenta portal="proveedor" />} />
