@@ -36,7 +36,7 @@ Todos los flujos de la plataforma, sacados del código actual (frontend `bolt_pr
 Quién hace qué y cómo se conectan los tres portales. Todo pasa por la misma API y la misma base de datos.
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph PUB["Público, sin login"]
         L["Landing /"]
         RED["Red de proveedores /red"]
@@ -76,7 +76,7 @@ flowchart LR
 **Ciclo completo de una compra**, de la configuración al cierre:
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Alta de empresa y onboarding"] --> B["Proveedores registrados y homologados"]
     B --> C["Requerimiento"] --> D["Aprobación según matriz"]
     D --> E["Licitación: invitados y red"] --> F["Ofertas"]
@@ -167,7 +167,7 @@ flowchart TD
 **Gestión de usuarios después del alta**
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Admin en Usuarios y roles"] --> B["Invitar"] --> B1{"¿Cupo del plan?"}
     B1 -->|"No"| B2["Bloqueado: actualizar plan"]
     B1 -->|"Sí"| B3["Correo de invitación, membresía activa"]
@@ -485,7 +485,7 @@ flowchart TD
 ### 11.2 Modificaciones
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Ficha del contrato"] --> B["Prorrogar · Comprador / Admin"]
     A --> C["Cambiar valor · Admin / CFO"]
     A --> D["Terminar anticipadamente · Admin / CFO"]
@@ -717,7 +717,7 @@ flowchart TD
 ## 19. Red de proveedores y vitrina
 
 ```mermaid
-flowchart LR
+flowchart TD
     A["Proveedor se registra gratis"] --> B["Se homologa una vez"]
     B --> C["Aparece en /red y en el directorio de clientes"]
     B --> D["Vitrina pública /vitrina/:id: presentación, video, galería, brochures, catálogo, métricas verificadas"]
@@ -772,7 +772,7 @@ flowchart TD
 ## 22. Procesos automáticos y notificaciones
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph CRON["Procesos programados"]
         V["06:00 Vencimientos: contratos por vencer y vencidos, hitos en riesgo y atrasados, pagos vencidos"]
         R["04:15 Riesgo continuo: listas, documentos, revalidación"]
