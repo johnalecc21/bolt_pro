@@ -99,6 +99,21 @@ export async function fetchCategoriasContratos(): Promise<string[]> {
 
 // ------------------------------------------------------------------ ficha
 
+export interface MarcaPdf {
+  razonSocial: string | null;
+  nit: string | null;
+  direccion: string | null;
+  ciudad: string | null;
+  telefono: string | null;
+  email: string | null;
+  representanteLegal: string | null;
+  cargoRepresentante: string | null;
+  colorPrimario: string | null;
+  clausulas: string | null;
+  piePagina: string | null;
+  logoUrl: string | null;
+}
+
 export type TipoModificacion = "PRORROGA" | "MONTO" | "TERMINACION";
 
 export interface FichaContrato extends Contrato {
@@ -145,7 +160,11 @@ export interface FichaContrato extends Contrato {
     usuario: string;
     fecha: string;
   }[];
-  versiones: { id: string; nombre: string; tamanoBytes: number | null; subidoPor: string; fecha: string }[];
+  versiones: { id: string; nombre: string; tamanoBytes: number | null; subidoPor: string; origen: "MANUAL" | "PLANTILLA"; editable: boolean; fecha: string }[];
+  /** The buyer's letterhead for the Procurex PDF (null if never set). */
+  marca: MarcaPdf | null;
+  /** A company template applies: the document can be regenerated from it. */
+  plantillaActiva: boolean;
   evaluaciones: { id: string; puntaje: number; calidad: number; plazos: number; servicio: number; hse: number; comentario: string | null; requierePlanMejora: boolean; fecha: string }[];
 }
 
@@ -173,8 +192,10 @@ interface ApiFicha extends ApiContrato {
   })[];
   resumenPagos: FichaContrato["resumenPagos"];
   modificaciones: (Omit<FichaContrato["modificaciones"][number], "fecha"> & { createdAt: string })[];
-  versiones: (Omit<FichaContrato["versiones"][number], "fecha"> & { createdAt: string })[];
+  versiones: (Omit<FichaContrato["versiones"][number], "fecha" | "origen" | "editable"> & { createdAt: string; origen?: "MANUAL" | "PLANTILLA"; editable?: boolean })[];
   evaluaciones: (Omit<FichaContrato["evaluaciones"][number], "fecha"> & { createdAt: string })[];
+  marca?: MarcaPdf | null;
+  plantillaActiva?: boolean;
 }
 
 const d10 = (s: string | null) => (s ? s.slice(0, 10) : null);
@@ -224,7 +245,9 @@ function toFicha(c: ApiFicha): FichaContrato {
       vigenciaDespues: d10(m.vigenciaDespues),
       fecha: createdAt,
     })),
-    versiones: c.versiones.map(({ createdAt, ...v }) => ({ ...v, fecha: createdAt })),
+    versiones: c.versiones.map(({ createdAt, ...v }) => ({ ...v, origen: v.origen ?? "MANUAL", editable: !!v.editable, fecha: createdAt })),
+    marca: c.marca ?? null,
+    plantillaActiva: !!c.plantillaActiva,
     evaluaciones: c.evaluaciones.map(({ createdAt, ...e }) => ({ ...e, fecha: createdAt })),
   };
 }
@@ -291,8 +314,14 @@ export async function obtenerUrlArchivoContrato(id: string): Promise<{ url: stri
   return data;
 }
 
-export async function obtenerUrlVersion(id: string, versionId: string): Promise<{ url: string; nombre: string }> {
-  const { data } = await api.get<{ url: string; nombre: string }>(`/contratos/${id}/versiones/${versionId}/url`);
+export async function obtenerUrlVersion(id: string, versionId: string, editable = false): Promise<{ url: string; nombre: string }> {
+  const { data } = await api.get<{ url: string; nombre: string }>(`/contratos/${id}/versiones/${versionId}/url`, { params: editable ? { editable: 1 } : undefined });
+  return data;
+}
+
+/** Fills the company's active template again with the current data. */
+export async function regenerarDocumento(id: string) {
+  const { data } = await api.post(`/contratos/${id}/documento/regenerar`);
   return data;
 }
 

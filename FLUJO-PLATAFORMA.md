@@ -111,6 +111,22 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 - **Admin Clientes** — "entrar como" un cliente (impersonación), queda registrado en auditoría.
 - **Benchmark de Mercado** — índice de precios que alimenta las alertas de anomalías del comparativo.
 
+## Plantillas y documentos (`/cliente/plantillas`)
+
+Solo Admin Cliente. Sirve para que cada empresa use sus propios formatos de contrato y orden de compra, en lugar de uno genérico.
+
+- **Plantillas Word**:
+  - La empresa sube su formato (.docx) con marcadores como `{{proveedor.nit}}`, `{{contrato.valorEnLetras}}` o una tabla `{{#lineas}}…{{/lineas}}`. Puede partir de las plantillas de ejemplo descargables.
+  - Procurex la valida al subirla. Rechaza los marcadores mal escritos y las llaves sin cerrar, con un mensaje claro para cada error, y advierte si falta el NIT o el valor.
+  - Antes de activarla se puede ver una vista previa, en PDF o en Word, llena con el último contrato real.
+  - Hay una plantilla activa por tipo (orden de compra o contrato marco). Una plantilla de categoría tiene prioridad sobre la general.
+- **Generación automática**: al firmar una adjudicación o emitir una PO bajo un marco, Procurex llena la plantilla activa y la convierte a PDF con Gotenberg (LibreOffice) en el servidor. El resultado queda como documento vigente, en PDF, y el Word llenado se puede descargar y editar. Las prórrogas y los cambios de valor generan una versión nueva. En la ficha, **Generar desde plantilla** la vuelve a llenar a mano. Si algo falla, la firma no se bloquea y el error queda en la auditoría.
+- **Marca y datos**:
+  - Se configuran la razón social, el NIT, la dirección, el representante legal que firma, el logo, el color, las cláusulas propias y el pie de página.
+  - Estos datos llenan los marcadores `{{empresa.…}}` y `{{clausulas}}`.
+  - Sin plantilla propia, el PDF de Procurex sale con esta marca: el logo y el color en el encabezado, las cláusulas de la empresa y un bloque de firmas. El proveedor lo descarga igual.
+- **Guía de marcadores**: la lista completa, con descripción y botón de copiar, más las reglas para tablas y condicionales. El detalle técnico está en `docs/PLANTILLAS-DOCUMENTOS.md` del backend.
+
 ## Integración ERP (`/cliente/integraciones`)
 
 Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Oracle, Odoo, Excel…) porque Procurex publica un formato propio y estable; el ERP (o su integrador) lo consume. Detalle técnico completo en `docs/INTEGRACION-ERP.md` del backend.
@@ -134,6 +150,7 @@ Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Ora
 
 ## Limitaciones conocidas (para tener en cuenta)
 
+- **Plantillas**: se llenan desde Word (.docx); no se leen PDF ni .doc antiguos. La conversión a PDF necesita el contenedor de Gotenberg; sin él se entrega el Word llenado.
 - **Firma electrónica**: "Firmar y generar contrato" registra la firma dentro de Procurex (con usuario y fecha en la bitácora); no hay integración con un proveedor externo de e-signature (DocuSign, etc.).
 - **Listas colombianas manuales**: Procuraduría, Contraloría y Policía no tienen API pública; quedan como verificación manual que Compliance registra. OFAC y ONU sí se consultan automáticamente (si la lista no responde, el caso va a zona gris en vez de asumirse limpio).
 - **Moneda**: los montos son enteros en unidades completas y cada requerimiento/contrato/pago lleva su moneda. No hay conversión de tasas: la analítica solo agrega lo que está en la moneda base de la empresa.

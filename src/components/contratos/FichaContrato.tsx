@@ -13,15 +13,15 @@ import { EvaluarDesempenoDialog } from "@/components/cliente/EvaluarDesempenoDia
 import { DialogoAccion } from "@/components/contratos/DialogoAccion";
 import {
   AlertTriangle, ArrowLeft, Ban, CalendarPlus, CheckCircle2, Circle, Clock, DollarSign, Download, FilePlus2,
-  FileUp, History, Loader2, MessageSquareText, Scale, Upload,
+  FileUp, History, Loader2, MessageSquareText, RefreshCw, Scale, Upload,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatMoney } from "@/lib/moneda";
 import { apiErrorMessage } from "@/lib/api/http";
 import { fechaLocal } from "@/lib/fecha";
-import { generateContratoPdf } from "@/lib/pdf/contrato";
+import { cargarLogo, generateContratoPdf } from "@/lib/pdf/contrato";
 import {
-  cambiarMontoContrato, emitirPo, obtenerUrlArchivoContrato, obtenerUrlVersion, prorrogarContrato,
+  cambiarMontoContrato, emitirPo, obtenerUrlArchivoContrato, obtenerUrlVersion, prorrogarContrato, regenerarDocumento,
   reportarAvance, subirArchivoContrato, terminarContrato, type FichaContrato as Ficha,
 } from "@/lib/api/contratos";
 import { actualizarEstadoHito, type EstadoHito, type Hito } from "@/lib/api/seguimiento";
@@ -76,6 +76,31 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
   const prorrogable = !terminado && (c.operativo || c.estadoApi === "VENCIDO");
   const [descargando, setDescargando] = useState(false);
   const [subiendo, setSubiendo] = useState(false);
+  const [regenerando, setRegenerando] = useState(false);
+
+  async function regenerar() {
+    setRegenerando(true);
+    try {
+      await regenerarDocumento(c.id);
+      toast.success("Documento generado desde tu plantilla", { description: "Quedó como la versión vigente." });
+      onCambio();
+    } catch (err) {
+      toast.error(apiErrorMessage(err, "No se pudo generar el documento."));
+    } finally {
+      setRegenerando(false);
+    }
+  }
+
+  async function abrirVersion(versionId: string, editable = false) {
+    const tab = window.open("", "_blank");
+    try {
+      const { url } = await obtenerUrlVersion(c.id, versionId, editable);
+      if (tab) tab.location.href = url;
+    } catch (err) {
+      tab?.close();
+      toast.error(apiErrorMessage(err));
+    }
+  }
   const fileRef = useRef<HTMLInputElement>(null);
 
   async function descargar() {
@@ -86,7 +111,8 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
         const { url } = await obtenerUrlArchivoContrato(c.id);
         if (tab) tab.location.href = url;
       } else {
-        generateContratoPdf({ ...c, esMarco: c.esMarco });
+        const logo = c.marca?.logoUrl ? await cargarLogo(c.marca.logoUrl) : null;
+        generateContratoPdf({ ...c, esMarco: c.esMarco }, c.marca ? { ...c.marca, logo } : null);
         toast.success("PDF generado", { description: `${c.codigo}.pdf` });
       }
     } catch (err) {
@@ -357,9 +383,20 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
 
           {esCliente && (
             <Card className="p-5">
-              <h2 className="mb-3 flex items-center gap-2 font-semibold"><FileUp className="h-4 w-4" /> Documento firmado</h2>
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-semibold"><FileUp className="h-4 w-4" /> Documento</h2>
+                {c.plantillaActiva && (
+                  <Button size="sm" variant="outline" className="gap-1.5" disabled={regenerando} onClick={regenerar}>
+                    <RefreshCw className={cn("h-3.5 w-3.5", regenerando && "animate-spin")} aria-hidden="true" /> Generar desde plantilla
+                  </Button>
+                )}
+              </div>
               {c.versiones.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin documento propio: la descarga usa la plantilla de Procurex. Adjunta el contrato firmado para guardarlo aquí; cada nueva subida queda como otra versión.</p>
+                <p className="text-sm text-muted-foreground">
+                  {c.plantillaActiva
+                    ? "Tu empresa tiene una plantilla para este documento: genérala con los datos actuales, o adjunta el firmado."
+                    : "Sin documento propio: la descarga usa el formato de Procurex con los datos de tu empresa. Sube tus plantillas en Plantillas y documentos, o adjunta el contrato firmado; cada subida queda como otra versión."}
+                </p>
               ) : (
                 <ul className="space-y-2">
                   {c.versiones.map((v, i) => (
@@ -368,25 +405,20 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
                         <p className="truncate font-medium" title={v.nombre}>
                           v{c.versiones.length - i} · {v.nombre} {i === 0 && <Badge variant="secondary" className="ml-1 text-[10px]">Vigente</Badge>}
                         </p>
-                        <p className="text-xs text-muted-foreground">{fechaLocal(v.fecha)} · {v.subidoPor} {tamano(v.tamanoBytes)}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {fechaLocal(v.fecha)} · {v.origen === "PLANTILLA" ? `Generado de ${v.subidoPor.replace(/^Plantilla /, "la plantilla ")}` : v.subidoPor} {tamano(v.tamanoBytes)}
+                        </p>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label={`Descargar versión ${c.versiones.length - i}`}
-                        onClick={async () => {
-                          const tab = window.open("", "_blank");
-                          try {
-                            const { url } = await obtenerUrlVersion(c.id, v.id);
-                            if (tab) tab.location.href = url;
-                          } catch (err) {
-                            tab?.close();
-                            toast.error(apiErrorMessage(err));
-                          }
-                        }}
-                      >
-                        <Download className="h-4 w-4" />
-                      </Button>
+                      <div className="flex shrink-0 items-center">
+                        {v.editable && (
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs" aria-label={`Descargar Word de la versión ${c.versiones.length - i}`} onClick={() => abrirVersion(v.id, true)}>
+                            Word
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="icon" aria-label={`Descargar versión ${c.versiones.length - i}`} onClick={() => abrirVersion(v.id)}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </li>
                   ))}
                 </ul>

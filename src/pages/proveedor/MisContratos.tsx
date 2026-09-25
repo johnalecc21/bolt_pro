@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchMisContratos, obtenerUrlArchivoContrato, type ContratoConHitos } from "@/lib/api/contratos";
-import { generateContratoPdf } from "@/lib/pdf/contrato";
+import { fetchMiFichaContrato, fetchMisContratos, obtenerUrlArchivoContrato, type ContratoConHitos } from "@/lib/api/contratos";
+import { cargarLogo, generateContratoPdf } from "@/lib/pdf/contrato";
 import { apiErrorMessage } from "@/lib/api/http";
 import { CheckCircle2, Circle, Clock, AlertTriangle, FileCheck2, Calendar, Download, Loader2, FileUp } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,10 @@ export function MisContratos() {
         if (pendingTab) pendingTab.location.href = url;
         toast.success("Documento del cliente abierto", { description: c.archivoNombre });
       } else {
-        generateContratoPdf({ ...c, esMarco: c.esMarco });
+        // The buyer's letterhead, when it has one.
+        const marca = (await fetchMiFichaContrato(c.id).catch(() => null))?.marca ?? null;
+        const logo = marca?.logoUrl ? await cargarLogo(marca.logoUrl) : null;
+        generateContratoPdf({ ...c, esMarco: c.esMarco }, marca ? { ...marca, logo } : null);
         toast.success("PDF generado", { description: `${c.codigo}.pdf` });
       }
     } catch (err) {
