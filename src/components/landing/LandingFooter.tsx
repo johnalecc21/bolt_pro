@@ -19,6 +19,7 @@ const columns = [
       { label: "Portal Proveedores", href: "/proveedor/login" },
       { label: "Panel Interno", href: "/interno/login" },
       { label: "Registro de proveedor", href: "/proveedor/registro" },
+      { label: "Red de proveedores", href: "/red" },
     ],
   },
   {

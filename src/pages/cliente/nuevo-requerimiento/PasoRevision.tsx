@@ -17,11 +17,12 @@ interface PasoRevisionProps {
   fechaLimite: string;
   criterios: Criterios;
   proveedoresSeleccionados: string[];
+  abiertoRed: boolean;
   prioridad: Prioridad;
   items: number;
 }
 
-export function PasoRevision({ titulo, descripcion, categoria, presupuesto, moneda, fechaLimite, criterios, proveedoresSeleccionados, prioridad, items }: PasoRevisionProps) {
+export function PasoRevision({ titulo, descripcion, categoria, presupuesto, moneda, fechaLimite, criterios, proveedoresSeleccionados, abiertoRed, prioridad, items }: PasoRevisionProps) {
   const filas: [string, string][] = [
     ["Título", titulo || "(sin definir)"],
     ["Descripción", descripcion || "(sin definir)"],
@@ -32,6 +33,7 @@ export function PasoRevision({ titulo, descripcion, categoria, presupuesto, mone
     ["Fecha requerida", fechaLimite || "(sin definir)"],
     ["Criterios", `Precio ${criterios.precio}% · Tiempo ${criterios.tiempo}% · Calidad ${criterios.calidad}% · Pago ${criterios.pago}%`],
     ["Proveedores preseleccionados", String(proveedoresSeleccionados.length)],
+    ["Abierto a la red", abiertoRed ? `Sí: todos los homologados de ${categoria} recibirán la convocatoria` : "No: solo los invitados"],
   ];
 
   return (

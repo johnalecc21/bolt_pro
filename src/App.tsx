@@ -58,6 +58,9 @@ const MisContratos = lazy(() => import("@/pages/proveedor/MisContratos").then((m
 const PagosFactoring = lazy(() => import("@/pages/proveedor/PagosFactoring").then((m) => ({ default: m.PagosFactoring })));
 const PerfilEmpresa = lazy(() => import("@/pages/proveedor/PerfilEmpresa").then((m) => ({ default: m.PerfilEmpresa })));
 const MiDesempeno = lazy(() => import("@/pages/proveedor/MiDesempeno").then((m) => ({ default: m.MiDesempeno })));
+const OportunidadesRed = lazy(() => import("@/pages/proveedor/OportunidadesRed").then((m) => ({ default: m.OportunidadesRed })));
+const RiesgoContinuo = lazy(() => import("@/pages/interno/RiesgoContinuo").then((m) => ({ default: m.RiesgoContinuo })));
+const RedProveedores = lazy(() => import("@/pages/publico/RedProveedores").then((m) => ({ default: m.RedProveedores })));
 const MiVitrina = lazy(() => import("@/pages/proveedor/MiVitrina").then((m) => ({ default: m.MiVitrina })));
 
 const DashboardConsultor = lazy(() => import("@/pages/interno/DashboardConsultor").then((m) => ({ default: m.DashboardConsultor })));
@@ -84,6 +87,7 @@ export default function App() {
           <Route path="/terminos" element={<TerminosCondiciones />} />
           <Route path="/privacidad" element={<AvisoPrivacidad />} />
           <Route path="/vitrina/:id" element={<VitrinaProveedor />} />
+          <Route path="/red" element={<RedProveedores />} />
 
           {/* Portal Cliente */}
           <Route path="/cliente/login" element={<LoginCliente />} />
@@ -140,6 +144,7 @@ export default function App() {
             <Route path="dashboard" element={<DashboardProveedor />} />
             <Route path="onboarding" element={<OnboardingProveedor />} />
             <Route path="homologacion" element={<HomologacionForm />} />
+            <Route path="oportunidades" element={<OportunidadesRed />} />
             <Route path="invitaciones" element={<InvitacionesProveedor />} />
             <Route path="ofertas" element={<CargaOferta />} />
             <Route path="ofertas/:requerimientoId" element={<CargaOferta />} />
@@ -168,6 +173,7 @@ export default function App() {
           >
             <Route path="dashboard" element={<DashboardConsultor />} />
             <Route path="homologacion" element={<RequireRole allow={["compliance_ops"]}><ColaHomologacion /></RequireRole>} />
+            <Route path="riesgo" element={<RequireRole allow={["compliance_ops"]}><RiesgoContinuo /></RequireRole>} />
             <Route path="mediacion" element={<MediacionDisputas />} />
             <Route path="clientes" element={<RequireRole allow={["compliance_ops"]}><AdminClientes /></RequireRole>} />
             <Route path="benchmark" element={<BenchmarkMercado />} />

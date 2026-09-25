@@ -28,6 +28,7 @@ export function NuevoRequerimiento() {
     especificaciones, actualizarEspecificacion, eliminarEspecificacion, agregarEspecificacion,
     items, setItems, itemsConError,
     proveedoresSeleccionados, toggleProveedor,
+    abiertoRed, setAbiertoRed,
     submitting,
     proveedores, loadingProveedores,
     total, esCatalogo,
@@ -105,6 +106,9 @@ export function NuevoRequerimiento() {
             loadingProveedores={loadingProveedores}
             proveedoresSeleccionados={proveedoresSeleccionados}
             onToggleProveedor={toggleProveedor}
+            categoria={categoria}
+            abiertoRed={abiertoRed}
+            onAbiertoRed={setAbiertoRed}
           />
         )}
 
@@ -118,6 +122,7 @@ export function NuevoRequerimiento() {
             fechaLimite={fechaLimite}
             criterios={criterios}
             proveedoresSeleccionados={proveedoresSeleccionados}
+            abiertoRed={abiertoRed}
             prioridad={prioridad}
             items={itemsValidos(items).length}
           />
@@ -133,7 +138,7 @@ export function NuevoRequerimiento() {
           {step < TOTAL_STEPS ? (
             <Button
               onClick={() => setStep((s) => s + 1)}
-              disabled={(step === 2 && itemsConError) || (step === 4 && total !== 100) || (step === 5 && proveedoresSeleccionados.length < 3)}
+              disabled={(step === 2 && itemsConError) || (step === 4 && total !== 100) || (step === 5 && !abiertoRed && proveedoresSeleccionados.length < 3)}
             >
               Siguiente <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

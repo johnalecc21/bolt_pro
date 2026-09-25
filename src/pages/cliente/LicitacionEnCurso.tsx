@@ -9,8 +9,8 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Send, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, cerrarLicitacion, type InvitacionRequerimiento } from "@/lib/api/requerimientos";
-import { fetchOfertasPorRequerimiento } from "@/lib/api/ofertas";
+import { TableroLicitacion } from "@/components/licitacion/TableroLicitacion";
+import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, cerrarLicitacion } from "@/lib/api/requerimientos";
 import { fetchPreguntas, responderPregunta } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
 
@@ -32,10 +32,6 @@ export function LicitacionEnCurso() {
   const requerimientoId = id ?? "";
   const { data: requerimiento, loading: cargandoRequerimiento, reload: reloadRequerimiento } = useApiData(
     () => (requerimientoId ? fetchRequerimiento(requerimientoId) : new Promise<never>(() => {})),
-    [requerimientoId],
-  );
-  const { data: ofertas } = useApiData(
-    () => (requerimientoId ? fetchOfertasPorRequerimiento(requerimientoId) : Promise.resolve([])),
     [requerimientoId],
   );
   const { data: preguntas, reload: reloadPreguntas } = useApiData(
@@ -72,22 +68,6 @@ export function LicitacionEnCurso() {
   // moved on to negotiation/adjudication.
   const enLicitacion = requerimiento.estado === "en_licitacion";
   const cerrada = !enLicitacion || tiempo.vencido;
-
-  // Real invited-provider status: derived from the actual Invitacion + Oferta
-  // records for this proceso, not padded with unrelated providers.
-  const idsConOfertaEnviada = new Set((ofertas ?? []).filter((o) => o.enviada).map((o) => o.proveedorId));
-  const estadoLabel: Record<InvitacionRequerimiento["estado"], string> = {
-    NUEVA: "Sin respuesta",
-    VISTA: "Visto",
-    RESPONDIDA: "Oferta enviada",
-    VENCIDA: "Vencida",
-    DECLINADA: "Declinó",
-  };
-  const listaProveedores = requerimiento.invitaciones.map((inv) => ({
-    proveedor: inv.proveedor,
-    invitadoAt: inv.createdAt.slice(0, 10),
-    estado: idsConOfertaEnviada.has(inv.proveedorId) ? "Oferta enviada" : estadoLabel[inv.estado],
-  }));
 
   const pctRespuesta = requerimiento.proveedoresInvitados > 0
     ? Math.round((requerimiento.ofertasRecibidas / requerimiento.proveedoresInvitados) * 100)
@@ -133,12 +113,12 @@ export function LicitacionEnCurso() {
     <div className="space-y-6 p-6">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{requerimientoId}</h1>
+          <h1 className="text-2xl font-bold">{requerimiento.codigo}</h1>
           <Badge className={cerrada ? "bg-muted text-muted-foreground" : "bg-info/15 text-info border-info/30"}>
             {cerrada ? "Licitación Cerrada" : "Licitación Abierta"}
           </Badge>
         </div>
-        <p className="text-sm text-muted-foreground">{requerimiento.titulo} · Acme S.A.</p>
+        <p className="text-sm text-muted-foreground">{requerimiento.titulo} · {requerimiento.categoria}</p>
       </div>
 
       {mode === "readonly" && (
@@ -190,38 +170,9 @@ export function LicitacionEnCurso() {
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Providers */}
-        <Card className="p-5">
-          <h2 className="mb-4 font-semibold">Estado de proveedores invitados</h2>
-          {listaProveedores.length === 0 ? (
-            <EmptyState icon={Users} title="Sin proveedores invitados todavía" />
-          ) : (
-            <div className="space-y-2">
-              {listaProveedores.map(({ proveedor: p, estado, invitadoAt }) => {
-                const colorClass =
-                  estado === "Oferta enviada" ? "bg-success/15 text-success" :
-                  estado === "Visto" ? "bg-info/15 text-info" :
-                  estado === "Declinó" ? "bg-destructive/15 text-destructive" :
-                  estado === "Vencida" ? "bg-muted text-muted-foreground" :
-                  "bg-warning/15 text-warning-foreground";
-                return (
-                  <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border p-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg text-white text-xs font-bold" style={{ background: p.color }}>
-                      {p.iniciales}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate text-sm font-medium">{p.nombre}</p>
-                      <p className="text-xs text-muted-foreground">Invitado {invitadoAt}</p>
-                    </div>
-                    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClass}`}>{estado}</span>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Card>
+      <TableroLicitacion requerimientoId={requerimientoId} abierta={!cerrada} puedeGestionar={mode === "full"} />
 
+      <div className="grid grid-cols-1 gap-6">
         {/* Q&A */}
         <Card className="p-5">
           <h2 className="mb-4 flex items-center gap-2 font-semibold">

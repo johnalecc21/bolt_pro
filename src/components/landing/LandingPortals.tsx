@@ -16,7 +16,7 @@ const portals = [
   {
     icon: Truck,
     title: "Portal Proveedores",
-    description: "Homologa tu empresa, recibe invitaciones a licitar, cotiza y da seguimiento a tus procesos.",
+    description: "Registro y vitrina gratis. Homológate una vez y participa en los procesos de todas las empresas de Procurex.",
     to: "/proveedor/login",
     offset: "",
   },
@@ -36,6 +36,10 @@ export function LandingPortals() {
         <Reveal className="mx-auto max-w-2xl text-center">
           <span className="text-sm font-semibold uppercase tracking-widest text-primary">Acceso a la plataforma</span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">Elige tu portal para comenzar</h2>
+          <p className="mt-3 text-muted-foreground">
+            ¿Eres proveedor?{" "}
+            <Link to="/red" className="font-medium text-primary hover:underline">Conoce la red de proveedores homologados</Link>
+          </p>
         </Reveal>
 
         <StaggerGroup className="mt-14 grid gap-6 sm:grid-cols-3">

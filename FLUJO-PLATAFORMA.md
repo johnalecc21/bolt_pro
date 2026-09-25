@@ -141,6 +141,27 @@ Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Ora
 - **API de entrada** — con una API key (se genera en *Conexión*), el ERP informa los pagos que hizo (`POST /integraciones/erp/entrada/pagos`, por id de pago o número de factura + NIT) y Procurex los registra como pagados sin duplicarlos; también puede confirmar el número interno que le asignó a cada documento (`/acuse`).
 - **NIT del proveedor**: el proveedor lo completa en *Perfil de Empresa* (se precarga del NIT detectado en homologación); sin él el ERP no puede crear el tercero.
 
+## Red de proveedores, seguimiento en vivo y riesgo continuo
+
+**"Homológate una vez y participa en los procesos de todas las empresas de Procurex."** El registro y la vitrina son gratis para el proveedor, así que la red crece con cada cliente. Detalle técnico en `docs/RED-Y-RIESGO.md` del backend.
+
+- **Abrir un proceso a la red**: en el paso *Proveedores* del nuevo requerimiento viene activado. Además de los invitados directos, al aprobarse la salida a licitación se avisa a los proveedores homologados de la categoría. Con la red abierta ya no hace falta invitar a 3 proveedores. También se puede abrir o cerrar desde el tablero mientras la licitación esté abierta.
+- **Oportunidades (`/proveedor/oportunidades`)**: el proveedor ve los procesos abiertos de su categoría (o todos), lee el requerimiento completo y se une con un clic, sin invitación. Si la empresa exige documentos que el proveedor no tiene validados, no puede unirse y se le dice cuáles faltan. Al unirse, el comprador recibe un aviso. El menú muestra cuántas oportunidades nuevas hay.
+- **Directorio público (`/red`)**: proveedores homologados con búsqueda, categorías y enlace a su vitrina, cifras de la red y el llamado a registrarse gratis. Tiene enlaces desde la landing y desde el registro.
+- **Seguimiento en vivo (ficha de la licitación)**: un tablero que se actualiza cada 15 s mientras la licitación está abierta.
+  - Muestra el embudo: participantes, vieron, aceptaron, preparando, enviaron y declinaron.
+  - Por cada proveedor muestra la etapa, cuándo vio, respondió y envió, y su última actividad.
+  - Indica quién llegó desde la red. Nunca muestra precios antes del cierre.
+- **Riesgo continuo**: cada noche, un proceso revisa a los proveedores homologados.
+  - Vuelve a consultar OFAC y ONU cada 30 días por proveedor. Una coincidencia nueva manda la homologación a revisión (zona gris) y genera una alerta para Compliance. A las empresas con contratos con ese proveedor se les avisa "en revisión", sin detalle, y al proveedor no se le revela.
+  - Avisa al proveedor 30, 15 y 7 días antes de que venza un documento. El día que vence, lo marca *vencido* y genera una alerta.
+  - Alerta cuando la revalidación anual está vencida.
+  - Si una lista no responde, no se da por limpio y se reintenta al día siguiente.
+  - El proveedor puede indicar la vigencia al subir cada documento, y ve sus pendientes en *Homologación*.
+  - Compliance las gestiona en `/interno/riesgo`: puede resolver cada alerta con una nota o ejecutar el monitoreo en el momento. Al volver a aprobar una homologación, sus alertas se cierran solas.
+  - El comprador ve en la ficha del proveedor la fecha de la última re-consulta y las alertas abiertas.
+  - **Pendiente**: datos financieros (RUES, centrales de riesgo).
+
 ## Lo que conecta todo
 
 - **Log de auditoría** (visible en Contratos e Interno › Admin Clientes): cada aprobación, rechazo, cambio de score, impersonación o documento adjuntado queda ahí, sin importar desde qué portal se generó — todo backend-real.

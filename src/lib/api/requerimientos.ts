@@ -189,6 +189,8 @@ export async function createRequerimiento(payload: {
   criteriosPeso?: Record<string, number>;
   especificaciones?: Especificacion[];
   proveedorIds?: string[];
+  /** Also publish it to every homologated supplier of the category. */
+  abiertoRed?: boolean;
   centroCostoId?: string;
   prioridad?: Prioridad;
   items?: ItemRequerimiento[];

@@ -7,6 +7,7 @@ import { EmptyState } from "@/components/shared/EmptyState";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { InvitarProveedorDialog } from "@/components/cliente/InvitarProveedorDialog";
 import { ResumenDesempenoProveedor } from "@/components/cliente/ResumenDesempenoProveedor";
+import { MonitoreoRiesgoProveedor } from "@/components/cliente/MonitoreoRiesgoProveedor";
 import {
   CatalogoVitrina, ContactoVitrina, DocumentosVitrina, GaleriaVitrina, MetricasVitrina, VerificadoVitrina, VideoVitrina,
 } from "@/components/vitrina/SeccionesVitrina";
@@ -64,6 +65,7 @@ export function DetalleProveedor() {
       </Card>
 
       <MetricasVitrina p={p} />
+      <MonitoreoRiesgoProveedor proveedorId={p.id} />
 
       <Card className="p-5">
         <ResumenDesempenoProveedor proveedorId={p.id} />

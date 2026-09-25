@@ -84,7 +84,9 @@ export interface RequerimientoInvitado {
   criterios: Record<string, number> | null;
   items: { id: string; orden: number; descripcion: string; cantidad: number; unidad: string; especificacion: string | null }[];
   documentos: { id: string; nombre: string }[];
-  invitacion: { id: string; estado: "NUEVA" | "VISTA" | "RESPONDIDA" | "VENCIDA" | "DECLINADA" };
+  /** Null when the supplier only previews a process open to the network. */
+  invitacion: { id: string; estado: "NUEVA" | "VISTA" | "RESPONDIDA" | "VENCIDA" | "DECLINADA" } | null;
+  abiertoRed?: boolean;
 }
 
 export async function fetchRequerimientoInvitado(requerimientoId: string): Promise<RequerimientoInvitado> {

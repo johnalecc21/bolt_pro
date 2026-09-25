@@ -39,6 +39,8 @@ export interface DocumentoHomologacion {
   estado: EstadoDocumento;
   /** Required ones block "enviar"; optional ones matter when a client requires their category. */
   obligatorio: boolean;
+  /** Expiry date the supplier declared (ISO), if any. */
+  vigencia?: string | null;
 }
 
 export type ResultadoLista = "sin_coincidencia" | "coincidencia" | "no_disponible" | "pendiente_manual";
@@ -209,6 +211,7 @@ interface ApiHomologacion {
     categoria: Uppercase<CategoriaDocumento>;
     estado: "PENDIENTE" | "SUBIDO" | "VALIDADO" | "VENCIDO";
     obligatorio: boolean;
+    vigencia?: string | null;
   }[];
   verificaciones?: {
     lista: string;
@@ -238,6 +241,7 @@ function toRegistro(h: ApiHomologacion): RegistroHomologacion {
       categoria: d.categoria.toLowerCase() as CategoriaDocumento,
       estado: d.estado.toLowerCase() as EstadoDocumento,
       obligatorio: d.obligatorio,
+      vigencia: d.vigencia ?? null,
     })),
     verificaciones: (h.verificaciones ?? []).map((v) => ({
       lista: v.lista,
@@ -304,7 +308,7 @@ export async function guardarCuestionario(cuestionario: Partial<HomologacionCues
   return toRegistro(data);
 }
 
-export async function subirDocumento(documentoId: string, file: File) {
+export async function subirDocumento(documentoId: string, file: File, vigencia?: string) {
   assertFileSizeOk(file);
 
   const { data: uploadUrlData } = await api.post<{ path: string; token: string }>(
@@ -314,7 +318,7 @@ export async function subirDocumento(documentoId: string, file: File) {
 
   await uploadToSignedUrl(BUCKET, uploadUrlData.path, uploadUrlData.token, file);
 
-  const { data } = await api.post(`/homologacion/documentos/${documentoId}/subir`, { path: uploadUrlData.path });
+  const { data } = await api.post(`/homologacion/documentos/${documentoId}/subir`, { path: uploadUrlData.path, vigencia: vigencia || undefined });
   return data;
 }
 

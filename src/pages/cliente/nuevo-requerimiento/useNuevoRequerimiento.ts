@@ -40,6 +40,9 @@ export function useNuevoRequerimiento() {
   const [items, setItems] = useState<ItemBorrador[]>([]);
   const itemsConError = items.some(itemIncompleto);
   const [proveedoresSeleccionados, setProveedoresSeleccionados] = useState<string[]>([]);
+  // Open to the whole homologated network of the category by default: more
+  // competition without the buyer having to know every supplier.
+  const [abiertoRed, setAbiertoRed] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const { data: proveedores, loading: loadingProveedores } = useApiData(() => fetchProveedores());
 
@@ -95,6 +98,7 @@ export function useNuevoRequerimiento() {
         criteriosPeso: criterios,
         especificaciones: especificaciones.filter((e) => e.name.trim() || e.value.trim()),
         proveedorIds: proveedoresSeleccionados,
+        abiertoRed,
         items: itemsValidos(items),
       });
       if (evaluacion?.excede) {
@@ -134,6 +138,7 @@ export function useNuevoRequerimiento() {
     especificaciones, actualizarEspecificacion, eliminarEspecificacion, agregarEspecificacion,
     items, setItems, itemsConError,
     proveedoresSeleccionados, toggleProveedor,
+    abiertoRed, setAbiertoRed,
     submitting,
     proveedores, loadingProveedores,
     total, esCatalogo,

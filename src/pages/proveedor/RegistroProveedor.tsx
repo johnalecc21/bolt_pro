@@ -45,7 +45,7 @@ export function RegistroProveedor() {
             <Building2 className="h-6 w-6" />
           </div>
           <h1 className="text-xl font-bold">Únete a la red de proveedores</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Registro autoservicio — luego completarás tu homologación</p>
+          <p className="mt-1 text-sm text-muted-foreground">Gratis. Homológate una vez y participa en los procesos de todas las empresas de Procurex.</p>
         </div>
 
         {step === "form" && (

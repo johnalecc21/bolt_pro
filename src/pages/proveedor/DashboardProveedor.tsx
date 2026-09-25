@@ -115,7 +115,7 @@ function HomologacionCard({
     borrador: {
       icon: ShieldCheck, tone: "text-primary bg-primary/10",
       titulo: "Completa tu homologación",
-      desc: "Necesitas estar homologado para recibir invitaciones a licitar.",
+      desc: "Homológate una vez y participa en los procesos de todas las empresas de Procurex, sin esperar invitación.",
       cta: { label: "Continuar homologación", to: "/proveedor/homologacion" },
     },
     en_revision: {
@@ -139,8 +139,8 @@ function HomologacionCard({
     aprobado: {
       icon: CheckCircle2, tone: "text-success bg-success/10",
       titulo: "Estás homologado",
-      desc: "Tu empresa aparece en el directorio y puede recibir invitaciones a licitar.",
-      cta: { label: "Ver mi homologación", to: "/proveedor/homologacion" },
+      desc: "Tu empresa aparece en la red y puedes unirte a los procesos abiertos de todas las empresas de Procurex.",
+      cta: { label: "Ver oportunidades de la red", to: "/proveedor/oportunidades" },
     },
   }[estado];
 

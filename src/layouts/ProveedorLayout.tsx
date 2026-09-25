@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, ShieldCheck, Inbox, FileText, Trophy, Wallet, User, Gavel, FileCheck2, Store, BarChart3, Target, Building,
+  LayoutDashboard, ShieldCheck, Inbox, FileText, Trophy, Wallet, User, Gavel, FileCheck2, Store, BarChart3, Target, Building, Network,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useApiData } from "@/hooks/useApiData";
@@ -14,6 +14,7 @@ const navItems: PortalNavEntry[] = [
     label: "Oportunidades",
     icon: Target,
     items: [
+      { to: "oportunidades", label: "Red de oportunidades", icon: Network, contador: "oportunidades", contadorTitulo: "abiertas en tus categorías" },
       { to: "invitaciones", label: "Invitaciones", icon: Inbox, contador: "invitaciones", contadorTitulo: "sin responder" },
       { to: "ofertas", label: "Mis ofertas", icon: FileText },
       { to: "subasta", label: "Subasta en vivo", icon: Gavel },

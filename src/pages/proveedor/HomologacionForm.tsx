@@ -4,8 +4,9 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
-  Loader2, Upload, FileCheck, CheckCircle2, AlertTriangle, Lock, Save, ArrowLeft, ArrowRight, Info, Check,
+  Loader2, Upload, FileCheck, CheckCircle2, AlertTriangle, Lock, Save, ArrowLeft, ArrowRight, Info, Check, CalendarClock,
 } from "lucide-react";
+import { fetchMisAlertas } from "@/lib/api/riesgo";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
 import {
@@ -30,6 +31,8 @@ const stepsValidacion = [
 export function HomologacionForm() {
   const navigate = useNavigate();
   const { data: registro, reload } = useApiData(fetchMiHomologacion);
+  const { data: misAlertas, reload: reloadAlertas } = useApiData(() => fetchMisAlertas().catch(() => []));
+  const [vigencias, setVigencias] = useState<Record<string, string>>({});
   const [seccion, setSeccion] = useState(0);
   const [cuestionario, setCuestionario] = useState<HomologacionCuestionario>({});
   const [dirty, setDirty] = useState(false);
@@ -128,9 +131,10 @@ export function HomologacionForm() {
     setArchivoError((prev) => { const next = { ...prev }; delete next[pending.id]; return next; });
     setSubiendo(pending.id);
     try {
-      await subirDocumento(pending.id, file);
+      await subirDocumento(pending.id, file, vigencias[pending.id]);
       toast.success("Documento subido", { description: pending.nombre });
       reload();
+      reloadAlertas();
     } catch (err) {
       const message = apiErrorMessage(err, "No se pudo subir el archivo.");
       setArchivoError((prev) => ({ ...prev, [pending.id]: message }));
@@ -188,6 +192,13 @@ export function HomologacionForm() {
       {bloqueadaEnRevision && (
         <Banner tone="warning" icon={Lock}>
           Tu homologación está en revisión. No puedes modificarla hasta que Procurex resuelva.
+        </Banner>
+      )}
+      {(misAlertas ?? []).length > 0 && (
+        <Banner tone="warning" icon={CalendarClock} title="Tienes pendientes para mantener tu homologación al día">
+          <ul className="list-disc space-y-0.5 pl-4">
+            {(misAlertas ?? []).map((a) => <li key={a.id}>{a.detalle}</li>)}
+          </ul>
         </Banner>
       )}
       {yaAprobada && (
@@ -263,6 +274,8 @@ export function HomologacionForm() {
                   onFileSelected={onFileSelected}
                   onElegirArchivo={elegirArchivo}
                   onVerDocumento={verDocumento}
+                  vigencias={vigencias}
+                  onVigencia={(id, v) => setVigencias((prev) => ({ ...prev, [id]: v }))}
                 />
               ) : (
                 <SeccionCuestionario seccion={seccion} c={cuestionario} setField={setField} />
@@ -373,7 +386,7 @@ function Banner({
       <Icon className="mt-0.5 h-4 w-4 shrink-0" />
       <div>
         {title && <p className="font-medium">{title}</p>}
-        <p>{children}</p>
+        <div>{children}</div>
       </div>
     </div>
   );
@@ -389,6 +402,8 @@ function DocumentosSeccion({
   onFileSelected,
   onElegirArchivo,
   onVerDocumento,
+  vigencias,
+  onVigencia,
 }: {
   documentos: import("@/lib/api/homologacion").DocumentoHomologacion[];
   estado: import("@/lib/api/homologacion").EstadoHomologacion | undefined;
@@ -399,7 +414,10 @@ function DocumentosSeccion({
   onFileSelected: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onElegirArchivo: (id: string, nombre: string) => void;
   onVerDocumento: (id: string) => void;
+  vigencias: Record<string, string>;
+  onVigencia: (id: string, v: string) => void;
 }) {
+  const hoy = Date.now();
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between text-sm">
@@ -458,6 +476,28 @@ function DocumentosSeccion({
                   {cargando ? <Loader2 className="h-4 w-4 animate-spin" /> : label}
                 </Button>
               </div>
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              {doc.vigencia && (() => {
+                const dias = Math.ceil((new Date(doc.vigencia).getTime() - hoy) / 86_400_000);
+                return (
+                  <span className={cn(dias <= 30 && "font-medium text-warning-foreground")}>
+                    {dias <= 0 ? "Venció" : "Vence"} el {doc.vigencia.slice(0, 10)}{dias > 0 && dias <= 30 ? ` (en ${dias} día(s))` : ""}
+                  </span>
+                );
+              })()}
+              {puedeEditar && !cargando && (
+                <label className="flex items-center gap-1.5">
+                  {tieneArchivo ? "Vigencia del nuevo documento" : "Vigencia"} (opcional)
+                  <input
+                    type="date"
+                    value={vigencias[doc.id] ?? ""}
+                    min={new Date(hoy).toISOString().slice(0, 10)}
+                    onChange={(e) => onVigencia(doc.id, e.target.value)}
+                    className="h-7 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+                  />
+                </label>
+              )}
             </div>
             {archivoError[doc.id] && <p className="mt-2 text-xs text-destructive">{archivoError[doc.id]}</p>}
           </div>
