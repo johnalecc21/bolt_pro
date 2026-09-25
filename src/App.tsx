@@ -32,7 +32,6 @@ const Negociacion = lazy(() => import("@/pages/cliente/Negociacion").then((m) =>
 const Adjudicacion = lazy(() => import("@/pages/cliente/Adjudicacion").then((m) => ({ default: m.Adjudicacion })));
 const Contratos = lazy(() => import("@/pages/cliente/Contratos").then((m) => ({ default: m.Contratos })));
 const Seguimiento = lazy(() => import("@/pages/cliente/Seguimiento").then((m) => ({ default: m.Seguimiento })));
-const Disputas = lazy(() => import("@/pages/cliente/Disputas").then((m) => ({ default: m.Disputas })));
 const IntegracionesErp = lazy(() => import("@/pages/cliente/IntegracionesErp").then((m) => ({ default: m.IntegracionesErp })));
 const PlantillasDocumentos = lazy(() => import("@/pages/cliente/PlantillasDocumentos").then((m) => ({ default: m.PlantillasDocumentos })));
 const CuentasPorPagar = lazy(() => import("@/pages/cliente/CuentasPorPagar").then((m) => ({ default: m.CuentasPorPagar })));
@@ -63,11 +62,9 @@ const RiesgoContinuo = lazy(() => import("@/pages/interno/RiesgoContinuo").then(
 const RedProveedores = lazy(() => import("@/pages/publico/RedProveedores").then((m) => ({ default: m.RedProveedores })));
 const MiVitrina = lazy(() => import("@/pages/proveedor/MiVitrina").then((m) => ({ default: m.MiVitrina })));
 
-const DashboardConsultor = lazy(() => import("@/pages/interno/DashboardConsultor").then((m) => ({ default: m.DashboardConsultor })));
+const EmpresasClientes = lazy(() => import("@/pages/interno/EmpresasClientes").then((m) => ({ default: m.EmpresasClientes })));
+const EmpresaDetalle = lazy(() => import("@/pages/interno/EmpresaDetalle").then((m) => ({ default: m.EmpresaDetalle })));
 const ColaHomologacion = lazy(() => import("@/pages/interno/ColaHomologacion").then((m) => ({ default: m.ColaHomologacion })));
-const MediacionDisputas = lazy(() => import("@/pages/interno/MediacionDisputas").then((m) => ({ default: m.MediacionDisputas })));
-const AdminClientes = lazy(() => import("@/pages/interno/AdminClientes").then((m) => ({ default: m.AdminClientes })));
-const BenchmarkMercado = lazy(() => import("@/pages/interno/BenchmarkMercado").then((m) => ({ default: m.BenchmarkMercado })));
 
 function RouteLoading() {
   return (
@@ -116,7 +113,6 @@ export default function App() {
             <Route path="contratos" element={<Contratos />} />
             <Route path="contratos/:id" element={<ContratoDetalle />} />
             <Route path="seguimiento" element={<RequireRole allow={["comprador", "admin_cliente"]}><Seguimiento /></RequireRole>} />
-            <Route path="disputas" element={<RequireRole allow={["comprador", "admin_cliente"]}><Disputas /></RequireRole>} />
             <Route path="pagos" element={<RequireRole allow={["comprador", "admin_cliente", "aprobador_cfo"]}><CuentasPorPagar /></RequireRole>} />
             <Route path="plantillas" element={<RequireRole allow={["admin_cliente"]}><PlantillasDocumentos /></RequireRole>} />
             <Route path="integraciones" element={<RequireRole allow={["admin_cliente", "aprobador_cfo"]}><IntegracionesErp /></RequireRole>} />
@@ -171,12 +167,11 @@ export default function App() {
               </ProtectedRoute>
             }
           >
-            <Route path="dashboard" element={<DashboardConsultor />} />
+            <Route path="dashboard" element={<Navigate to="/interno/empresas" replace />} />
+            <Route path="empresas" element={<EmpresasClientes />} />
+            <Route path="empresas/:id" element={<EmpresaDetalle />} />
             <Route path="homologacion" element={<RequireRole allow={["compliance_ops"]}><ColaHomologacion /></RequireRole>} />
             <Route path="riesgo" element={<RequireRole allow={["compliance_ops"]}><RiesgoContinuo /></RequireRole>} />
-            <Route path="mediacion" element={<MediacionDisputas />} />
-            <Route path="clientes" element={<RequireRole allow={["compliance_ops"]}><AdminClientes /></RequireRole>} />
-            <Route path="benchmark" element={<BenchmarkMercado />} />
             <Route path="notificaciones" element={<CentroNotificaciones />} />
             <Route path="configuracion" element={<ConfiguracionCuenta portal="interno" />} />
           </Route>

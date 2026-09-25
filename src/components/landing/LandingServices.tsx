@@ -5,12 +5,9 @@ import {
   Gavel,
   ClipboardList,
   LineChart,
-  Scale,
   FileCheck2,
-  ShieldAlert,
   Crown,
   ArrowUpRight,
-  MessageSquare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Reveal } from "./Reveal";
@@ -43,12 +40,6 @@ const services = [
     icon: LineChart,
     title: "Analítica de ahorro",
     description: "Ahorro contra el presupuesto aprobado en cada adjudicación, consolidado para el CFO.",
-  },
-  {
-    key: "disputas",
-    icon: Scale,
-    title: "Mediación de disputas",
-    description: "Canal formal con seguimiento y soporte human-in-the-loop de nuestro equipo.",
   },
 ];
 
@@ -131,7 +122,6 @@ export function LandingServices() {
                 {s.key === "negociacion" && <NegociacionPreview />}
                 {s.key === "aprobaciones" && <AprobacionesPreview />}
                 {s.key === "auditoria" && <AuditoriaPreview />}
-                {s.key === "disputas" && <DisputasPreview />}
               </div>
             ))}
           </div>
@@ -306,37 +296,3 @@ function AuditoriaPreview() {
   );
 }
 
-function DisputasPreview() {
-  return (
-    <PreviewShell label="Disputa DSP-0031 · Retraso en entrega">
-      <div className="space-y-3">
-        {[
-          { from: "Proveedor", text: "El retraso fue por un paro de transporte en la vía.", icon: MessageSquare },
-          { from: "Compliance", text: "Solicitamos evidencia documental del hecho.", icon: ShieldAlert },
-        ].map((msg, i) => (
-          <m.div
-            key={i}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.15 + i * 0.15, duration: 0.4 }}
-            className="flex gap-3 rounded-lg border border-border px-3.5 py-3"
-          >
-            <msg.icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <div>
-              <p className="text-xs font-medium text-muted-foreground">{msg.from}</p>
-              <p className="mt-0.5 text-sm">{msg.text}</p>
-            </div>
-          </m.div>
-        ))}
-      </div>
-      <m.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5, duration: 0.4 }}
-        className="mt-5"
-      >
-        <Badge variant="outline" className="border-info/40 text-info">En mediación</Badge>
-      </m.div>
-    </PreviewShell>
-  );
-}

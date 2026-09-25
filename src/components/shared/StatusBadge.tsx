@@ -18,7 +18,6 @@ const config: Record<string, { label: string; className: string }> = {
   "Por pagar": { label: "Por pagar", className: "bg-warning/15 text-warning-foreground border-warning/30" },
   Terminado: { label: "Terminado", className: "bg-muted text-muted-foreground border-border" },
   Abierta: { label: "Abierta", className: "bg-destructive/15 text-destructive border-destructive/30" },
-  "En mediación": { label: "En mediación", className: "bg-warning/15 text-warning-foreground border-warning/30" },
   Resuelta: { label: "Resuelta", className: "bg-success/15 text-success border-success/30" },
   Pendiente: { label: "Pendiente", className: "bg-warning/15 text-warning-foreground border-warning/30" },
   aprobado: { label: "Aprobado", className: "bg-success/15 text-success border-success/30" },

@@ -1,6 +1,6 @@
 import {
   Cable, Receipt, LayoutDashboard, FileText, Gavel, Handshake, Award, FileCheck, Truck, Building2, BarChart3,
-  ShieldCheck, Scale, Users, SlidersHorizontal, Rocket, Landmark, FileSignature, ShoppingCart, Wallet, Settings,
+  ShieldCheck, Users, SlidersHorizontal, Rocket, Landmark, FileSignature, ShoppingCart, Wallet, Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { PortalShellLayout, type PortalNavEntry } from "@/components/layout/PortalShellLayout";
@@ -39,7 +39,6 @@ const navItems: PortalNavEntry[] = [
     items: [
       { to: "contratos", label: "Contratos / POs", icon: FileCheck },
       { to: "seguimiento", label: "Seguimiento de entregas", icon: Truck, roles: ["comprador", "admin_cliente"] },
-      { to: "disputas", label: "Disputas", icon: Scale, roles: ["comprador", "admin_cliente"] },
     ],
   },
   {

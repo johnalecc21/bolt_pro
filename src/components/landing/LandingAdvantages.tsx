@@ -140,7 +140,7 @@ function ExpertsCell() {
   return (
     <CellShell className="bg-card">
       <CellIcon icon={Users2} color="var(--info)" />
-      <h3 className="mt-5 text-lg font-semibold">Expertos humanos, human-in-the-loop</h3>
+      <h3 className="mt-5 text-lg font-semibold">Homologación con revisión humana</h3>
       <p className="mt-2 text-sm text-muted-foreground">Cada caso en zona gris pasa por revisión de nuestro equipo antes de avanzar.</p>
     </CellShell>
   );

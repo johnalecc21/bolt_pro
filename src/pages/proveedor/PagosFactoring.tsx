@@ -128,7 +128,7 @@ function DetallePago({ pago, onCambio }: { pago: PagoPO; onCambio: () => void })
   const puedeRadicar = etapa === "sin_factura" || etapa === "factura_rechazada";
   const pp = pago.prontoPago;
   const puedeProntoPago =
-    pago.estado !== "pagado" && pago.facturaVigente?.estado === "aprobada" && pago.descuentoProntoPago === 0 && pp?.estado !== "solicitada" && !pago.disputaAbierta;
+    pago.estado !== "pagado" && pago.facturaVigente?.estado === "aprobada" && pago.descuentoProntoPago === 0 && pp?.estado !== "solicitada";
 
   return (
     <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">

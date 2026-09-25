@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { CheckCircle2, Circle, Clock, AlertTriangle, Truck, MessageSquareWarning, MessageSquareText, Plus, X, DollarSign, Lock } from "lucide-react";
+import { CheckCircle2, Circle, Clock, AlertTriangle, Truck, MessageSquareText, Plus, X, DollarSign, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CardGridSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
@@ -50,7 +50,6 @@ const enEjecucion = (c: SeguimientoContrato) =>
   c.estado !== "TERMINADO" && !c.esMarco && (c.hitos.length === 0 || c.hitos.some((h) => h.estado !== "completado"));
 
 export function Seguimiento() {
-  const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const soloContrato = params.get("contrato");
   const { data: seguimiento, loading, reload } = useApiData(fetchSeguimiento);
@@ -92,7 +91,7 @@ export function Seguimiento() {
       ) : (
         <div className="space-y-6">
           {visibles.map((s) => (
-            <ContratoCard key={s.id} s={s} onCambio={reload} onDisputa={() => navigate(`/cliente/disputas?po=${s.codigo}`)} />
+            <ContratoCard key={s.id} s={s} onCambio={reload} />
           ))}
         </div>
       )}
@@ -100,7 +99,7 @@ export function Seguimiento() {
   );
 }
 
-function ContratoCard({ s, onCambio, onDisputa }: { s: SeguimientoContrato; onCambio: () => void; onDisputa: () => void }) {
+function ContratoCard({ s, onCambio }: { s: SeguimientoContrato; onCambio: () => void }) {
   const general = estadoGeneral(s.hitos);
   const terminado = s.estado === "TERMINADO";
   const [agregando, setAgregando] = useState(false);
@@ -185,17 +184,6 @@ function ContratoCard({ s, onCambio, onDisputa }: { s: SeguimientoContrato; onCa
       <div className="mt-4 flex flex-wrap gap-2 border-t pt-4">
         <Button asChild variant="outline" size="sm"><Link to={`/cliente/contratos/${s.id}`}>Ver ficha del contrato</Link></Button>
         <EvaluarDesempenoDialog contratoId={s.id} codigo={s.codigo} proveedor={s.proveedor} />
-        <ConfirmDialog
-          trigger={
-            <Button variant="outline" size="sm" className="gap-2 border-destructive/30 text-destructive hover:bg-destructive/10">
-              <MessageSquareWarning className="h-4 w-4" /> Reportar incidencia
-            </Button>
-          }
-          title="Reportar incidencia"
-          description={`Se abrirá un caso de disputa referenciando ${s.codigo} con ${s.proveedor}.`}
-          confirmLabel="Abrir caso"
-          onConfirm={onDisputa}
-        />
       </div>
     </Card>
   );

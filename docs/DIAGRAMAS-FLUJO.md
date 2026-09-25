@@ -18,7 +18,7 @@ Todos los flujos de la plataforma, sacados del código actual (frontend `bolt_pr
 11. [Contratos, contrato marco y modificaciones](#11-contratos-contrato-marco-y-modificaciones)
 12. [Ejecución: hitos y entregas](#12-ejecución-hitos-y-entregas)
 13. [Facturación, pagos y pronto pago](#13-facturación-pagos-y-pronto-pago)
-14. [Disputas y evaluación de desempeño](#14-disputas-y-evaluación-de-desempeño)
+14. [Evaluación de desempeño](#14-evaluación-de-desempeño)
 15. [Cierre del proceso: ciclo de vida del requerimiento](#15-cierre-del-proceso-ciclo-de-vida-del-requerimiento)
 16. [Plantillas y documentos](#16-plantillas-y-documentos)
 17. [Integración ERP y Siigo](#17-integración-erp-y-siigo)
@@ -55,8 +55,8 @@ flowchart TD
     end
     subgraph INT["Panel Interno"]
         I1["Compliance: homologación y riesgo"]
-        I2["Consultor: casos, disputas, benchmark"]
-        I3["Admin clientes: alta de empresas"]
+        I2["Consultor: consulta de empresas, solo lectura"]
+        I3["Empresas: cómo va cada cliente y alta de nuevas"]
     end
     API[("API NestJS + Postgres + Redis")]
     EXT["Servicios externos: Supabase Auth y Storage, OFAC, ONU, OCR, Gotenberg, ERP, Siigo, correo"]
@@ -129,8 +129,8 @@ flowchart TD
 | Cliente | Comprador | Requerimientos, licitaciones, negociación, contratos, seguimiento |
 | Cliente | Aprobador / CFO | Aprobaciones, adjudicación, pagos, analítica; licitaciones en solo lectura |
 | Proveedor | Proveedor | Su homologación, oportunidades, ofertas, contratos y cobros |
-| Interno | Consultor | Casos activos, mediación, benchmark |
-| Interno | Compliance / Ops | Cola de homologación, riesgo continuo, admin de clientes |
+| Interno | Consultor | Empresas, solo lectura |
+| Interno | Compliance / Ops | Empresas y alta de nuevas, cola de homologación, riesgo continuo |
 
 ---
 
@@ -140,7 +140,7 @@ Las empresas compradoras no se registran solas: el equipo de Procurex las crea (
 
 ```mermaid
 flowchart TD
-    A["Compliance / Ops en /interno/clientes: Nueva empresa"] --> B["POST /interno/clientes: nombre, admin, correo"]
+    A["Compliance / Ops en /interno/empresas: Nueva empresa"] --> B["POST /interno/clientes: nombre, admin, correo"]
     B --> C{"¿El correo ya existe?"}
     C -->|"Sí"| C1["Error: ya existe una cuenta"]
     C -->|"No"| D["Supabase envía invitación por correo"]
@@ -396,7 +396,7 @@ stateDiagram-v2
 flowchart TD
     A["Licitación cerrada, por fecha o anticipadamente"] --> B["Cuadro comparativo"]
     B --> B1["Ranking por score ponderado con los pesos del requerimiento"]
-    B --> B2["Detección de ofertas atípicas contra el benchmark"]
+    B --> B2["Detección de ofertas atípicas contra el promedio de las ofertas"]
     B --> B3["Ajuste de pesos, queda en auditoría"]
     B --> B4{"¿Tiene ítems?"}
     B4 -->|"Sí"| B5["Comparativo por ítem: mejor precio por línea, mejor combinación vs mejor proveedor único, ahorro de dividir"]
@@ -530,7 +530,6 @@ flowchart TD
     E --> F["Hito COMPLETADO: no se reabre ni cambia su %"]
     F --> G["Se libera el pago del hito → sección 13"]
     F --> H["Evento ERP: recepción"]
-    D --> I["Reportar incidencia → disputa, sección 14"]
     D --> J["Evaluar al proveedor → sección 14"]
     A --> K["Proceso diario"]
     K --> K1["3 días antes de la fecha: EN_RIESGO"]
@@ -602,17 +601,12 @@ Un pago solo se registra con la factura aprobada, y nunca dos veces. Si la empre
 
 ---
 
-## 14. Disputas y evaluación de desempeño
+## 14. Evaluación de desempeño
+
+La relación con el proveedor la maneja cada empresa directamente. Procurex no media en los procesos de compra.
 
 ```mermaid
 flowchart TD
-    A["Comprador: incidencia desde Seguimiento o Disputas"] --> B["Disputa ABIERTA: severidad y descripción"]
-    B --> C["Hilo de mensajes entre las partes"]
-    C --> D["Consultor Procurex se asigna: EN_MEDIACION"]
-    D --> E["Mediación en el hilo"]
-    E --> F["RESUELTA con resolución"]
-    B -.-> G["Mientras hay disputa abierta sobre un hito, se marca en pagos"]
-
     H["Contrato en ejecución o cumplido"] --> I["Evaluar: calidad, plazos, servicio y HSE de 1 a 5"]
     I --> J["Promedio del proveedor en directorio y vitrina"]
     I --> K{"¿Bajo 60/100?"}
@@ -754,17 +748,21 @@ flowchart TD
 
 ## 21. Panel interno
 
+Procurex no participa en los procesos de compra de ninguna empresa. El panel interno sirve para ver cómo va cada empresa con cifras agregadas, dar de alta empresas nuevas y homologar proveedores.
+
 ```mermaid
 flowchart TD
-    A["Login interno"] --> B{"Rol"}
-    B -->|"Consultor"| C["Casos activos: pendiente, en progreso, escalado"]
-    B -->|"Consultor"| D["Mediación de disputas"]
-    B -->|"Consultor"| E["Benchmark de mercado: índice de precios por categoría y región"]
-    B -->|"Compliance / Ops"| F["Cola de homologación → sección 4.2"]
-    B -->|"Compliance / Ops"| G["Riesgo continuo → sección 18"]
-    B -->|"Compliance / Ops"| H["Admin clientes: alta de empresas → sección 2"]
-    H --> H1["Entrar como cliente, con motivo; queda en auditoría"]
-    E --> E1["Alimenta las alertas de ofertas atípicas del cuadro comparativo"]
+    A["Login interno"] --> B["Empresas: lista con plan, facturación, configuración, usuarios, procesos en curso, contratos vigentes y último acceso"]
+    B --> C["Ficha de la empresa, solo lectura"]
+    C --> C1["Pasos de configuración y uso del plan"]
+    C --> C2["Actividad agregada: procesos por etapa, contratos, pagos, monto contratado, 6 meses"]
+    C --> C3["Equipo y último acceso"]
+    C2 -.-> X["Sin títulos, ofertas, precios ni proveedores elegidos"]
+    A --> D{"¿Compliance / Ops?"}
+    D -->|"Sí"| E["Nueva empresa → sección 2"]
+    D -->|"Sí"| F["Cola de homologación → sección 4.2"]
+    D -->|"Sí"| G["Riesgo continuo → sección 18"]
+    D -->|"No, consultor"| B
 ```
 
 ---
@@ -786,7 +784,7 @@ flowchart TD
         N3["Oferta recibida, proveedor se unió desde la red"]
         N4["Subasta iniciada, adjudicación, contrato firmado"]
         N5["Avance de hito, recepción, factura, pago, pronto pago"]
-        N6["Modificaciones de contrato, vencimientos, disputas"]
+        N6["Modificaciones de contrato y vencimientos"]
         N7["Homologación resuelta, documentos por vencer, alertas de riesgo"]
     end
     CRON --> NT["Centro de notificaciones: cada una lleva a su pantalla"]
@@ -812,7 +810,5 @@ flowchart TD
 | Pago | PENDIENTE · VENCIDO · PAGADO |
 | Factura | RADICADA · APROBADA · RECHAZADA |
 | Pronto pago | SOLICITADA · ACEPTADA · RECHAZADA |
-| Disputa | ABIERTA · EN_MEDIACION · RESUELTA |
 | Evento ERP | PENDIENTE · ENVIADO · ERROR · FALLIDO · DESCARTADO |
 | Alerta de riesgo | ABIERTA · RESUELTA (tipos: lista restrictiva, documento vencido, revalidación) |
-| Caso interno | PENDIENTE · EN_PROGRESO · ESCALADO |

@@ -46,7 +46,6 @@ export interface Proveedor {
   certificaciones: string[];
   procesosGanados: number;
   entregasATiempo: number;
-  disputas: number;
   color: string;
   /** 0-100 average of every client's performance evaluations; null until the first one. */
   desempenoPromedio: number | null;
@@ -95,12 +94,3 @@ export interface Aprobacion {
   totalPasos?: number;
 }
 
-export interface Disputa {
-  id: string;
-  poReferencia: string;
-  proveedor: string;
-  severidad: "Baja" | "Media" | "Alta";
-  estado: "Abierta" | "En mediación" | "Resuelta";
-  diasAbierta: number;
-  mediador: string;
-}

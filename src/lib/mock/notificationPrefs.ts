@@ -9,5 +9,4 @@ export const notificationTypes: NotificationPrefKey[] = [
   { key: "contrato", label: "Contratos por vencer" },
   { key: "negociacion", label: "Rondas de negociación" },
   { key: "proveedor", label: "Actividad de proveedores" },
-  { key: "disputa", label: "Disputas" },
 ];

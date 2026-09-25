@@ -13,7 +13,6 @@ interface ApiProveedor {
   certificaciones: string[];
   procesosGanados: number;
   entregasATiempo: number;
-  disputasCount: number;
   color: string;
   desempenoPromedio: number | null;
   evaluacionesCount: number;
@@ -40,7 +39,6 @@ function toProveedor(p: ApiProveedor): Proveedor {
     certificaciones: p.certificaciones,
     procesosGanados: p.procesosGanados,
     entregasATiempo: p.entregasATiempo,
-    disputas: p.disputasCount,
     color: p.color,
     desempenoPromedio: p.desempenoPromedio ?? null,
     evaluacionesCount: p.evaluacionesCount ?? 0,

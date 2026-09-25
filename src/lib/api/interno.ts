@@ -1,96 +1,69 @@
 import { api } from "@/lib/api/http";
+import type { Moneda } from "@/lib/moneda";
 
-export interface CasoConsultor {
-  id: string;
-  cliente: string;
-  tipo: string;
-  prioridad: "Alta" | "Media" | "Baja";
-  sla: string;
-  estado: "Pendiente" | "En progreso" | "Escalado";
-}
+export type PlanCliente = "STARTER" | "GROWTH" | "ENTERPRISE";
+export type Facturacion = "AL_DIA" | "PENDIENTE" | "VENCIDA";
 
-interface ApiCaso {
-  id: string;
-  tipo: string;
-  prioridad: "ALTA" | "MEDIA" | "BAJA";
-  estado: "PENDIENTE" | "EN_PROGRESO" | "ESCALADO";
-  slaVencido: boolean;
-  company: { nombre: string };
-}
+export const PLAN_LABEL: Record<PlanCliente, string> = { STARTER: "Starter", GROWTH: "Growth", ENTERPRISE: "Enterprise" };
+export const FACTURACION_LABEL: Record<Facturacion, string> = { AL_DIA: "Al día", PENDIENTE: "Pendiente", VENCIDA: "Vencida" };
 
-const PRIORIDAD_LABEL: Record<ApiCaso["prioridad"], CasoConsultor["prioridad"]> = { ALTA: "Alta", MEDIA: "Media", BAJA: "Baja" };
-const ESTADO_LABEL: Record<ApiCaso["estado"], CasoConsultor["estado"]> = { PENDIENTE: "Pendiente", EN_PROGRESO: "En progreso", ESCALADO: "Escalado" };
-
-export async function fetchCasos(): Promise<CasoConsultor[]> {
-  const { data } = await api.get<ApiCaso[]>("/interno/casos");
-  return data.map((c) => ({
-    id: c.id,
-    cliente: c.company.nombre,
-    tipo: c.tipo,
-    prioridad: PRIORIDAD_LABEL[c.prioridad],
-    sla: c.slaVencido ? "Vencido" : "En plazo",
-    estado: ESTADO_LABEL[c.estado],
-  }));
-}
-
-export interface ClienteAdmin {
+/** A client company as an account: what Procurex's team follows, never its processes. */
+export interface EmpresaCliente {
   id: string;
   nombre: string;
-  plan: "Starter" | "Growth" | "Enterprise";
-  facturacion: "Al día" | "Pendiente" | "Vencida";
-  procesosActivos: number;
+  plan: PlanCliente;
+  facturacion: Facturacion;
+  creada: string;
   contactoPrincipal: string;
+  correoContacto: string | null;
+  usuariosActivos: number;
+  procesosEnCurso: number;
+  procesosTotales: number;
+  contratosVigentes: number;
+  ultimoAcceso: string | null;
+  configuracion: { hechos: number; total: number };
 }
 
-interface ApiCliente {
-  id: string;
-  nombre: string;
-  plan: "STARTER" | "GROWTH" | "ENTERPRISE";
-  facturacion: "AL_DIA" | "PENDIENTE" | "VENCIDA";
-  procesosActivos: number;
-  contactoPrincipal: string;
+export async function fetchEmpresas(): Promise<EmpresaCliente[]> {
+  const { data } = await api.get<EmpresaCliente[]>("/interno/clientes");
+  return data;
 }
 
-const PLAN_LABEL: Record<ApiCliente["plan"], ClienteAdmin["plan"]> = { STARTER: "Starter", GROWTH: "Growth", ENTERPRISE: "Enterprise" };
-const FACTURACION_LABEL: Record<ApiCliente["facturacion"], ClienteAdmin["facturacion"]> = { AL_DIA: "Al día", PENDIENTE: "Pendiente", VENCIDA: "Vencida" };
-
-export async function fetchClientes(): Promise<ClienteAdmin[]> {
-  const { data } = await api.get<ApiCliente[]>("/interno/clientes");
-  return data.map((c) => ({
-    id: c.id,
-    nombre: c.nombre,
-    plan: PLAN_LABEL[c.plan],
-    facturacion: FACTURACION_LABEL[c.facturacion],
-    procesosActivos: c.procesosActivos,
-    contactoPrincipal: c.contactoPrincipal,
-  }));
+export interface PasoConfiguracion {
+  clave: string;
+  label: string;
+  hecho: boolean;
+  opcional: boolean;
+  detalle?: string | null;
 }
 
-export async function impersonarCliente(companyId: string, motivo: string) {
-  const { data } = await api.post<{ ok: boolean; empresa: string }>(`/interno/clientes/${companyId}/impersonar`, { motivo });
+export interface ResumenEmpresa {
+  empresa: { id: string; nombre: string; plan: PlanCliente; facturacion: Facturacion; pais: string; monedaBase: Moneda; creada: string };
+  uso: {
+    plan: PlanCliente;
+    planNombre: string;
+    limites: { usuarios: number | null; requerimientosMes: number | null; almacenamientoMb: number | null };
+    uso: { usuarios: number; requerimientosMes: number; almacenamientoMb: number };
+  };
+  configuracion: PasoConfiguracion[];
+  usuarios: { nombre: string; email: string; rol: string; activo: boolean; ultimoAcceso: string | null }[];
+  actividad: {
+    ultimaActividad: string | null;
+    procesosPorEstado: Partial<Record<string, number>>;
+    procesosTotales: number;
+    contratosPorEstado: Partial<Record<string, number>>;
+    pagosPorEstado: Partial<Record<string, number>>;
+    ultimos12Meses: { contratos: number; montoContratado: number; contratosEnOtraMoneda: number; proveedoresContratados: number };
+    porMes: { mes: string; procesos: number; contratos: number }[];
+  };
+}
+
+export async function fetchResumenEmpresa(id: string): Promise<ResumenEmpresa> {
+  const { data } = await api.get<ResumenEmpresa>(`/interno/clientes/${id}`);
   return data;
 }
 
 export async function crearCliente(payload: { nombreEmpresa: string; adminNombre: string; adminEmail: string }) {
   const { data } = await api.post<{ id: string; nombre: string }>("/interno/clientes", payload);
-  return data;
-}
-
-export interface BenchmarkEntry {
-  id: string;
-  categoria: string;
-  region: string;
-  precioPromedio: number;
-  muestras: number;
-  outlier: boolean;
-}
-
-export async function fetchBenchmark(): Promise<BenchmarkEntry[]> {
-  const { data } = await api.get<BenchmarkEntry[]>("/interno/benchmark");
-  return data;
-}
-
-export async function marcarBenchmarkValido(id: string) {
-  const { data } = await api.post(`/interno/benchmark/${id}/marcar-valido`);
   return data;
 }

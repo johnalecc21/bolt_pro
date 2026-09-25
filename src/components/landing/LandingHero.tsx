@@ -35,7 +35,7 @@ export function LandingHero() {
               LCP element), so fading it in would push LCP back by the animation. */}
           <p className="mx-auto mt-6 max-w-lg text-lg text-muted-foreground lg:mx-0">
             Automatiza requerimientos, homologa proveedores con verificación real, negocia en vivo
-            y cierra contratos, con trazabilidad completa y expertos humanos detrás de cada decisión.
+            y cierra contratos, con trazabilidad completa y proveedores revisados por nuestro equipo de compliance.
           </p>
 
           <m.div

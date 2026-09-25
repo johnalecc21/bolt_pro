@@ -12,7 +12,7 @@ Hay 3 portales independientes, cada uno con su propio login, pero comparten el m
 /                    → Landing (elige portal)
 /cliente/*           → Portal Cliente (comprador)
 /proveedor/*         → Portal Proveedores
-/interno/*           → Panel Interno (consultores/compliance)
+/interno/*           → Panel Interno (equipo Procurex: empresas y homologación)
 ```
 
 Repos: `bolt_procure` (frontend, React + Vite + TS) y `bolt_procure_backend` (API NestJS + Prisma, Postgres en Supabase).
@@ -62,13 +62,12 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
    - **Documento firmado con versiones**: cada subida queda como una versión descargable; la vigente es la que descarga el proveedor. Sin documento propio, se descarga el PDF de Procurex (con ítems, hitos y su %, y la cláusula de pago desde la factura).
    - **Evaluación del proveedor** del contrato.
    - **Contrato Marco** (a partir del umbral de la empresa): es un techo, no se paga por hitos. Se ejecuta **emitiendo POs** desde su ficha: cada PO descuenta del saldo (no se puede pasar, ni con dos emisiones simultáneas), queda dentro de su vigencia, hereda proveedor y condiciones de pago, nace con un hito de entrega del 100% y se notifica al proveedor. El proceso de compra no se cierra mientras el marco siga vigente.
-8. **Seguimiento de entregas** — filtros *En ejecución / Con atrasos / Todos*; los hitos se marcan solos **en riesgo** 3 días antes y **atrasados** al pasar su fecha (en pantalla y por el cron diario). Los % de pago de un contrato no pueden sumar más de 100% (se muestra cuánto falta), un hito que ya liberó pago no se reabre, no cambia su % ni se elimina, y recibir un hito pide confirmación. También se ve lo que reporta el proveedor, y desde cada contrato se abre su ficha, se evalúa o se reporta una incidencia (Disputa). Cuando todos los contratos del proceso están cumplidos o terminados (y no queda un marco vigente), el proceso pasa a **Cerrado**.
+8. **Seguimiento de entregas** — filtros *En ejecución / Con atrasos / Todos*; los hitos se marcan solos **en riesgo** 3 días antes y **atrasados** al pasar su fecha (en pantalla y por el cron diario). Los % de pago de un contrato no pueden sumar más de 100% (se muestra cuánto falta), un hito que ya liberó pago no se reabre, no cambia su % ni se elimina, y recibir un hito pide confirmación. También se ve lo que reporta el proveedor, y desde cada contrato se abre su ficha o se evalúa al proveedor. Cuando todos los contratos del proceso están cumplidos o terminados (y no queda un marco vigente), el proceso pasa a **Cerrado**.
 9. **Cuentas por pagar** (`/cliente/pagos`, Comprador, Admin y CFO) — cada pago liberado por un hito, con la factura que radicó el proveedor. Filtros *Requieren acción / Por pagar / Pagados / Todos*, búsqueda y totales (por pagar, vencido, vence en 30 días, facturas por revisar). Por pago:
    - **Aprobar o rechazar la factura** (con motivo; el proveedor la corrige y radica otra, y queda el historial). Comprador, Admin o CFO.
    - **Registrar el pago** (fecha, referencia bancaria y soporte opcional) — solo con factura aprobada; solo Admin o CFO; no se registra dos veces. Se paga el neto de cualquier descuento de pronto pago.
    - **Responder solicitudes de pronto pago** — aceptar cambia la fecha pactada y fija el descuento; Admin o CFO.
    El plazo de pago del contrato cuenta desde la **radicación** de la factura. Un pago sin pagar después de su fecha se muestra *Vencido* al instante y el cron diario lo guarda así. Todo queda en la bitácora de auditoría y cada decisión notifica al otro lado.
-10. **Disputas** — hilo de mediación real por caso.
 11. **Analítica CFO** (`/cliente/analitica`, CFO y Admin) — tablero con una sola fila de filtros (período: 3/6/12 meses, este año, año anterior o personalizado; unidad de negocio; centro de costo; categoría) que aplica a todo:
     - **Resumen**: 8 indicadores con variación contra el período anterior de igual duración (gasto comprometido, ahorro y ahorro %, ahorro por negociación, procesos adjudicados, ciclo promedio y mediana, ofertas por proceso, entrega a tiempo, pagos vencidos) y **hallazgos** calculados con los datos (pagos vencidos, centros sobre presupuesto, concentración de proveedores, baja competencia, ciclos lentos, entregas tardías, evaluaciones bajas, contratos por vencer, variación del ahorro).
     - Pestañas **Gasto, Ahorro, Eficiencia** (embudo de procesos, ciclo y competencia por categoría, prioridad y solicitante), **Proveedores** (HHI, participación del principal y del top 5, desempeño y entrega a tiempo por proveedor), **Presupuesto** (ejecución por centro, igual que en Estructura), **Pagos** (por pagar, vencidos, próximos 30 días) y **Detalle** (todos los procesos del período con búsqueda).
@@ -103,15 +102,20 @@ Este es el corazón de la plataforma — sigue un requerimiento de principio a f
 10. **Evaluaciones de desempeño** (en Historial) — lo que sus clientes calificaron por contrato, con aviso de plan de mejora bajo 60/100.
 11. **Mi desempeño** (`/proveedor/desempeno`) — la analítica del proveedor, solo con sus propios datos: monto adjudicado, tasa de éxito y de respuesta, embudo de invitaciones, ventas por mes, cliente y categoría, cumplimiento de hitos, evaluaciones, cobros (por cobrar, vencidos, próximos 30 días), contratos por vencer y visitas a su vitrina, con variación contra el período anterior y hallazgos. Filtros de período, moneda, cliente y categoría; exporta informe PDF, Excel y CSV. En los procesos perdidos ve su **posición por precio y la brecha con el precio adjudicado solo si la empresa compradora lo activó**; nunca ve el nombre del ganador ni precios de otros proveedores (y lo mismo aplica en el feedback del Historial).
 
-## Panel Interno (quién opera todo por detrás)
+## Panel Interno (equipo de Procurex)
 
-Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabajo, pero la arquitectura es la misma (NestJS + Prisma, sin mocks en la capa de datos):
+Procurex **no participa en los procesos de compra** de ninguna empresa: no ve ni toca requerimientos, ofertas, precios, adjudicaciones, contratos ni pagos de un cliente. El panel interno sirve para tres cosas:
 
-- **Casos Activos** — carga de trabajo del consultor/compliance del día.
-- **Cola de Homologación** — compliance aprueba/rechaza a los proveedores en "zona gris" (resuelve el paso 1 del proveedor), viendo los documentos reales que subió y el resultado por lista restrictiva. Para proveedores colombianos registra la consulta manual en Procuraduría, Contraloría y Policía (no tienen API pública); no se puede aprobar con listas pendientes, caídas o con coincidencias sin resolver. También valida uno a uno los documentos opcionales que suba un proveedor ya homologado.
-- **Mediación de Disputas** — vista espejo de las disputas del cliente.
-- **Admin Clientes** — "entrar como" un cliente (impersonación), queda registrado en auditoría.
-- **Benchmark de Mercado** — índice de precios que alimenta las alertas de anomalías del comparativo.
+- **Empresas** (`/interno/empresas`, Compliance y Consultor) — cómo va cada empresa cliente, solo con cifras agregadas:
+  - Lista con plan, facturación, avance de la configuración, usuarios activos, procesos en curso, contratos vigentes y último acceso, más totales (empresas, activas en 30 días, con configuración pendiente).
+  - Ficha de la empresa: pasos de configuración (equipo, matriz, primer requerimiento; y opcionales: centros de costo, requisitos de homologación, plantillas, ERP), uso del plan (usuarios, requerimientos del mes, almacenamiento), actividad de 6 meses (procesos creados y contratos firmados), procesos por etapa, contratos y pagos por estado, monto contratado en 12 meses y proveedores contratados, y el equipo con su último acceso.
+  - Nunca muestra títulos, ofertas, precios ni proveedores elegidos de un proceso.
+- **Nueva empresa** (solo Compliance / Ops) — crea la empresa y su primer administrador, que recibe la invitación por correo y configura su empresa.
+- **Homologación de proveedores** (Compliance / Ops):
+  - **Cola de Homologación** — aprueba o rechaza a los proveedores en revisión o "zona gris", viendo los documentos reales que subió y el resultado por lista restrictiva. Para proveedores colombianos registra la consulta manual en Procuraduría, Contraloría y Policía (no tienen API pública); no se puede aprobar con listas pendientes, caídas o con coincidencias sin resolver. También valida uno a uno los documentos que suba un proveedor ya homologado.
+  - **Riesgo continuo** — alertas del monitoreo nocturno (ver más abajo).
+
+La bitácora de auditoría de cada empresa es solo de esa empresa: el panel interno no la lee.
 
 ## Plantillas y documentos (`/cliente/plantillas`)
 
@@ -166,7 +170,7 @@ Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Ora
 
 ## Lo que conecta todo
 
-- **Log de auditoría** (visible en Contratos e Interno › Admin Clientes): cada aprobación, rechazo, cambio de score, impersonación o documento adjuntado queda ahí, sin importar desde qué portal se generó — todo backend-real.
+- **Log de auditoría** (visible en Contratos y exportable en Configuración, solo para la propia empresa): cada aprobación, rechazo, cambio de score o documento adjuntado queda ahí — todo backend-real.
 - **Menú por etapas**: el menú del cliente se agrupa en Inicio · Compras · Contratos · Finanzas · Directorio, con **Configuración** aparte al fondo. El del proveedor se agrupa en Inicio · Oportunidades · Contratos y pagos · Mi empresa.
   - Los grupos se despliegan y se recuerdan; el de la pantalla actual siempre está abierto. Con el menú colapsado, cada grupo es un ícono que abre sus opciones.
   - Los **contadores** muestran lo que espera al usuario: aprobaciones por aprobar, facturas o pronto pagos por revisar, invitaciones sin responder, pagos por facturar y la cola de homologación. Salen de `GET /navegacion/contadores` y se refrescan al navegar y cada minuto.

@@ -3,7 +3,7 @@ import { api, apiErrorMessage } from "@/lib/api/http";
 
 export interface Notificacion {
   id: string;
-  tipo: "aprobacion" | "oferta" | "contrato" | "negociacion" | "proveedor" | "disputa";
+  tipo: "aprobacion" | "oferta" | "contrato" | "negociacion" | "proveedor";
   titulo: string;
   desc: string;
   tiempo: string;

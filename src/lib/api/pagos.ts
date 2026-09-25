@@ -49,7 +49,6 @@ export interface PagoPO {
   fechaPagoPactada: string;
   condicionesPagoDias: number;
   estado: "pendiente" | "pagado" | "vencido";
-  disputaAbierta: boolean;
   fechaPago: string | null;
   montoPagado: number | null;
   referenciaPago: string | null;
@@ -99,7 +98,6 @@ const apiPagoSchema = z.object({
   fechaPagoPactada: z.string(),
   condicionesPagoDias: z.number(),
   estado: z.enum(["PENDIENTE", "PAGADO", "VENCIDO"]),
-  disputaAbierta: z.boolean(),
   fechaPago: z.string().nullable(),
   montoPagado: z.number().nullable(),
   referenciaPago: z.string().nullable(),
@@ -141,7 +139,6 @@ function toPago(p: ApiPago): PagoPO {
     fechaPagoPactada: p.fechaPagoPactada,
     condicionesPagoDias: p.condicionesPagoDias,
     estado: p.estado.toLowerCase() as PagoPO["estado"],
-    disputaAbierta: p.disputaAbierta,
     fechaPago: p.fechaPago,
     montoPagado: p.montoPagado,
     referenciaPago: p.referenciaPago,

@@ -61,7 +61,6 @@ export interface PagoFila {
   emision: string;
   pactada: string;
   estado: "PENDIENTE" | "PAGADO" | "VENCIDO";
-  disputa: boolean;
 }
 
 export interface HitoFila {

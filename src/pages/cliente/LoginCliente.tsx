@@ -21,7 +21,7 @@ export function LoginCliente() {
               Procurement-as-a-Service
             </h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Más velocidad. Más ahorro. Con expertos humanos detrás de cada decisión.
+              Más velocidad. Más ahorro. Con proveedores homologados y trazabilidad completa.
             </p>
           </div>
           <div className="space-y-4">

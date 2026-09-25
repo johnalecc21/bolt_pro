@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2, Scale, Mail, MessageCircle } from "lucide-react";
+import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2, Mail, MessageCircle } from "lucide-react";
 import { useNotifications, type Notificacion } from "@/lib/api/notificaciones";
 import { notificationTypes } from "@/lib/mock/notificationPrefs";
 import { cn } from "@/lib/utils";
@@ -16,7 +16,6 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
   contrato: FileCheck,
   negociacion: Handshake,
   proveedor: Building2,
-  disputa: Scale,
 };
 
 export function CentroNotificaciones() {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2, Scale } from "lucide-react";
+import { Bell, CheckCheck, FileText, Handshake, FileCheck, ShieldCheck, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
@@ -13,7 +13,6 @@ const iconByType: Record<Notificacion["tipo"], typeof Bell> = {
   contrato: FileCheck,
   negociacion: Handshake,
   proveedor: Building2,
-  disputa: Scale,
 };
 
 export function NotificationDropdown({ portal }: { portal: "cliente" | "proveedor" | "interno" }) {

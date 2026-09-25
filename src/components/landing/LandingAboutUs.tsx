@@ -12,7 +12,7 @@ const timeline = [
   {
     stage: "Hoy",
     title: "Automatización con criterio humano",
-    description: "Cada homologación, negociación y disputa en la plataforma tiene, en algún punto, una persona real revisando lo que importa.",
+    description: "Cada proveedor que se homologa pasa por una persona real de compliance antes de entrar a la red.",
   },
   {
     stage: "Futuro",

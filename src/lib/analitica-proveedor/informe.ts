@@ -55,7 +55,7 @@ export function construirInformeProveedor(datos: DatosProveedor, f: FiltrosProve
     insights.push({
       nivel: "critico",
       titulo: `${cob.nVencidos} pago(s) vencido(s) por cobrar: ${formatMoney(cob.vencido, m)}`,
-      detalle: "Contacta al cliente o revisa si hay una disputa abierta sobre el hito.",
+      detalle: "Contacta al cliente para confirmar la fecha de pago.",
       enlace: { to: "/proveedor/pagos", texto: "Ver pagos" },
     });
   }

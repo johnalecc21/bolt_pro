@@ -32,7 +32,6 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
     { label: "Contratos / POs", to: "contratos" },
     { label: "Seguimiento", to: "seguimiento", roles: ["comprador", "admin_cliente"] },
     { label: "Cuentas por pagar", to: "pagos", roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
-    { label: "Disputas", to: "disputas", roles: ["comprador", "admin_cliente"] },
     { label: "Directorio de proveedores", to: "directorio", roles: ["comprador", "admin_cliente"] },
     { label: "Analítica CFO", to: "analitica", roles: ["aprobador_cfo", "admin_cliente"] },
     { label: "Aprobaciones", to: "aprobaciones", roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
@@ -52,11 +51,9 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
     { label: "Perfil empresa", to: "perfil" },
   ],
   interno: [
-    { label: "Casos activos", to: "dashboard" },
+    { label: "Empresas", to: "empresas" },
     { label: "Cola de homologación", to: "homologacion", roles: ["compliance_ops"] },
-    { label: "Mediación de disputas", to: "mediacion", roles: ["compliance_ops"] },
-    { label: "Admin clientes", to: "clientes", roles: ["compliance_ops"] },
-    { label: "Benchmark de mercado", to: "benchmark", roles: ["compliance_ops"] },
+    { label: "Riesgo continuo", to: "riesgo", roles: ["compliance_ops"] },
   ],
 };
 

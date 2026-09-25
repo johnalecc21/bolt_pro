@@ -32,7 +32,7 @@ const plans = [
       "Negociación y subastas en vivo",
       "Matriz de aprobación avanzada",
       "Auditoría de ahorro para CFO",
-      "Soporte prioritario + consultor asignado",
+      "Soporte prioritario",
     ],
     highlighted: true,
   },

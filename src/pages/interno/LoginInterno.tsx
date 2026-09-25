@@ -18,14 +18,14 @@ export function LoginInterno() {
           <div>
             <h1 className="text-4xl font-bold leading-tight text-foreground">Panel Interno</h1>
             <p className="mt-3 text-lg text-muted-foreground">
-              Herramientas de sourcing, compliance y soporte human-in-the-loop.
+              Seguimiento de las empresas clientes y homologación de proveedores.
             </p>
           </div>
           <div className="space-y-4">
             {[
-              { icon: Users2, title: "Casos activos", desc: "Da soporte experto a cada cliente." },
-              { icon: ShieldAlert, title: "Compliance", desc: "Homologación y auditoría con trazabilidad." },
-              { icon: LineChart, title: "Benchmark de mercado", desc: "Data que alimenta cada decisión." },
+              { icon: Users2, title: "Empresas", desc: "Cómo va cada empresa cliente y alta de nuevas empresas." },
+              { icon: ShieldAlert, title: "Homologación", desc: "Revisión de proveedores con listas restrictivas y documentos." },
+              { icon: LineChart, title: "Riesgo continuo", desc: "Monitoreo de los proveedores homologados." },
             ].map((f) => (
               <div key={f.title} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4">
                 <f.icon className="h-6 w-6 shrink-0 text-warning-foreground" />

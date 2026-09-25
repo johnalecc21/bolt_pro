@@ -100,9 +100,9 @@ export function datos(): DatosCfo {
       contrato("cx", { moneda: "USD", monto: 50 }),
     ],
     pagos: [
-      { id: "p1", contrato: "c1", proveedor: "Prov A", categoria: "TI", centroCostoId: "cc1", monto: 400, moneda: "COP", emision: new Date(2026, 3, 1).toISOString(), pactada: new Date(2026, 4, 1).toISOString(), estado: "PENDIENTE", disputa: false },
-      { id: "p2", contrato: "c2", proveedor: "Prov B", categoria: "Servicios", centroCostoId: "cc2", monto: 300, moneda: "COP", emision: new Date(2026, 5, 1).toISOString(), pactada: new Date(2026, 5, 30).toISOString(), estado: "PENDIENTE", disputa: false },
-      { id: "p3", contrato: "c1", proveedor: "Prov A", categoria: "TI", centroCostoId: "cc1", monto: 999, moneda: "COP", emision: new Date(2026, 1, 1).toISOString(), pactada: new Date(2026, 2, 1).toISOString(), estado: "PAGADO", disputa: false },
+      { id: "p1", contrato: "c1", proveedor: "Prov A", categoria: "TI", centroCostoId: "cc1", monto: 400, moneda: "COP", emision: new Date(2026, 3, 1).toISOString(), pactada: new Date(2026, 4, 1).toISOString(), estado: "PENDIENTE" },
+      { id: "p2", contrato: "c2", proveedor: "Prov B", categoria: "Servicios", centroCostoId: "cc2", monto: 300, moneda: "COP", emision: new Date(2026, 5, 1).toISOString(), pactada: new Date(2026, 5, 30).toISOString(), estado: "PENDIENTE" },
+      { id: "p3", contrato: "c1", proveedor: "Prov A", categoria: "TI", centroCostoId: "cc1", monto: 999, moneda: "COP", emision: new Date(2026, 1, 1).toISOString(), pactada: new Date(2026, 2, 1).toISOString(), estado: "PAGADO" },
     ],
     hitos: [
       { proveedor: "Prov A", categoria: "TI", centroCostoId: "cc1", comprometido: new Date(2026, 3, 1).toISOString(), real: new Date(2026, 2, 30).toISOString(), estado: "COMPLETADO" },
