@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { BadgeCheck, CheckCircle2, Eye, Network, Truck } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 import { AuthLayout } from "@/components/shared/AuthLayout";
 import { apiRegisterProveedor } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
@@ -51,32 +51,8 @@ export function RegistroProveedor() {
 
   return (
     <AuthLayout
-      panel={{
-        etiqueta: "Red de proveedores",
-        titulo: "Homológate una vez, vende a todas las empresas",
-        texto: "El registro y la homologación no tienen costo.",
-        puntos: [
-          {
-            icon: Eye,
-            titulo: "Vitrina gratis",
-            texto:
-              "Tu portafolio y certificaciones, visibles para las empresas de Procurex.",
-          },
-          {
-            icon: BadgeCheck,
-            titulo: "Una sola homologación",
-            texto: "Nuestro equipo la revisa y queda vigente para toda la red.",
-          },
-          {
-            icon: Network,
-            titulo: "Procesos de tus categorías",
-            texto: "Recibe invitaciones y convocatorias abiertas sin esperar.",
-          },
-        ],
-      }}
-      portal={{ icon: Truck, nombre: "Registro de proveedor" }}
       titulo="Únete a la red de proveedores"
-      subtitulo="Gratis. Homológate una vez y participa en los procesos de todas las empresas de Procurex."
+      subtitulo="Gratis. Homológate una vez y participa en los procesos de todas las empresas."
     >
       {step === "form" && (
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -167,7 +143,7 @@ export function RegistroProveedor() {
             </Label>
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={!aceptaTerminos}>
+          <Button type="submit" className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground disabled:bg-muted disabled:text-[#B3B3B3]" disabled={!aceptaTerminos}>
             Crear cuenta
           </Button>
           <p className="text-center text-sm text-muted-foreground">

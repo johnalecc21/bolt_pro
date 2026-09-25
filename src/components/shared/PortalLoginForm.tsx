@@ -189,7 +189,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
           </div>
         </div>
         {error && <p className="text-xs text-destructive">{error}</p>}
-        <Button type="submit" className="h-11 w-full gradient-brand text-white shadow-md shadow-primary/20" disabled={loading}>
+        <Button type="submit" className="h-11 w-full bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground" disabled={loading}>
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Iniciar sesión"}
         </Button>
       </form>
@@ -198,7 +198,7 @@ export function PortalLoginForm({ portal, demoHint, footer }: {
         <span className="text-xs text-muted-foreground">o continúa con</span>
         <div className="h-px flex-1 bg-border" />
       </div>
-      <Button variant="outline" className="h-11 w-full gap-2.5" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
+      <Button variant="outline" className="h-11 w-full gap-2.5 border-border hover:bg-muted hover:text-foreground" onClick={() => handleSSO("Google")} disabled={!!ssoLoading}>
         {ssoLoading === "Google" ? <Loader2 className="h-4 w-4 animate-spin" /> : <><IconoGoogle /> Google</>}
       </Button>
       {/* Only for demo environments: never show shared credentials on a real deployment. */}
