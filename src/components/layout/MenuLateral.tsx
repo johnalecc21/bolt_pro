@@ -86,6 +86,11 @@ function Enlace({ item, c, compacto, sangria, onNavegar }: { item: PortalNavItem
   );
 }
 
+/** The group holding the given section of the portal, if any. */
+function grupoDe(entries: PortalNavEntry[], seccion: string): PortalNavGroup | undefined {
+  return entries.find((e): e is PortalNavGroup => esGrupo(e) && e.items.some((i) => i.to.split("/")[0] === seccion));
+}
+
 const CLAVE = (portal: string) => `procurex_menu_grupos_${portal}`;
 
 function leerAbiertos(portal: string): string[] {
@@ -97,8 +102,10 @@ function leerAbiertos(portal: string): string[] {
 }
 
 /**
- * The side menu: plain items and collapsible groups. The group holding the
- * current page is always open; the rest remember what the user left open.
+ * The side menu: plain items and collapsible groups. Entering a page opens
+ * its group, but any group (the current one too) can be collapsed; open
+ * groups are remembered. A collapsed group holding the current page stays
+ * highlighted so the user still sees where they are.
  * With the sidebar collapsed, a group becomes an icon that opens its items.
  */
 export function MenuLateral({
@@ -114,7 +121,11 @@ export function MenuLateral({
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const seccion = pathname.split("/")[2] ?? "";
-  const [abiertos, setAbiertos] = useState<string[]>(() => leerAbiertos(portal));
+  const [abiertos, setAbiertos] = useState<string[]>(() => {
+    const guardados = leerAbiertos(portal);
+    const inicial = grupoDe(entries, seccion)?.grupo;
+    return inicial && !guardados.includes(inicial) ? [...guardados, inicial] : guardados;
+  });
   useEffect(() => {
     try {
       localStorage.setItem(CLAVE(portal), JSON.stringify(abiertos));
@@ -123,16 +134,18 @@ export function MenuLateral({
     }
   }, [abiertos, portal]);
 
-  const actual = useMemo(
-    () => entries.find((e) => esGrupo(e) && e.items.some((i) => i.to.split("/")[0] === seccion)) as PortalNavGroup | undefined,
-    [entries, seccion],
-  );
+  const actual = useMemo(() => grupoDe(entries, seccion), [entries, seccion]);
+  // Open the current page's group when arriving at a new section, not on every render.
+  const grupoActual = actual?.grupo;
+  useEffect(() => {
+    if (grupoActual) setAbiertos((a) => (a.includes(grupoActual) ? a : [...a, grupoActual]));
+  }, [grupoActual, seccion]);
   const principales = entries.filter((e) => !(esGrupo(e) && e.separado));
   const abajo = entries.filter((e) => esGrupo(e) && e.separado) as PortalNavGroup[];
 
   const grupo = (g: PortalNavGroup) => {
     const activo = actual?.grupo === g.grupo;
-    const abierto = activo || abiertos.includes(g.grupo);
+    const abierto = abiertos.includes(g.grupo);
     const total = g.items.reduce((s, i) => s + valor(contadores, i.contador), 0);
     if (compacto) {
       return (
@@ -162,10 +175,14 @@ export function MenuLateral({
         <button
           type="button"
           aria-expanded={abierto}
-          onClick={() => !activo && setAbiertos((a) => (a.includes(g.grupo) ? a.filter((x) => x !== g.grupo) : [...a, g.grupo]))}
+          onClick={() => setAbiertos((a) => (a.includes(g.grupo) ? a.filter((x) => x !== g.grupo) : [...a, g.grupo]))}
           className={cn(
             "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-            activo ? "text-sidebar-foreground" : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+            activo && !abierto
+              ? "bg-sidebar-accent text-sidebar-accent-foreground"
+              : activo
+                ? "text-sidebar-foreground hover:bg-sidebar-accent"
+                : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
           )}
         >
           <g.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
