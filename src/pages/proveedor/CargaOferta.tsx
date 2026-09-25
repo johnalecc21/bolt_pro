@@ -11,7 +11,8 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { FileText, Send, CheckCircle2, Inbox, Calendar } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
-import { fetchInvitaciones } from "@/lib/api/invitaciones";
+import { fetchInvitaciones, fetchRequerimientoInvitado } from "@/lib/api/invitaciones";
+import { RequerimientoInvitadoDetalle } from "@/components/proveedor/RequerimientoInvitadoDetalle";
 import { fetchMiOferta, fetchMisOfertas, guardarMiOferta, enviarMiOferta, type MiOferta } from "@/lib/api/ofertas";
 import { fetchPreguntas, preguntar as apiPreguntar } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
@@ -57,7 +58,7 @@ function MisOfertasList() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Mis Ofertas</h1>
-        <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta</p>
+        <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta. Los más recientes aparecen primero.</p>
       </div>
       <div className="space-y-3">
         {ofertas.map((o) => (
@@ -68,9 +69,10 @@ function MisOfertasList() {
                   <FileText className="h-5 w-5" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{o.titulo || o.requerimientoId} · {o.categoria}</p>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <p className="truncate text-sm font-medium"><span className="text-muted-foreground">{o.codigo}</span> · {o.titulo || o.categoria}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{o.cliente}</span>
+                    <span>{o.categoria}</span>
                     <span className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Vence {o.fechaLimite}</span>
                   </div>
                 </div>
@@ -89,6 +91,7 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   const { data: invitaciones } = useApiData(fetchInvitaciones);
   const invitacion = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId);
   const { data: ofertaData, loading, reload } = useApiData(() => fetchMiOferta(requerimientoId), [requerimientoId]);
+  const { data: detalle } = useApiData(() => fetchRequerimientoInvitado(requerimientoId), [requerimientoId]);
   const { data: preguntas, reload: reloadPreguntas } = useApiData(
     () => fetchPreguntas(requerimientoId),
     [requerimientoId],
@@ -119,7 +122,7 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
     .map((l) => ({ itemId: l.id, precioUnitario: Math.round(Number(precios[l.id])), cantidad: l.cantidad }));
   // Same rounding the server applies; the server recomputes it anyway.
   const totalItems = cotizadas.reduce((s, c) => s + Math.round(c.cantidad * c.precioUnitario), 0);
-  const moneda = invitacion?.moneda ?? "USD";
+  const moneda = detalle?.moneda ?? invitacion?.moneda ?? "USD";
   const camposCompletos = (itemizada ? cotizadas.length > 0 : oferta.precioTotal > 0) && oferta.plazoEntregaDias > 0;
 
   function update(patch: Partial<MiOferta>) {
@@ -168,16 +171,15 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   return (
     <div className="space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold">{invitacion?.titulo ?? "Proceso"} — Detalle y carga de oferta</h1>
-        <p className="text-sm text-muted-foreground">{invitacion?.cliente ?? "Cliente"} · Categoría: {invitacion?.categoria ?? "—"}</p>
+        <h1 className="text-2xl font-bold">{detalle?.titulo ?? invitacion?.titulo ?? "Proceso"}</h1>
+        <p className="text-sm text-muted-foreground">
+          {detalle?.codigo ?? invitacion?.codigo ?? ""} · {detalle?.cliente ?? invitacion?.cliente ?? "Cliente"} · Detalle y carga de oferta
+        </p>
       </div>
 
       <Card className="p-5">
-        <h2 className="mb-3 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Especificaciones del RFP</h2>
-        <div className="space-y-2 text-sm text-muted-foreground">
-          <p>{invitacion?.titulo ?? "Revisa el detalle completo del requerimiento en tu correo de invitación."}</p>
-          <p>Fecha límite de recepción de ofertas: <strong className="text-foreground">{invitacion?.fechaLimite ?? "—"}</strong></p>
-        </div>
+        <h2 className="mb-4 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Requerimiento</h2>
+        {detalle ? <RequerimientoInvitadoDetalle r={detalle} /> : <p className="text-sm text-muted-foreground">Cargando el requerimiento…</p>}
       </Card>
 
       <Card className="p-5">
@@ -201,8 +203,11 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
       <Card className="p-5">
         <h2 className="mb-4 font-semibold">Formulario estandarizado de oferta</h2>
         {oferta.enviada ? (
-          <div className="flex items-center gap-2 rounded-lg bg-success/10 p-4 text-sm text-success">
-            <CheckCircle2 className="h-5 w-5" /> Tu oferta fue enviada y está en revisión. Ya no es editable.
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 rounded-lg bg-success/10 p-4 text-sm text-success">
+              <CheckCircle2 className="h-5 w-5" /> Tu oferta fue enviada y está en revisión. Ya no es editable.
+            </div>
+            <ResumenOferta oferta={oferta} moneda={moneda} />
           </div>
         ) : invitacion && haVencido(invitacion.cierre) ? (
           <div className="rounded-lg bg-muted p-4 text-sm text-muted-foreground">
@@ -304,6 +309,57 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
           </>
         )}
       </Card>
+    </div>
+  );
+}
+
+/** Read-only view of what was sent: price per line, total and terms. */
+function ResumenOferta({ oferta, moneda }: { oferta: MiOferta; moneda: Parameters<typeof formatMoney>[1] }) {
+  const precio = new Map(oferta.items.map((i) => [i.itemId, i.precioUnitario]));
+  const cond: [string, string][] = [
+    ["Plazo de entrega", `${oferta.plazoEntregaDias} días`],
+    ["Condiciones de pago", `${oferta.condicionesPagoDias} días`],
+    ["Garantía", `${oferta.garantiaMeses} meses`],
+    ["Vigencia de la oferta", `${oferta.vigenciaOfertaDias} días`],
+  ];
+  return (
+    <div className="space-y-3 text-sm">
+      {oferta.lineas.length > 0 && (
+        <div className="overflow-x-auto rounded-lg border border-border">
+          <table className="w-full">
+            <thead className="bg-muted/50 text-xs text-muted-foreground">
+              <tr>
+                <th className="px-3 py-2 text-left font-medium">Ítem</th>
+                <th className="px-3 py-2 text-right font-medium">Cantidad</th>
+                <th className="px-3 py-2 text-right font-medium">Precio unitario</th>
+                <th className="px-3 py-2 text-right font-medium">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {oferta.lineas.map((l) => {
+                const pu = precio.get(l.id);
+                return (
+                  <tr key={l.id} className="border-t border-border">
+                    <td className="px-3 py-2">{l.descripcion}</td>
+                    <td className="whitespace-nowrap px-3 py-2 text-right tabular-nums">{l.cantidad.toLocaleString("es-CO", { maximumFractionDigits: 3 })} {l.unidad}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{pu == null ? <span className="text-muted-foreground">No cotizado</span> : formatMoney(pu, moneda)}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">{pu == null ? "—" : formatMoney(Math.round(l.cantidad * pu), moneda)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="font-medium">Total ofertado: {formatMoney(oferta.precioTotal, moneda)}</p>
+      <dl className="grid gap-2 sm:grid-cols-4">
+        {cond.map(([k, v]) => (
+          <div key={k} className="rounded-lg bg-muted/50 p-2">
+            <dt className="text-xs text-muted-foreground">{k}</dt>
+            <dd className="font-medium">{v}</dd>
+          </div>
+        ))}
+      </dl>
     </div>
   );
 }

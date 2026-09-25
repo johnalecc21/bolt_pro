@@ -17,7 +17,8 @@ export function SubastaVivo() {
   const { requerimientoId } = useParams();
   const { state: auction, pujar } = useSubasta(requerimientoId);
   const { data: invitaciones } = useApiData(fetchInvitaciones);
-  const moneda = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId)?.moneda ?? "USD";
+  const invitacion = (invitaciones ?? []).find((i) => i.requerimientoId === requerimientoId);
+  const moneda = invitacion?.moneda ?? "USD";
   const [, forceTick] = useState(0);
   const [mejora, setMejora] = useState("");
 
@@ -52,7 +53,7 @@ export function SubastaVivo() {
     <div className="space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold">Subasta en Vivo</h1>
-        <p className="text-sm text-muted-foreground">{auction.requerimientoId} · Nunca verás montos ni identidades de otros competidores</p>
+        <p className="text-sm text-muted-foreground">{invitacion ? `${invitacion.codigo} · ${invitacion.titulo}` : "Proceso"} · Nunca verás montos ni identidades de otros competidores</p>
       </div>
 
       <Card className="overflow-hidden">

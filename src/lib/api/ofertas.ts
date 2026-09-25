@@ -53,6 +53,7 @@ export async function fetchOfertasPorRequerimiento(requerimientoId: string): Pro
 
 export interface MiOfertaResumen {
   requerimientoId: string;
+  codigo: string;
   titulo: string;
   cliente: string;
   categoria: string;
@@ -67,6 +68,7 @@ export interface MiOfertaResumen {
 
 interface ApiMiOfertaResumen {
   requerimientoId: string;
+  codigo: string | null;
   titulo: string;
   cliente: string;
   categoria: string;
@@ -79,6 +81,7 @@ export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
   const { data } = await api.get<ApiMiOfertaResumen[]>("/ofertas/mine");
   return data.map((o) => ({
     requerimientoId: o.requerimientoId,
+    codigo: o.codigo ?? "Proceso",
     titulo: o.titulo,
     cliente: o.cliente,
     categoria: o.categoria,
