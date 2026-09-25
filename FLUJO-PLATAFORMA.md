@@ -2,6 +2,8 @@
 
 > Backend real: NestJS + Prisma + PostgreSQL (Supabase), con autenticación real vía Supabase Auth (incluye MFA/2FA real y login con Google). Todo lo que se crea, aprueba, oferta, adjudica o firma persiste de verdad en la base de datos — no hay datos mock detrás del flujo de negocio. `src/lib/mock/*.ts` solo conserva etiquetas y tipos compartidos (nombres de roles, tipos de notificación); ninguna pantalla muestra datos o acciones simuladas.
 
+> **Diagramas de flujo de toda la aplicación** (registro, onboarding, homologación, compra completa, contratos, pagos, ERP, riesgo, estados): [`docs/DIAGRAMAS-FLUJO.md`](docs/DIAGRAMAS-FLUJO.md).
+
 ## Arquitectura general
 
 Hay 3 portales independientes, cada uno con su propio login, pero comparten el mismo router, el mismo backend y la misma base de datos.
