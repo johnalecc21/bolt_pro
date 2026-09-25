@@ -3,7 +3,13 @@ import { m, useMotionValue, useSpring } from "framer-motion";
 
 /** Wraps a CTA so it pulls slightly toward the cursor on hover. Pointer tracking uses
  * motion values (not useState) so it never re-renders React on mousemove. */
-export function Magnetic({ children, strength = 18 }: { children: ReactNode; strength?: number }) {
+export function Magnetic({
+  children,
+  strength = 18,
+}: {
+  children: ReactNode;
+  strength?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);

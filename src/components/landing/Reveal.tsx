@@ -39,7 +39,13 @@ export const staggerItem: Variants = {
   show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: easeOut } },
 };
 
-export function StaggerGroup({ children, className }: { children: ReactNode; className?: string }) {
+export function StaggerGroup({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
     <m.div
       variants={staggerContainer}
@@ -53,7 +59,17 @@ export function StaggerGroup({ children, className }: { children: ReactNode; cla
   );
 }
 
-export function AnimatedCounter({ value, suffix = "", prefix = "", duration = 1.6 }: { value: number; suffix?: string; prefix?: string; duration?: number }) {
+export function AnimatedCounter({
+  value,
+  suffix = "",
+  prefix = "",
+  duration = 1.6,
+}: {
+  value: number;
+  suffix?: string;
+  prefix?: string;
+  duration?: number;
+}) {
   const ref = useRef<HTMLSpanElement>(null);
   const inView = useInView(ref, { once: true, margin: "-10% 0px -10% 0px" });
   const [display, setDisplay] = useState(0);

@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Building2, Truck, Users2, ChevronDown, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LogoFull } from "@/components/shared/Logo";
+import { DEMO_MAILTO } from "./contacto";
 
 const navLinks = [
-  { label: "Cómo funciona", href: "#como-funciona" },
-  { label: "Servicios", href: "#servicios" },
-  { label: "Ventajas", href: "#ventajas" },
+  { label: "Plataforma", href: "#plataforma" },
+  { label: "Homologación", href: "#homologacion" },
+  { label: "Red de proveedores", href: "#red" },
   { label: "Precios", href: "#precios" },
-  { label: "Nosotros", href: "#nosotros" },
 ];
 
 const portals = [
@@ -48,14 +48,22 @@ export function LandingNavbar() {
 
         <nav className="hidden items-center gap-8 lg:flex">
           {navLinks.map((l) => (
-            <a key={l.href} href={l.href} className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <a
+              key={l.href}
+              href={l.href}
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               {l.label}
             </a>
           ))}
         </nav>
 
         <div className="hidden items-center gap-3 lg:flex">
-          <div className="relative" onMouseEnter={() => setPortalOpen(true)} onMouseLeave={() => setPortalOpen(false)}>
+          <div
+            className="relative"
+            onMouseEnter={() => setPortalOpen(true)}
+            onMouseLeave={() => setPortalOpen(false)}
+          >
             <Button variant="ghost" className="gap-1.5">
               Ingresar <ChevronDown className="h-3.5 w-3.5" />
             </Button>
@@ -82,13 +90,24 @@ export function LandingNavbar() {
               )}
             </AnimatePresence>
           </div>
-          <Button asChild className="gradient-brand text-white shadow-lg shadow-primary/20">
-            <a href="#precios">Solicitar demo</a>
+          <Button
+            asChild
+            className="gradient-brand text-white shadow-lg shadow-primary/20"
+          >
+            <a href={DEMO_MAILTO}>Solicitar demo</a>
           </Button>
         </div>
 
-        <button className="text-foreground lg:hidden" onClick={() => setMobileOpen((v) => !v)} aria-label="Abrir menú">
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        <button
+          className="text-foreground lg:hidden"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label="Abrir menú"
+        >
+          {mobileOpen ? (
+            <X className="h-6 w-6" />
+          ) : (
+            <Menu className="h-6 w-6" />
+          )}
         </button>
       </div>
 
@@ -103,13 +122,22 @@ export function LandingNavbar() {
           >
             <div className="flex flex-col gap-1 px-6 py-4">
               {navLinks.map((l) => (
-                <a key={l.href} href={l.href} onClick={() => setMobileOpen(false)} className="rounded-lg px-2 py-2.5 text-sm font-medium text-foreground/80 hover:bg-muted">
+                <a
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-lg px-2 py-2.5 text-sm font-medium text-foreground/80 hover:bg-muted"
+                >
                   {l.label}
                 </a>
               ))}
               <div className="my-2 h-px bg-border" />
               {portals.map((p) => (
-                <Link key={p.to} to={p.to} className="flex items-center gap-2 rounded-lg px-2 py-2.5 text-sm text-foreground/80 hover:bg-muted">
+                <Link
+                  key={p.to}
+                  to={p.to}
+                  className="flex items-center gap-2 rounded-lg px-2 py-2.5 text-sm text-foreground/80 hover:bg-muted"
+                >
                   <p.icon className="h-4 w-4" /> {p.label}
                 </Link>
               ))}

@@ -35,7 +35,11 @@ export function BlurText({
           )}
           initial={{ filter: "blur(10px)", opacity: 0, y: 14 }}
           animate={inView ? { filter: "blur(0px)", opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.5, delay: (i * delay) / 1000, ease: easeOut }}
+          transition={{
+            duration: 0.5,
+            delay: (i * delay) / 1000,
+            ease: easeOut,
+          }}
         >
           {word}
           {i < words.length - 1 ? " " : ""}

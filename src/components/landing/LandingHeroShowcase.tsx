@@ -1,89 +1,153 @@
 import { m } from "framer-motion";
-import { Crown, TrendingUp, ShieldCheck } from "lucide-react";
-import { AnimatedCounter } from "./Reveal";
+import {
+  BadgeCheck,
+  CheckCircle2,
+  ShieldCheck,
+  TrendingDown,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const rows = [
-  { pos: 1, label: "CloudSphere Technologies", price: "$48.200", color: "oklch(0.46 0.14 246)" },
-  { pos: 2, label: "NovaTech Consulting", price: "$49.850", color: "oklch(0.62 0.12 195)" },
-  { pos: 3, label: "AuditTrust Asociados", price: "$51.100", color: "oklch(0.5 0.05 240)" },
+const ofertas = [
+  { nombre: "Suministros Andinos S.A.S.", total: "$162.900.000", mejor: true },
+  { nombre: "TecnoRed Colombia", total: "$168.450.000", mejor: false },
+  { nombre: "Distribuciones Pacífico", total: "$171.300.000", mejor: false },
 ];
 
+const kpis = [
+  { label: "Invitados", valor: "8" },
+  { label: "Vieron", valor: "6" },
+  { label: "Ofertaron", valor: "4" },
+  { label: "Cierra en", valor: "2 d 4 h" },
+];
+
+/** A process as the buyer sees it in the platform: live tender, offers and savings. */
 export function LandingHeroShowcase() {
   return (
-    <div className="relative mx-auto w-full max-w-md lg:mx-0">
-      <div className="absolute -inset-x-10 -inset-y-16 -z-10 bg-primary/[0.07] blur-3xl" />
+    <div
+      className="relative mx-auto w-full max-w-xl sm:mb-12 lg:mx-0"
+      aria-hidden="true"
+    >
+      <div className="absolute -inset-x-10 -inset-y-12 -z-10 bg-primary/[0.08] blur-3xl" />
 
-      <m.div
-        animate={{ y: [0, -10, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: "easeInOut" }}
-        className="relative z-10 overflow-hidden rounded-2xl border border-border bg-card p-6 shadow-xl shadow-primary/[0.08]"
-      >
-        <div className="flex items-center justify-between border-b border-border pb-4">
-          <span className="text-xs font-medium text-muted-foreground">Subasta en vivo · Ronda 2</span>
-          <span className="flex items-center gap-1.5 text-xs font-medium text-success">
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
-            </span>
-            En vivo
+      <div className="relative z-10 overflow-hidden rounded-2xl border border-border bg-card shadow-2xl shadow-primary/[0.12]">
+        <div className="flex items-center gap-1.5 border-b border-border bg-muted/50 px-4 py-2.5">
+          <span className="h-2.5 w-2.5 rounded-full bg-border" />
+          <span className="h-2.5 w-2.5 rounded-full bg-border" />
+          <span className="h-2.5 w-2.5 rounded-full bg-border" />
+          <span className="ml-3 text-[11px] text-muted-foreground">
+            Procesos de compra · REQ-0248
           </span>
         </div>
-        <div className="mt-4 space-y-2.5">
-          {rows.map((r, i) => (
-            <m.div
-              key={r.label}
-              initial={{ opacity: 0, x: -12 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5 + i * 0.12, duration: 0.5 }}
-              className="flex items-center gap-3 rounded-lg border border-border px-3.5 py-2.5"
-            >
-              <span
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white"
-                style={{ background: r.color }}
+
+        <div className="p-5">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="text-base font-bold">REQ-0248</p>
+              <p className="truncate text-xs text-muted-foreground">
+                Portátiles para el equipo comercial · Tecnología
+              </p>
+            </div>
+            <span className="rounded-full bg-info/10 px-2.5 py-1 text-[11px] font-semibold text-info">
+              En licitación
+            </span>
+          </div>
+
+          <div className="mt-4 flex gap-4 border-b border-border text-xs font-medium">
+            {["Seguimiento", "Comparativo", "Negociación", "Adjudicación"].map(
+              (t, i) => (
+                <span
+                  key={t}
+                  className={cn(
+                    "-mb-px border-b-2 pb-2",
+                    i === 0
+                      ? "border-primary text-primary"
+                      : "border-transparent text-muted-foreground",
+                  )}
+                >
+                  {t}
+                </span>
+              ),
+            )}
+          </div>
+
+          <div className="mt-4 grid grid-cols-4 gap-2">
+            {kpis.map((k) => (
+              <div
+                key={k.label}
+                className="rounded-lg bg-muted/60 px-2 py-2 text-center"
               >
-                {r.pos}
-              </span>
-              <span className="flex-1 truncate text-sm font-medium">{r.label}</span>
-              <span className="font-mono text-sm">{r.price}</span>
-              {r.pos === 1 && <Crown className="h-4 w-4 shrink-0 text-warning" />}
-            </m.div>
-          ))}
+                <p className="text-sm font-bold tabular-nums sm:text-base">
+                  {k.valor}
+                </p>
+                <p className="text-[10px] text-muted-foreground">{k.label}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 space-y-2">
+            {ofertas.map((o, i) => (
+              <m.div
+                key={o.nombre}
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.6 + i * 0.12, duration: 0.45 }}
+                className={cn(
+                  "flex items-center gap-3 rounded-lg border px-3 py-2.5",
+                  o.mejor ? "border-success/40 bg-success/5" : "border-border",
+                )}
+              >
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-muted text-[11px] font-bold">
+                  {i + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">{o.nombre}</p>
+                  <p className="flex items-center gap-1 text-[11px] text-success">
+                    <BadgeCheck className="h-3 w-3" /> Homologado
+                  </p>
+                </div>
+                <span className="font-mono text-xs sm:text-sm">{o.total}</span>
+              </m.div>
+            ))}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-primary/5 px-3 py-2.5 text-xs">
+            <span className="text-muted-foreground">
+              Presupuesto aprobado{" "}
+              <span className="font-mono text-foreground">$186.000.000</span>
+            </span>
+            <span className="flex items-center gap-1 font-semibold text-success">
+              <TrendingDown className="h-3.5 w-3.5" /> 12,4 % por debajo
+            </span>
+          </div>
         </div>
-      </m.div>
+      </div>
 
       <m.div
-        initial={{ opacity: 0, scale: 0.9, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: [0, 8, 0] }}
-        transition={{
-          opacity: { delay: 0.9, duration: 0.5 },
-          scale: { delay: 0.9, duration: 0.5 },
-          y: { delay: 1.4, duration: 6, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute -bottom-8 -left-8 z-20 w-52 rounded-xl border border-border bg-card p-4 shadow-xl shadow-primary/10 sm:-left-14"
+        initial={{ opacity: 0, scale: 0.9, y: -8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 1.1, duration: 0.5 }}
+        className="absolute -right-3 -top-5 z-20 flex items-center gap-2 rounded-full border border-border bg-card py-1.5 pl-1.5 pr-3.5 shadow-lg shadow-primary/10 sm:-right-8"
       >
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success">
-          <TrendingUp className="h-4 w-4" />
-        </div>
-        <div className="mt-2.5 text-2xl font-bold text-foreground">
-          <AnimatedCounter value={42} suffix="%" />
-        </div>
-        <p className="mt-0.5 text-xs text-muted-foreground">Ahorro vs. presupuesto</p>
-      </m.div>
-
-      <m.div
-        initial={{ opacity: 0, scale: 0.9, y: -10 }}
-        animate={{ opacity: 1, scale: 1, y: [0, -8, 0] }}
-        transition={{
-          opacity: { delay: 1.1, duration: 0.5 },
-          scale: { delay: 1.1, duration: 0.5 },
-          y: { delay: 1.6, duration: 5.5, repeat: Infinity, ease: "easeInOut" },
-        }}
-        className="absolute -right-4 -top-6 z-20 flex items-center gap-2 rounded-full border border-border bg-card py-2 pl-2 pr-4 shadow-lg shadow-primary/10 sm:-right-10"
-      >
-        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-primary">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-success/10 text-success">
           <ShieldCheck className="h-3.5 w-3.5" />
-        </div>
-        <span className="text-xs font-medium text-foreground">OFAC/SDN verificado</span>
+        </span>
+        <span className="text-xs font-medium">
+          Sin coincidencias en listas restrictivas
+        </span>
+      </m.div>
+
+      <m.div
+        initial={{ opacity: 0, scale: 0.9, y: 10 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ delay: 1.3, duration: 0.5 }}
+        className="absolute -bottom-16 -left-3 z-20 hidden w-60 rounded-xl border border-border bg-card p-3.5 shadow-xl shadow-primary/10 sm:block sm:-left-10"
+      >
+        <p className="flex items-center gap-1.5 text-xs font-semibold">
+          <CheckCircle2 className="h-4 w-4 text-success" /> Aprobado por el CFO
+        </p>
+        <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
+          La matriz lo envió al CFO por superar el monto de la categoría.
+        </p>
       </m.div>
     </div>
   );
