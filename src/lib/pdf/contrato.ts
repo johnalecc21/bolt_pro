@@ -261,23 +261,26 @@ export function generateContratoPdf(data: ContratoPdfData, marca?: MarcaDocument
   }
   y += 10;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10.5);
-  doc.setTextColor(NAVY);
-  doc.text("Penalidades por incumplimiento", MARGIN_X, y);
-  y += 16;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
-  doc.setTextColor(MUTED);
-  const penalidadTexto =
-    `En caso de atraso injustificado en cualquiera de los hitos pactados, el PROVEEDOR reconocerá al CLIENTE una penalidad ` +
-    `del 0.5% del monto del hito afectado por cada día calendario de atraso, hasta un máximo acumulado del 10% del monto ` +
-    `total del contrato. El incumplimiento reiterado (más de dos hitos consecutivos atrasados) faculta al CLIENTE a dar ` +
-    `por terminado el contrato sin perjuicio de las acciones legales a que haya lugar.`;
-  const penalidadLines = doc.splitTextToSize(penalidadTexto, CONTENT_WIDTH);
-  doc.text(penalidadLines, MARGIN_X, y);
-  y += penalidadLines.length * 13 + 20;
+  // Only the clause the company wrote; Procurex never invents one.
+  if (marca?.penalidad?.texto) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10.5);
+    doc.setTextColor(NAVY);
+    doc.text("Penalidades por incumplimiento", MARGIN_X, y);
+    y += 16;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    doc.setTextColor(MUTED);
+    for (const linea of doc.splitTextToSize(marca.penalidad.texto, CONTENT_WIDTH) as string[]) {
+      if (y > PAGE_HEIGHT - MARGIN_BOTTOM) {
+        doc.addPage();
+        y = 60;
+      }
+      doc.text(linea, MARGIN_X, y);
+      y += 13;
+    }
+    y += 20;
+  }
 
   if (marca?.clausulas?.trim()) {
     doc.setFont("helvetica", "bold");

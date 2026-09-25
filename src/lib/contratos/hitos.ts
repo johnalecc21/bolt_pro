@@ -29,29 +29,43 @@ export function diasDeAtraso(h: Hito, ahora = Date.now()): number {
   return Math.max(0, Math.floor((fin - dia(h.comprometido)) / MS_DIA));
 }
 
-export const PENALIDAD_DIARIA = 0.005;
-export const PENALIDAD_TOPE = 0.1;
+import type { ReglaPenalidad } from "@/lib/api/contratos";
+
+const pct = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 3 });
+
+/** "0,5 % diario del valor del hito atrasado, tope 10 % del contrato, 3 días de gracia". */
+export function describirPenalidad(r: ReglaPenalidad) {
+  return `${pct(r.diaria)} % diario ${r.base === "CONTRATO" ? "del valor del contrato" : "del valor del hito atrasado"}, tope ${pct(r.tope)} % del contrato${r.diasGracia ? `, ${r.diasGracia} día(s) de gracia` : ""}`;
+}
 
 /**
- * The contract's standard penalty clause, estimated: 0.5% of the late
- * milestone's value per calendar day, capped at 10% of the contract. It's
- * informative — applying it is a decision of the buyer.
+ * The company's own penalty clause, estimated. Without a clause (the company
+ * didn't set one) there is no penalty. It's informative — applying it is a
+ * decision of the buyer.
  */
 export function penalidadEstimada(
   hitos: Hito[],
   montoContrato: number,
+  regla: ReglaPenalidad | null,
   ahora = Date.now(),
   /** What a milestone is worth when it isn't simply its % of today's value (e.g. the payment it already released). */
   valorDe?: (h: Hito) => number | undefined,
 ) {
+  const vacio = { detalle: [] as { id: string; label: string; dias: number; base: number; valor: number }[], total: 0, tope: 0, topeAlcanzado: false };
+  if (!regla) return vacio;
+  const diaria = regla.diaria / 100;
   const detalle = hitos
     .map((h) => {
-      const dias = diasDeAtraso(h, ahora);
-      const base = valorDe?.(h) ?? Math.round((montoContrato * h.porcentaje) / 100);
-      return { id: h.id, label: h.label, dias, base, valor: Math.round(base * PENALIDAD_DIARIA * dias) };
+      const dias = Math.max(0, diasDeAtraso(h, ahora) - regla.diasGracia);
+      const base = regla.base === "CONTRATO" ? montoContrato : (valorDe?.(h) ?? Math.round((montoContrato * h.porcentaje) / 100));
+      return { id: h.id, label: h.label, dias, base, valor: Math.round(base * diaria * dias) };
     })
     .filter((d) => d.dias > 0 && d.valor > 0);
-  const bruto = detalle.reduce((s, d) => s + d.valor, 0);
-  const tope = Math.round(montoContrato * PENALIDAD_TOPE);
+  // On the contract value, the days of delay count once (the longest), not per milestone.
+  const bruto =
+    regla.base === "CONTRATO"
+      ? Math.round(montoContrato * diaria * Math.max(0, ...detalle.map((d) => d.dias)))
+      : detalle.reduce((s, d) => s + d.valor, 0);
+  const tope = Math.round((montoContrato * regla.tope) / 100);
   return { detalle, total: Math.min(bruto, tope), tope, topeAlcanzado: bruto > tope };
 }

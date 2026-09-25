@@ -337,7 +337,10 @@ function SubirPlantilla({ tipo, onClose, onSubida }: { tipo: TipoPlantilla | nul
 
 // ---------------------------------------------------------------------- marca
 
-const CAMPOS: [keyof CamposMarca, string, string][] = [
+/** The plain text fields of the letterhead form. */
+type CampoTexto = "razonSocial" | "nit" | "direccion" | "ciudad" | "telefono" | "email" | "sitioWeb" | "representanteLegal" | "cargoRepresentante";
+
+const CAMPOS: [CampoTexto, string, string][] = [
   ["razonSocial", "Razón social", "Acme S.A.S."],
   ["nit", "NIT", "900.123.456-7"],
   ["direccion", "Dirección", "Cra 7 # 71-21"],
@@ -364,7 +367,7 @@ function MarcaDocumentos() {
 
   if (loading && !data) return <TableSkeleton />;
   if (!data || !form) return null;
-  const set = (k: keyof CamposMarca, v: string) => setForm((f) => (f ? { ...f, [k]: v } : f));
+  const set = <K extends keyof CamposMarca>(k: K, v: CamposMarca[K]) => setForm((f) => (f ? { ...f, [k]: v } : f));
 
   async function guardar() {
     setGuardando(true);
@@ -415,7 +418,7 @@ function MarcaDocumentos() {
         plazoDias: 15,
         condicionesPagoDias: 30,
       },
-      { ...form!, logo: logoData },
+      { ...form!, logo: logoData, penalidad: reglaDe(form!) },
     );
   }
 
@@ -439,6 +442,7 @@ function MarcaDocumentos() {
           <Textarea id="marca-clausulas" rows={7} value={form.clausulas} maxLength={20000} placeholder="PRIMERA. CONFIDENCIALIDAD. …" onChange={(e) => set("clausulas", e.target.value)} />
           <p className="text-xs text-muted-foreground">Se agregan al formato de Procurex y están disponibles como {"{{clausulas}}"} en tus plantillas.</p>
         </div>
+        <Penalidad form={form} set={set} />
         <div className="space-y-1.5">
           <Label htmlFor="marca-pie">Pie de página</Label>
           <Input id="marca-pie" value={form.piePagina} maxLength={300} placeholder="Documento confidencial · Acme S.A.S." onChange={(e) => set("piePagina", e.target.value)} />
@@ -474,6 +478,110 @@ function MarcaDocumentos() {
           <p className="text-xs opacity-90">{[form.nit && `NIT ${form.nit}`, form.ciudad].filter(Boolean).join(" · ") || "NIT · Ciudad"}</p>
         </div>
       </Card>
+    </div>
+  );
+}
+
+// ----------------------------------------------------------------- penalidad
+
+/** The rule as the PDF and the contract estimate read it; null when off or incomplete. */
+function reglaDe(f: CamposMarca) {
+  if (!f.penalidadActiva || !f.penalidadDiaria || !f.penalidadTope || !f.penalidadTexto.trim()) return null;
+  return { diaria: f.penalidadDiaria, tope: f.penalidadTope, diasGracia: f.penalidadDiasGracia, base: f.penalidadBase, texto: f.penalidadTexto.trim() };
+}
+
+const pctTxt = (n: number | null) => (n == null ? "__" : n.toLocaleString("es-CO", { maximumFractionDigits: 3 }));
+
+/** A starting point the company edits; nothing is printed until it saves its own wording. */
+function textoSugerido(f: CamposMarca) {
+  const base = f.penalidadBase === "CONTRATO" ? "del valor total del contrato" : "del valor del hito o entrega afectada";
+  const gracia = f.penalidadDiasGracia ? `, contados a partir del día ${f.penalidadDiasGracia + 1} de atraso,` : "";
+  return (
+    `En caso de atraso injustificado en el cumplimiento de cualquiera de los hitos pactados, el CONTRATISTA reconocerá al CONTRATANTE, ` +
+    `a título de pena, una suma equivalente al ${pctTxt(f.penalidadDiaria)} % ${base} por cada día calendario de atraso${gracia} ` +
+    `sin que el total exceda el ${pctTxt(f.penalidadTope)} % del valor del contrato. El CONTRATANTE podrá descontar estas sumas de los ` +
+    `pagos pendientes, previo aviso escrito al CONTRATISTA.`
+  );
+}
+
+/** Decimal input that accepts "0,5" while typing and reports a number (or null). */
+function Decimal({ id, value, placeholder, onChange }: { id: string; value: number | null; placeholder: string; onChange: (v: number | null) => void }) {
+  const aTexto = (v: number | null) => (v == null ? "" : String(v).replace(".", ","));
+  const [texto, setTexto] = useState(aTexto(value));
+  useEffect(() => {
+    // Only resync when the number really changed (not on every keystroke).
+    const actual = texto.trim() === "" ? null : Number(texto.replace(",", "."));
+    if (actual !== value) setTexto(aTexto(value));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return (
+    <Input
+      id={id}
+      inputMode="decimal"
+      value={texto}
+      placeholder={placeholder}
+      onChange={(e) => {
+        const t = e.target.value.replace(/[^\d.,]/g, "");
+        setTexto(t);
+        const n = Number(t.replace(",", "."));
+        onChange(t.trim() === "" || Number.isNaN(n) ? null : n);
+      }}
+    />
+  );
+}
+
+function Penalidad({ form, set }: { form: CamposMarca; set: <K extends keyof CamposMarca>(k: K, v: CamposMarca[K]) => void }) {
+  return (
+    <div className="space-y-3 rounded-lg border border-border p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-medium">Penalidad por incumplimiento</p>
+          <p className="text-xs text-muted-foreground">
+            Procurex no incluye ninguna penalidad por su cuenta. Si tu empresa la aplica, define aquí los valores y redacta la cláusula: se imprime en el formato de Procurex, está disponible como {"{{penalidad.texto}}"} en tus plantillas y la ficha de cada contrato estima su valor con estos mismos datos.
+          </p>
+        </div>
+        <label className="flex shrink-0 items-center gap-2 text-sm">
+          <input type="checkbox" className="h-4 w-4" checked={form.penalidadActiva} onChange={(e) => set("penalidadActiva", e.target.checked)} />
+          Aplicar
+        </label>
+      </div>
+      {form.penalidadActiva && (
+        <>
+          <div className="grid gap-3 sm:grid-cols-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="pen-diaria">% por día de atraso</Label>
+              <Decimal id="pen-diaria" value={form.penalidadDiaria} placeholder="0,5" onChange={(v) => set("penalidadDiaria", v)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pen-tope">Tope (% del contrato)</Label>
+              <Decimal id="pen-tope" value={form.penalidadTope} placeholder="10" onChange={(v) => set("penalidadTope", v)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pen-gracia">Días de gracia</Label>
+              <Input id="pen-gracia" inputMode="numeric" value={form.penalidadDiasGracia} onChange={(e) => set("penalidadDiasGracia", Math.max(0, Math.floor(Number(e.target.value) || 0)))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="pen-base">Se calcula sobre</Label>
+              <select id="pen-base" className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={form.penalidadBase} onChange={(e) => set("penalidadBase", e.target.value as "HITO" | "CONTRATO")}>
+                <option value="HITO">El valor del hito atrasado</option>
+                <option value="CONTRATO">El valor del contrato</option>
+              </select>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <Label htmlFor="pen-texto">Texto de la cláusula (lo redacta tu empresa)</Label>
+              <Button type="button" size="sm" variant="ghost" onClick={() => set("penalidadTexto", textoSugerido(form))}>
+                Usar texto sugerido
+              </Button>
+            </div>
+            <Textarea id="pen-texto" rows={5} value={form.penalidadTexto} maxLength={5000} placeholder="Redacta la cláusula como la aprobó tu área jurídica…" onChange={(e) => set("penalidadTexto", e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              El texto sugerido es solo un punto de partida: revísalo con tu área jurídica. Si cambias los porcentajes, actualiza también el texto.
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }

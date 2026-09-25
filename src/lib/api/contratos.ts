@@ -111,7 +111,19 @@ export interface MarcaPdf {
   colorPrimario: string | null;
   clausulas: string | null;
   piePagina: string | null;
+  /** The company's own penalty clause; null = it has none (nothing printed or estimated). */
+  penalidad: ReglaPenalidad | null;
   logoUrl: string | null;
+}
+
+export interface ReglaPenalidad {
+  /** % per day of delay (0.5 = 0,5 %). */
+  diaria: number;
+  /** Cap, % of the contract value. */
+  tope: number;
+  diasGracia: number;
+  base: "HITO" | "CONTRATO";
+  texto: string;
 }
 
 export type TipoModificacion = "PRORROGA" | "MONTO" | "TERMINACION";

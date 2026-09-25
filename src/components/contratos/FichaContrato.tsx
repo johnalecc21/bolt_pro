@@ -25,7 +25,7 @@ import {
   reportarAvance, subirArchivoContrato, terminarContrato, type FichaContrato as Ficha,
 } from "@/lib/api/contratos";
 import { actualizarEstadoHito, type EstadoHito, type Hito } from "@/lib/api/seguimiento";
-import { diasDeAtraso, ESTADO_GENERAL, estadoGeneral, penalidadEstimada } from "@/lib/contratos/hitos";
+import { describirPenalidad, diasDeAtraso, ESTADO_GENERAL, estadoGeneral, penalidadEstimada } from "@/lib/contratos/hitos";
 import { LineaErp, useEstadoErp } from "@/components/integraciones/EstadoErp";
 
 const HITO: Record<EstadoHito, { label: string; icon: typeof Circle; clase: string }> = {
@@ -69,7 +69,8 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
   // A paid milestone is worth what it released, even if the value changed later.
   const pagoDe = new Map(c.pagos.map((p) => [p.id, p.monto]));
   const valorHito = (h: Hito) => (h.pagoGeneradoId ? pagoDe.get(h.pagoGeneradoId) : undefined);
-  const penalidad = penalidadEstimada(c.hitos, c.monto, Date.now(), valorHito);
+  const regla = c.marca?.penalidad ?? null;
+  const penalidad = penalidadEstimada(c.hitos, c.monto, regla, Date.now(), valorHito);
   const completados = c.hitos.filter((h) => h.estado === "completado").length;
   const restantes = diasHasta(c.vigenciaFin);
   const terminado = c.estadoApi === "TERMINADO";
@@ -253,10 +254,10 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
                   <div>
                     <p>
                       <strong>Penalidad estimada por atrasos: {formatMoney(penalidad.total, c.moneda)}</strong>
-                      {penalidad.topeAlcanzado && ` (tope del 10%: ${formatMoney(penalidad.tope, c.moneda)})`}
+                      {penalidad.topeAlcanzado && ` (tope alcanzado: ${formatMoney(penalidad.tope, c.moneda)})`}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Cláusula del contrato: 0,5% del valor del hito por día de atraso, hasta el 10% del contrato.{" "}
+                      Cláusula de {c.marca?.razonSocial || c.cliente}: {regla && describirPenalidad(regla)}.{" "}
                       {penalidad.detalle.map((d) => `${d.label}: ${d.dias} día(s)`).join(" · ")}. {esCliente ? "Es una estimación; aplicarla es una decisión de tu empresa." : "Es una estimación informativa."}
                     </p>
                   </div>

@@ -52,6 +52,15 @@ export interface Marca {
   colorPrimario: string;
   clausulas: string;
   piePagina: string;
+  /** Penalty clause: off unless the company sets it and writes the text. */
+  penalidadActiva: boolean;
+  /** % per day of delay. */
+  penalidadDiaria: number | null;
+  /** Cap, % of the contract value. */
+  penalidadTope: number | null;
+  penalidadDiasGracia: number;
+  penalidadBase: "HITO" | "CONTRATO";
+  penalidadTexto: string;
   tieneLogo: boolean;
   logoUrl: string | null;
 }
