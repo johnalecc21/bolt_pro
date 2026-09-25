@@ -450,6 +450,7 @@ Con ítems, las líneas del ganador se escalan en la proporción puja / oferta.
 flowchart TD
     A["Ficha del proceso, pestaña Adjudicación: una tarjeta por ganador"] --> B["Confirmar decisión"]
     B --> C["Requerimiento ADJUDICADO + notificación a cada ganador"]
+    C -.-> CA["Carta de adjudicación en PDF, para el comprador y el ganador → sección 16"]
     C --> D{"Por cada contrato: ¿supera el umbral legal de su moneda?"}
     D -->|"Sí"| E["Bloqueado hasta marcar revisión legal"] --> F
     D -->|"No"| F["Firmar y generar contrato"]
@@ -636,12 +637,12 @@ stateDiagram-v2
 
 ```mermaid
 flowchart TD
-    A["Admin: Plantillas y documentos"] --> B["Subir .docx con marcadores"]
+    A["Admin: Plantillas y documentos"] --> A2["Descargar el formato de Procurex en Word y editarlo"] --> B["Subir .docx con marcadores"]
     B --> C{"Validación"}
     C -->|"Marcadores mal escritos o llaves sin cerrar"| D["Rechazada con el error exacto"]
     C -->|"OK"| E["Advertencias: falta NIT o valor"]
-    E --> F["Vista previa con el último contrato real, en PDF o Word"]
-    F --> G["Activar: una activa por tipo, orden de compra o contrato marco; la de categoría gana a la general"]
+    E --> F["Vista previa con el último contrato o adjudicación real, en PDF o Word"]
+    F --> G["Activar: una activa por tipo (orden de compra, contrato marco o carta de adjudicación); la de categoría gana a la general"]
     A --> H["Marca y datos: razón social, NIT, logo, color, cláusulas, pie, penalidad opcional"]
 
     I["Firma de adjudicación o emisión de PO"] --> J{"¿Plantilla activa?"}
@@ -651,6 +652,11 @@ flowchart TD
     N["Prórroga o cambio de valor"] --> O["Nueva versión"] --> M
     K -.->|"Si falla"| P["La firma no se bloquea; error en auditoría"]
     M --> Q["El proveedor descarga la versión vigente"]
+
+    R["Carta de adjudicación: comprador en la adjudicación o ganador en su historial"] --> S{"¿Plantilla de carta activa?"}
+    S -->|"Sí"| T["Llena la plantilla de la empresa"]
+    S -->|"No"| U["Formato de Procurex con los datos y la firma de la empresa"]
+    T & U --> V["PDF para descargar; no se guarda como versión"]
 ```
 
 ---
