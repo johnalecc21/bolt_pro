@@ -7,6 +7,7 @@ import { Activity, CheckCircle2, Eye, FileEdit, MailQuestion, Network, Send, Thu
 import { cn } from "@/lib/utils";
 import { apiErrorMessage } from "@/lib/api/http";
 import { abrirARed, fetchTablero, type EtapaTablero, type Tablero } from "@/lib/api/red";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 const CADA_MS = 15_000;
 
@@ -74,7 +75,7 @@ export function TableroLicitacion({ requerimientoId, abierta, puedeGestionar }: 
     }
   }
 
-  if (!t) return <Card className="p-5 text-sm text-muted-foreground">Cargando el seguimiento…</Card>;
+  if (!t) return <CargandoProcurex texto="Cargando el seguimiento" />;
   const r = t.resumen;
   const embudo: [string, number, typeof Eye][] = [
     ["Participantes", r.participantes, Activity],

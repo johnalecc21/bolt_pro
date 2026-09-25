@@ -9,6 +9,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { describirExcluidos, fetchRequerimientos, invitarProveedores } from "@/lib/api/requerimientos";
 import { formatMoney } from "@/lib/moneda";
 import { cn } from "@/lib/utils";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 /**
  * Invites one proveedor to a requerimiento that's already out to bid. Only
@@ -52,7 +53,7 @@ export function InvitarProveedorDialog({ proveedorId, proveedorNombre }: { prove
           <DialogDescription>Elige un requerimiento en licitación. El proveedor recibe la invitación de inmediato.</DialogDescription>
         </DialogHeader>
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando requerimientos...</p>
+          <CargandoProcurex tamano="sm" texto="Cargando requerimientos" />
         ) : abiertos.length === 0 ? (
           <div className="space-y-3 text-sm text-muted-foreground">
             <p>No tienes requerimientos en licitación en este momento.</p>

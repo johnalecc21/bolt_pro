@@ -5,10 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, CheckCircle2, Building2 } from "lucide-react";
+import { CheckCircle2, Building2 } from "lucide-react";
 import { apiRegisterProveedor } from "@/lib/api/auth";
 import { apiErrorMessage } from "@/lib/api/http";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 export function RegistroProveedor() {
   usePageMeta({ title: "Registro de proveedores", description: "Registra tu empresa como proveedor en Procurex, homológate y recibe invitaciones a licitaciones de empresas compradoras." });
@@ -106,10 +107,7 @@ export function RegistroProveedor() {
         )}
 
         {step === "verifying" && (
-          <div className="flex flex-col items-center gap-3 py-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Creando tu cuenta...</p>
-          </div>
+          <CargandoProcurex texto="Creando tu cuenta…" mostrarTexto />
         )}
 
         {step === "done" && (

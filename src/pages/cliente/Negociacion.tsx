@@ -16,6 +16,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 import { cuentaRegresiva } from "@/lib/fecha";
 import { useIncrustado } from "@/components/layout/Incrustado";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 
 function Leaderboard({ ranking, moneda }: { ranking: Puja[]; moneda: Moneda }) {
@@ -101,7 +102,7 @@ export function Negociacion() {
   }
 
   if (cargandoRequerimiento) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+    return <CargandoProcurex pagina />;
   }
 
   if (!requerimiento) {

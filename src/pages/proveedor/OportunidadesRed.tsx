@@ -16,6 +16,7 @@ import { fechaLocal } from "@/lib/fecha";
 import { fetchOportunidades, participar, type Oportunidad } from "@/lib/api/red";
 import { fetchRequerimientoInvitado, type RequerimientoInvitado } from "@/lib/api/invitaciones";
 import { useIncrustado } from "@/components/layout/Incrustado";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 type Datos = Awaited<ReturnType<typeof fetchOportunidades>>;
 
@@ -188,7 +189,7 @@ export function OportunidadesRed() {
             {detalle ? (
               <RequerimientoInvitadoDetalle r={detalle} />
             ) : (
-              <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Cargando requerimiento…</div>
+              <CargandoProcurex texto="Cargando requerimiento" />
             )}
             {!abierta.puedeParticipar && abierta.motivo && !abierta.participa && (
               <p className="rounded-md bg-warning/10 p-3 text-sm text-warning-foreground">{abierta.motivo}</p>

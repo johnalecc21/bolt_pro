@@ -13,6 +13,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchMiPerfil, actualizarMiPerfil, completarOnboardingProveedor } from "@/lib/api/proveedores";
 import { apiErrorMessage } from "@/lib/api/http";
 import { LogoIcon } from "@/components/shared/Logo";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 const CATEGORIAS = ["Tecnología", "Servicios Generales", "Materia Prima", "Logística", "Marketing"];
 
@@ -97,7 +98,7 @@ export function OnboardingProveedor() {
   }
 
   if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+    return <CargandoProcurex pagina />;
   }
 
   return (

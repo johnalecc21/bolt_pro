@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
 import { usePageMeta } from "@/hooks/usePageMeta";
 import { fetchDirectorioPublico, fetchEstadisticasRed } from "@/lib/api/red";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 /**
  * Public directory of the Procurex network: every homologated supplier with
@@ -109,7 +110,7 @@ export function RedProveedores() {
         )}
 
         {loading && !data ? (
-          <p className="text-sm text-muted-foreground">Cargando proveedores…</p>
+          <CargandoProcurex texto="Cargando proveedores" />
         ) : !data || data.items.length === 0 ? (
           <Card className="p-8 text-center">
             <p className="font-medium">No encontramos proveedores con ese criterio</p>

@@ -14,6 +14,7 @@ import { useAuth } from "@/lib/auth/AuthContext";
 import { Badge } from "@/components/ui/badge";
 
 import { formatMoney } from "@/lib/moneda";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 export function DetalleRequerimiento() {
   const { id } = useParams();
   const {
@@ -26,7 +27,7 @@ export function DetalleRequerimiento() {
   const { currentUser } = useAuth();
 
   if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando requerimiento...</div>;
+    return <CargandoProcurex pagina texto="Cargando requerimiento" />;
   }
 
   if (!req) {

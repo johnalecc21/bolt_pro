@@ -14,6 +14,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { cn } from "@/lib/utils";
 import { Incrustado } from "@/components/layout/Incrustado";
 import { MiVitrina } from "@/pages/proveedor/MiVitrina";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 function sameArray(a: string[], b: string[]) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
@@ -131,7 +132,7 @@ function DatosEmpresa() {
   }
 
   if (loading) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+    return <CargandoProcurex pagina />;
   }
 
   return (

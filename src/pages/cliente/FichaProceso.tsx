@@ -9,6 +9,7 @@ import { useApiData } from "@/hooks/useApiData";
 import { cn } from "@/lib/utils";
 import { fetchRequerimiento } from "@/lib/api/requerimientos";
 import type { EstadoReq } from "@/lib/types";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 export type EtapaProceso = "seguimiento" | "comparativo" | "negociacion" | "adjudicacion";
 
@@ -34,7 +35,7 @@ export function FichaProceso() {
   const actual = pathname.split("/")[4] as EtapaProceso | undefined;
 
   if (!r) {
-    if (loading) return <div className="p-6 text-sm text-muted-foreground">Cargando proceso…</div>;
+    if (loading) return <CargandoProcurex pagina texto="Cargando proceso" />;
     return (
       <div className="p-6">
         <EmptyState icon={FileText} title="Proceso no encontrado" description={error ?? "Verifica el enlace o vuelve a la lista de procesos."} />

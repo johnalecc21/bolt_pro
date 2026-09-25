@@ -20,6 +20,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 import { useIncrustado } from "@/components/layout/Incrustado";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 const fmtCantidad = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 3 });
 
@@ -32,7 +33,7 @@ export function Adjudicacion() {
   const [notificarPerdedores, setNotificarPerdedores] = useState(true);
 
   if (loadingReq || loadingAdj) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando adjudicación...</div>;
+    return <CargandoProcurex pagina texto="Cargando adjudicación" />;
   }
 
   if (!requerimiento || !proceso) {

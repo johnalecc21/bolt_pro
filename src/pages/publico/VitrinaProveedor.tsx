@@ -9,6 +9,7 @@ import {
 import { useApiData } from "@/hooks/useApiData";
 import { fetchVitrina } from "@/lib/api/vitrina";
 import { usePageMeta } from "@/hooks/usePageMeta";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 /** Public, shareable profile of a homologated proveedor — verified facts plus the content it manages itself. */
 export function VitrinaProveedor() {
@@ -32,7 +33,7 @@ export function VitrinaProveedor() {
 
       <main className="mx-auto max-w-5xl space-y-5 px-4 py-8">
         {loading ? (
-          <p className="text-sm text-muted-foreground">Cargando perfil...</p>
+          <CargandoProcurex texto="Cargando perfil" />
         ) : error || !p ? (
           <Card className="p-8 text-center">
             <p className="font-medium">Este proveedor no tiene una vitrina pública</p>

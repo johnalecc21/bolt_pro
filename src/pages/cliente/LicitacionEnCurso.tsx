@@ -14,6 +14,7 @@ import { TableroLicitacion } from "@/components/licitacion/TableroLicitacion";
 import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, cerrarLicitacion } from "@/lib/api/requerimientos";
 import { fetchPreguntas, responderPregunta } from "@/lib/api/preguntas";
 import { apiErrorMessage } from "@/lib/api/http";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 function calcularTiempoRestante(cierre: string | undefined) {
   if (!cierre) return { dias: 0, horas: 0, min: 0, vencido: true };
@@ -55,7 +56,7 @@ export function LicitacionEnCurso() {
   }, [requerimiento?.cierre]);
 
   if (cargandoRequerimiento) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+    return <CargandoProcurex pagina />;
   }
 
   if (!requerimiento) {

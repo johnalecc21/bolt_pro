@@ -1,9 +1,9 @@
 import { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { RequireRole } from "@/components/auth/RequireRole";
 import { Landing } from "@/pages/Landing";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 // Everything except the landing is split out so the first visit only downloads
 // what the public home page needs.
@@ -74,9 +74,7 @@ function RedirigirSeguimiento() {
 
 function RouteLoading() {
   return (
-    <div className="flex h-full min-h-[60vh] items-center justify-center">
-      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-    </div>
+    <CargandoProcurex pagina />
   );
 }
 

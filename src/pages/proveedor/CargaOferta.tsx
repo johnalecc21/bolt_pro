@@ -18,6 +18,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 
 import { formatMoney } from "@/lib/moneda";
 import { haVencido } from "@/lib/fecha";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 export function CargaOferta() {
   const { requerimientoId } = useParams();
   return requerimientoId ? <OfertaDetalle requerimientoId={requerimientoId} /> : <MisOfertasList />;
@@ -113,7 +114,7 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
   }, [ofertaData]);
 
   if (loading || !oferta) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando...</div>;
+    return <CargandoProcurex pagina />;
   }
 
   const lineas = oferta.lineas;
@@ -180,7 +181,7 @@ function OfertaDetalle({ requerimientoId }: { requerimientoId: string }) {
 
       <Card className="p-5">
         <h2 className="mb-4 flex items-center gap-2 font-semibold"><FileText className="h-4 w-4" /> Requerimiento</h2>
-        {detalle ? <RequerimientoInvitadoDetalle r={detalle} /> : <p className="text-sm text-muted-foreground">Cargando el requerimiento…</p>}
+        {detalle ? <RequerimientoInvitadoDetalle r={detalle} /> : <CargandoProcurex texto="Cargando el requerimiento" />}
       </Card>
 
       <Card className="p-5">

@@ -19,6 +19,7 @@ import { ComparativoItems } from "@/components/cliente/ComparativoItems";
 import { compararItems, preciosComparables } from "@/lib/comparativo/items";
 
 import { formatMoney } from "@/lib/moneda";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 const criterios = [
   { key: "precio", label: "Precio total", prefix: "", suffix: "", lowerIsBetter: true },
   { key: "plazo", label: "Plazo de entrega", prefix: "", suffix: " días", lowerIsBetter: true },
@@ -114,7 +115,7 @@ export function CuadroComparativo() {
     : 0;
 
   if (loadingReq || loadingOfertas) {
-    return <div className="p-6 text-sm text-muted-foreground">Cargando comparativo...</div>;
+    return <CargandoProcurex pagina texto="Cargando comparativo" />;
   }
 
   if (!requerimiento || ofertasBase.length === 0 || !winner) {

@@ -8,12 +8,13 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { fetchInvitaciones, fetchRequerimientoInvitado, declinarInvitacion, type Invitacion, type RequerimientoInvitado } from "@/lib/api/invitaciones";
 import { apiErrorMessage } from "@/lib/api/http";
 import { fechaLocal } from "@/lib/fecha";
-import { Inbox, FileEdit, X, Calendar, Eye, ListChecks, Loader2 } from "lucide-react";
+import { Inbox, FileEdit, X, Calendar, Eye, ListChecks } from "lucide-react";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
 import { useApiData } from "@/hooks/useApiData";
 import { RequerimientoInvitadoDetalle } from "@/components/proveedor/RequerimientoInvitadoDetalle";
 import { useIncrustado } from "@/components/layout/Incrustado";
 import { haVencido } from "@/lib/fecha";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 const estadoMap: Record<Invitacion["estado"], string> = {
   nueva: "pendiente_aprobacion",
@@ -127,7 +128,7 @@ export function InvitacionesProveedor() {
             {detalle ? (
               <RequerimientoInvitadoDetalle r={detalle} />
             ) : (
-              <div className="flex items-center gap-2 py-10 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> Cargando requerimiento…</div>
+              <CargandoProcurex texto="Cargando requerimiento" />
             )}
             <DialogFooter className="gap-2 sm:justify-end">{acciones(abierta, true)}</DialogFooter>
           </DialogContent>

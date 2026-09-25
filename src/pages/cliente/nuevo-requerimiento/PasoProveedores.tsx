@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { AlertCircle, Network, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Proveedor } from "@/lib/types";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 interface PasoProveedoresProps {
   proveedores: Proveedor[] | null | undefined;
@@ -55,7 +56,7 @@ export function PasoProveedores({ proveedores, loadingProveedores, proveedoresSe
         Los invitados reciben la invitación en cuanto el requerimiento sea aprobado — no antes. Primero aparecen los de la categoría {categoria}.
       </p>
       {loadingProveedores ? (
-        <p className="text-sm text-muted-foreground">Cargando proveedores...</p>
+        <CargandoProcurex tamano="sm" texto="Cargando proveedores" />
       ) : lista.length === 0 ? (
         <EmptyState icon={Users} title="Sin proveedores disponibles" description="No hay proveedores homologados en el directorio todavía." />
       ) : (

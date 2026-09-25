@@ -12,6 +12,7 @@ import { fetchInvitaciones } from "@/lib/api/invitaciones";
 import { fetchMisOfertas } from "@/lib/api/ofertas";
 import { fetchMisContratos } from "@/lib/api/contratos";
 import { fetchMisPagos } from "@/lib/api/pagos";
+import { CargandoProcurex } from "@/components/shared/CargandoProcurex";
 
 export function DashboardProveedor() {
   const { activeCompany } = useAuth();
@@ -107,7 +108,7 @@ function HomologacionCard({
   loading: boolean;
 }) {
   if (loading) {
-    return <Card className="p-6 text-sm text-muted-foreground">Cargando estado de homologación...</Card>;
+    return <CargandoProcurex texto="Cargando estado de homologación" />;
   }
 
   const estado = homologacion?.estado ?? "borrador";
