@@ -4,6 +4,7 @@ import { apiAceptarTerminos, apiActualizarPerfil, apiMe, toCompany, toMockUser }
 import { setActiveCompanyId, setUnauthorizedHandler } from "@/lib/api/http";
 import { supabase } from "@/lib/supabase/client";
 import type { AuthContextValue, LoginResult, LoginStep, PendingUser } from "@/lib/auth/types";
+import { identificarUsuario } from "@/lib/monitoring";
 
 const ACTIVE_COMPANY_KEY = "procureos_active_company";
 export const OAUTH_PORTAL_KEY = "procureos_oauth_portal";
@@ -18,6 +19,14 @@ async function hasMfaEnrolled(): Promise<boolean> {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<MockUser | null>(null);
   const [activeCompany, setActiveCompanyState] = useState<Company | null>(null);
+
+  // Every error report from now on says whose session it was.
+  useEffect(() => {
+    identificarUsuario(
+      currentUser ? { id: currentUser.id, email: currentUser.email } : null,
+      { companyId: activeCompany?.id, empresa: activeCompany?.nombre, portal: currentUser?.portal, rol: currentUser?.role },
+    );
+  }, [currentUser?.id, currentUser?.email, currentUser?.portal, currentUser?.role, activeCompany?.id, activeCompany?.nombre]);
   const [loginStep, setLoginStep] = useState<LoginStep>("credentials");
   const [pendingUser, setPendingUser] = useState<PendingUser | null>(null);
   const [sessionLoading, setSessionLoading] = useState(true);

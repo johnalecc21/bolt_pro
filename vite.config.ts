@@ -1,8 +1,22 @@
 import path from "path"
+import { execSync } from "child_process"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { defineConfig, loadEnv } from "vite"
 import { seoPlugin } from "./seo.plugin"
+
+// Version reported with every frontend error: the deploy's commit (Vercel sets
+// VERCEL_GIT_COMMIT_SHA), else the local git commit, else nothing.
+function versionApp(): string {
+  if (process.env.VITE_APP_VERSION) return process.env.VITE_APP_VERSION
+  if (process.env.VERCEL_GIT_COMMIT_SHA) return process.env.VERCEL_GIT_COMMIT_SHA
+  try {
+    return execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim()
+  } catch {
+    return ""
+  }
+}
+process.env.VITE_APP_VERSION = versionApp()
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => ({

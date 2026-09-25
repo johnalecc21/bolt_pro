@@ -5,9 +5,11 @@ interface ErrorFallbackProps {
   /** Root-level fallback takes over the whole viewport; a scoped one (e.g. inside
    * the portal shell) only replaces the content area, so the sidebar/header stay. */
   fullScreen?: boolean
+  /** Error tracker's event id, shown so the user can quote it to support. */
+  codigo?: string
 }
 
-function ErrorFallback({ fullScreen = true }: ErrorFallbackProps) {
+function ErrorFallback({ fullScreen = true, codigo }: ErrorFallbackProps) {
   return (
     <div
       className={
@@ -20,6 +22,11 @@ function ErrorFallback({ fullScreen = true }: ErrorFallbackProps) {
       <p className="max-w-sm text-sm text-muted-foreground">
         Ocurrió un error inesperado. El equipo ya fue notificado — intenta recargar la página.
       </p>
+      {codigo && (
+        <p className="text-xs text-muted-foreground">
+          Si escribes a soporte, menciona el código <span className="select-all font-mono">{codigo.slice(0, 8)}</span>.
+        </p>
+      )}
       <button
         className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
         onClick={() => window.location.reload()}
@@ -37,19 +44,24 @@ interface AppErrorBoundaryProps {
   fullScreen?: boolean
 }
 
-export class AppErrorBoundary extends Component<AppErrorBoundaryProps, { failed: boolean }> {
-  state = { failed: false }
+export class AppErrorBoundary extends Component<AppErrorBoundaryProps, { failed: boolean; codigo?: string }> {
+  state: { failed: boolean; codigo?: string } = { failed: false }
 
   static getDerivedStateFromError() {
     return { failed: true }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    reportError(error, { componentStack: info.componentStack })
+    void reportError(error, {
+      tags: { tipo: "pantalla", ruta: window.location.pathname },
+      extra: { componentStack: info.componentStack },
+    }).then((codigo) => {
+      if (codigo) this.setState({ codigo })
+    })
   }
 
   render() {
-    if (this.state.failed) return <ErrorFallback fullScreen={this.props.fullScreen ?? true} />
+    if (this.state.failed) return <ErrorFallback fullScreen={this.props.fullScreen ?? true} codigo={this.state.codigo} />
     return this.props.children
   }
 }
