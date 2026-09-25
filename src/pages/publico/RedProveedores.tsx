@@ -64,9 +64,9 @@ export function RedProveedores() {
               [Building2, stats?.empresas, "empresas compradoras"],
               [Target, stats?.convocatoriasAbiertas, "convocatorias abiertas"],
             ] as const).map(([Icon, n, label]) => (
-              <div key={label} className="rounded-lg border border-border p-3">
+              <div key={label} className="rounded-xl border border-primary/15 bg-card p-3 shadow-sm">
                 <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
-                <p className="mt-1 text-2xl font-bold tabular-nums">{n ?? "—"}</p>
+                <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">{n ?? "—"}</p>
                 <p className="text-xs text-muted-foreground">{label}</p>
               </div>
             ))}
@@ -96,11 +96,13 @@ export function RedProveedores() {
                 aria-pressed={categoria === c.nombre}
                 onClick={() => { setCategoria(c.nombre); setPage(1); }}
                 className={cn(
-                  "rounded-full border px-3 py-1 text-sm transition-colors",
-                  categoria === c.nombre ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background hover:border-primary/50",
+                  "rounded-full border px-3 py-1 text-sm font-medium shadow-sm transition-colors",
+                  categoria === c.nombre
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-foreground/15 bg-card text-foreground hover:border-primary hover:text-primary",
                 )}
               >
-                {c.nombre ?? "Todas"}{c.proveedores != null && <span className="ml-1 opacity-70">{c.proveedores}</span>}
+                {c.nombre ?? "Todas"}{c.proveedores != null && <span className={cn("ml-1.5 rounded-full px-1.5 text-xs tabular-nums", categoria === c.nombre ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground")}>{c.proveedores}</span>}
               </button>
             ))}
           </div>
