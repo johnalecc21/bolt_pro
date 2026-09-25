@@ -9,11 +9,14 @@ export function BlurText({
   className,
   delay = 60,
   highlightFrom,
+  highlightClassName = "text-primary",
 }: {
   text: string;
   className?: string;
   delay?: number;
   highlightFrom?: number;
+  /** Color of the highlighted words (defaults to the brand primary). */
+  highlightClassName?: string;
 }) {
   const words = useMemo(() => text.split(" "), [text]);
   const ref = useRef<HTMLSpanElement>(null);
@@ -31,7 +34,9 @@ export function BlurText({
           key={i}
           className={cn(
             "inline-block will-change-[filter,transform,opacity]",
-            highlightFrom !== undefined && i >= highlightFrom && "text-primary",
+            highlightFrom !== undefined &&
+              i >= highlightFrom &&
+              highlightClassName,
           )}
           initial={{ filter: "blur(10px)", opacity: 0, y: 14 }}
           animate={inView ? { filter: "blur(0px)", opacity: 1, y: 0 } : {}}
