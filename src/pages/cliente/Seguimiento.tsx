@@ -27,6 +27,7 @@ import { formatMoney } from "@/lib/moneda";
 import { fechaLocal } from "@/lib/fecha";
 import { EvaluarDesempenoDialog } from "@/components/cliente/EvaluarDesempenoDialog";
 import { diasDeAtraso, ESTADO_GENERAL, estadoGeneral, type EstadoGeneral } from "@/lib/contratos/hitos";
+import { useIncrustado } from "@/components/layout/Incrustado";
 
 const HITO: Record<EstadoHito, { label: string; icon: typeof Circle; clase: string }> = {
   completado: { label: "Recibido", icon: CheckCircle2, clase: "bg-success/15 text-success" },
@@ -54,6 +55,7 @@ export function Seguimiento() {
   const soloContrato = params.get("contrato");
   const { data: seguimiento, loading, reload } = useApiData(fetchSeguimiento);
   const [filtro, setFiltro] = useState<Filtro>("ejecucion");
+  const incrustado = useIncrustado();
 
   const todos = seguimiento ?? [];
   const visibles = soloContrato
@@ -63,17 +65,19 @@ export function Seguimiento() {
       );
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Seguimiento de entregas</h1>
-        <p className="text-sm text-muted-foreground">
-          Los hitos se marcan solos como <em>en riesgo</em> 3 días antes y <em>atrasados</em> al pasar su fecha. Recibir un hito con % libera su pago.
-        </p>
-      </div>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      {!incrustado && (
+        <div>
+          <h1 className="text-2xl font-bold">Seguimiento de entregas</h1>
+          <p className="text-sm text-muted-foreground">
+            Los hitos se marcan solos como <em>en riesgo</em> 3 días antes y <em>atrasados</em> al pasar su fecha. Recibir un hito con % libera su pago.
+          </p>
+        </div>
+      )}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         {soloContrato ? (
-          <Button variant="outline" size="sm" onClick={() => setParams({}, { replace: true })}>Ver todos los contratos</Button>
+          <Button variant="outline" size="sm" onClick={() => setParams((p) => { const n = new URLSearchParams(p); n.delete("contrato"); return n; }, { replace: true })}>Ver todos los contratos</Button>
         ) : (
           <ToggleGroup type="single" variant="outline" value={filtro} onValueChange={(v) => v && setFiltro(v as Filtro)}>
             <ToggleGroupItem value="ejecucion" className="px-3 text-sm">En ejecución</ToggleGroupItem>

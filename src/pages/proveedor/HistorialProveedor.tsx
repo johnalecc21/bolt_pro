@@ -11,6 +11,7 @@ import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 
 import { formatMoney } from "@/lib/moneda";
 import { MisEvaluacionesCard } from "@/components/proveedor/MisEvaluacionesCard";
+import { useIncrustado } from "@/components/layout/Incrustado";
 const resultadoConfig: Record<ProcesoHistorial["resultado"], { label: string; icon: typeof Trophy; className: string; badgeVariant: "default" | "secondary" }> = {
   ganado: { label: "Ganado", icon: Trophy, className: "bg-success/10 text-success", badgeVariant: "default" },
   seleccionado: { label: "Seleccionado — pendiente de firma", icon: Trophy, className: "bg-info/10 text-info", badgeVariant: "default" },
@@ -19,6 +20,7 @@ const resultadoConfig: Record<ProcesoHistorial["resultado"], { label: string; ic
 };
 
 export function HistorialProveedor() {
+  const incrustado = useIncrustado();
   const { data, loading } = useApiData(fetchMiHistorial);
   const { data: miPerfil } = useApiData(fetchMiPerfil);
   const historialProcesos = data?.procesos ?? [];
@@ -43,11 +45,13 @@ export function HistorialProveedor() {
   const tasaExito = historialProcesos.length ? Math.round((ganados / historialProcesos.length) * 100) : 0;
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Historial de Procesos y Resultados</h1>
-        <p className="text-sm text-muted-foreground">Tu desempeño histórico en la red Procurex</p>
-      </div>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      {!incrustado && (
+        <div>
+          <h1 className="text-2xl font-bold">Historial de Procesos y Resultados</h1>
+          <p className="text-sm text-muted-foreground">Tu desempeño histórico en la red Procurex</p>
+        </div>
+      )}
 
       {loading ? <KpiRowSkeleton count={3} /> : <div className="grid grid-cols-3 gap-4">
         <Card className="p-4"><p className="text-sm text-muted-foreground">Ganados</p><p className="mt-1 text-2xl font-bold text-success">{ganados}</p></Card>

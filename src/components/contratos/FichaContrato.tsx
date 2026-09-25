@@ -235,7 +235,7 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
                     {c.porcentajeAsignado}% del valor asignado a hitos{c.porcentajeAsignado < 100 && ` · faltan ${100 - c.porcentajeAsignado}%`}
                   </span>
                   {esCliente && puedeGestionar && !terminado && (
-                    <Link to={`/cliente/seguimiento?contrato=${c.id}`} className="text-primary hover:underline">Editar hitos</Link>
+                    <Link to={`/cliente/contratos?vista=entregas&contrato=${c.id}`} className="text-primary hover:underline">Editar hitos</Link>
                   )}
                 </div>
               </div>

@@ -1,5 +1,5 @@
 import {
-  Cable, Receipt, LayoutDashboard, FileText, Gavel, Handshake, Award, FileCheck, Truck, Building2, BarChart3,
+  Cable, Receipt, LayoutDashboard, FileText, Gavel, FileCheck, Building2, BarChart3,
   ShieldCheck, Users, SlidersHorizontal, Rocket, Landmark, FileSignature, ShoppingCart, Wallet, Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
@@ -25,22 +25,15 @@ const navItems: PortalNavEntry[] = [
     label: "Compras",
     icon: ShoppingCart,
     items: [
+      // Requerimientos are written by other areas; once approved they become a
+      // purchase process, which holds tender, comparison, negotiation and award.
       { to: "requerimientos", label: "Requerimientos", icon: FileText },
-      { to: "licitaciones", label: "Licitaciones", icon: Gavel, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
-      { to: "negociacion", label: "Negociación", icon: Handshake, roles: ["comprador", "admin_cliente"] },
-      { to: "adjudicacion", label: "Adjudicación", icon: Award, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
+      { to: "procesos", label: "Procesos de compra", icon: Gavel, roles: ["comprador", "admin_cliente", "aprobador_cfo"] },
       { to: "aprobaciones", label: "Aprobaciones", icon: ShieldCheck, roles: ["comprador", "aprobador_cfo", "admin_cliente"], contador: "aprobaciones", contadorTitulo: "por aprobar" },
     ],
   },
-  {
-    grupo: "contratos",
-    label: "Contratos",
-    icon: FileCheck,
-    items: [
-      { to: "contratos", label: "Contratos / POs", icon: FileCheck },
-      { to: "seguimiento", label: "Seguimiento de entregas", icon: Truck, roles: ["comprador", "admin_cliente"] },
-    ],
-  },
+  // Deliveries are the "Entregas" view inside Contratos.
+  { to: "contratos", label: "Contratos", icon: FileCheck },
   {
     grupo: "finanzas",
     label: "Finanzas",

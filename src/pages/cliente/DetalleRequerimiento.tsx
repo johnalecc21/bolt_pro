@@ -61,18 +61,18 @@ export function DetalleRequerimiento() {
               <Link to={`/cliente/requerimientos/${id}/shortlist`}>Agregar proveedores</Link>
             </Button>
             <Button asChild variant="outline">
-              <Link to={`/cliente/licitaciones/${id}`}>Ver licitación</Link>
+              <Link to={`/cliente/procesos/${id}/seguimiento`}>Ver licitación</Link>
             </Button>
           </>
         )}
         {["en_licitacion", "en_negociacion"].includes(req.estado) && (
           <Button asChild>
-            <Link to={`/cliente/licitaciones/${id}/comparativo`}>Ver comparativo</Link>
+            <Link to={`/cliente/procesos/${id}/comparativo`}>Ver comparativo</Link>
           </Button>
         )}
         {["adjudicado", "en_cumplimiento", "cerrado"].includes(req.estado) && (
           <Button asChild>
-            <Link to={`/cliente/adjudicacion/${id}`}>Ver adjudicación</Link>
+            <Link to={`/cliente/procesos/${id}/adjudicacion`}>Ver adjudicación</Link>
           </Button>
         )}
       </div>

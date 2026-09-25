@@ -1,6 +1,6 @@
 import { Navigate, useLocation } from "react-router-dom";
 import {
-  LayoutDashboard, ShieldCheck, Inbox, FileText, Trophy, Wallet, User, Gavel, FileCheck2, Store, BarChart3, Target, Building, Network,
+  LayoutDashboard, ShieldCheck, Wallet, User, FileCheck2, BarChart3, Target, Building,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth/AuthContext";
 import { useApiData } from "@/hooks/useApiData";
@@ -9,18 +9,9 @@ import { PortalShellLayout, type PortalNavEntry } from "@/components/layout/Port
 
 const navItems: PortalNavEntry[] = [
   { to: "dashboard", label: "Inicio", icon: LayoutDashboard },
-  {
-    grupo: "oportunidades",
-    label: "Oportunidades",
-    icon: Target,
-    items: [
-      { to: "oportunidades", label: "Red de oportunidades", icon: Network, contador: "oportunidades", contadorTitulo: "abiertas en tus categorías" },
-      { to: "invitaciones", label: "Invitaciones", icon: Inbox, contador: "invitaciones", contadorTitulo: "sin responder" },
-      { to: "ofertas", label: "Mis ofertas", icon: FileText },
-      { to: "subasta", label: "Subasta en vivo", icon: Gavel },
-      { to: "historial", label: "Historial", icon: Trophy },
-    ],
-  },
+  // One list for every process: new (invited or open in the network),
+  // participating (offers and live auctions) and finished.
+  { to: "procesos", label: "Procesos", icon: Target, contador: "procesos", contadorTitulo: "nuevos por responder" },
   {
     grupo: "contratos",
     label: "Contratos y pagos",
@@ -35,9 +26,8 @@ const navItems: PortalNavEntry[] = [
     label: "Mi empresa",
     icon: Building,
     items: [
-      { to: "perfil", label: "Perfil", icon: User },
+      { to: "perfil", label: "Perfil y vitrina", icon: User },
       { to: "homologacion", label: "Homologación", icon: ShieldCheck },
-      { to: "vitrina", label: "Mi vitrina", icon: Store },
       { to: "desempeno", label: "Mi desempeño", icon: BarChart3 },
     ],
   },

@@ -27,6 +27,7 @@ import {
 } from "@/lib/api/vitrina";
 import { formatMoney } from "@/lib/moneda";
 import { videoEmbedUrl } from "@/lib/video";
+import { useIncrustado } from "@/components/layout/Incrustado";
 
 const LIMITE_IMAGENES = 20;
 const LIMITE_DOCUMENTOS = 5;
@@ -38,6 +39,7 @@ function tituloDesdeArchivo(nombre: string) {
 
 /** The proveedor edits what its public vitrina shows: pitch, contact, video, gallery, PDFs and catalog. */
 export function MiVitrina() {
+  const incrustado = useIncrustado();
   const { data: vitrina, loading, reload } = useApiData(fetchMiVitrina);
   const [descripcion, setDescripcion] = useState("");
   const [telefono, setTelefono] = useState("");
@@ -149,12 +151,14 @@ export function MiVitrina() {
   const documentosPorTipo = (tipo: string) => vitrina.documentos.filter((d) => d.tipo === tipo).length;
 
   return (
-    <div className="max-w-4xl space-y-6 p-6">
+    <div className={incrustado ? "max-w-4xl space-y-6" : "max-w-4xl space-y-6 p-6"}>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="flex items-center gap-2 text-2xl font-bold"><Store className="h-6 w-6" /> Mi vitrina</h1>
-          <p className="text-sm text-muted-foreground">Lo que ven los compradores de tu empresa: presentación, fotos, brochures y catálogo.</p>
-        </div>
+        {!incrustado && (
+          <div>
+            <h1 className="flex items-center gap-2 text-2xl font-bold"><Store className="h-6 w-6" /> Mi vitrina</h1>
+            <p className="text-sm text-muted-foreground">Lo que ven los compradores de tu empresa: presentación, fotos, brochures y catálogo.</p>
+          </div>
+        )}
         <div className="flex flex-wrap items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-sm" title="Visitas a tu vitrina pública">
             <Eye className="h-4 w-4 text-muted-foreground" /> {vitrina.vitrinaVistas.toLocaleString("es-CO")} visitas

@@ -58,11 +58,6 @@ export async function fetchInvitaciones(): Promise<Invitacion[]> {
   return data.map(toInvitacion);
 }
 
-export async function aceptarInvitacion(id: string) {
-  const { data } = await api.post(`/invitaciones/${id}/aceptar`);
-  return data;
-}
-
 export async function declinarInvitacion(id: string) {
   const { data } = await api.post(`/invitaciones/${id}/declinar`);
   return data;

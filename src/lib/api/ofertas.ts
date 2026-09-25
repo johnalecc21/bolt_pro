@@ -64,6 +64,8 @@ export interface MiOfertaResumen {
   moneda: Moneda;
   enviada: boolean;
   precioTotal: number | null;
+  /** Stage of the purchase process (EN_LICITACION, EN_NEGOCIACION, ADJUDICADO…). */
+  estadoProceso: string | null;
 }
 
 interface ApiMiOfertaResumen {
@@ -75,6 +77,7 @@ interface ApiMiOfertaResumen {
   fechaLimite: string;
   moneda: Moneda;
   oferta: { enviada: boolean; precioTotal: number } | null;
+  estadoProceso?: string | null;
 }
 
 export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
@@ -90,6 +93,7 @@ export async function fetchMisOfertas(): Promise<MiOfertaResumen[]> {
     moneda: o.moneda,
     enviada: o.oferta?.enviada ?? false,
     precioTotal: o.oferta?.precioTotal ?? null,
+    estadoProceso: o.estadoProceso ?? null,
   }));
 }
 

@@ -33,7 +33,7 @@ export function DashboardProveedor() {
       icon: Inbox,
       texto: `Nueva invitación a licitar: ${i.titulo || i.categoria}`,
       sub: `${i.cliente} · cierra ${i.fechaLimite}`,
-      to: "/proveedor/invitaciones",
+      to: "/proveedor/procesos",
       cta: "Responder",
     })),
     ...ofertasPorEnviar.map((o) => ({
@@ -58,8 +58,8 @@ export function DashboardProveedor() {
       {aprobado && (
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <MetricaTile to="/proveedor/invitaciones" icon={Inbox} valor={nuevasInvitaciones.length} label="Invitaciones nuevas" resaltar={nuevasInvitaciones.length > 0} />
-            <MetricaTile to="/proveedor/ofertas" icon={FileText} valor={ofertasPorEnviar.length} label="Ofertas por enviar" resaltar={ofertasPorEnviar.length > 0} />
+            <MetricaTile to="/proveedor/procesos" icon={Inbox} valor={nuevasInvitaciones.length} label="Invitaciones nuevas" resaltar={nuevasInvitaciones.length > 0} />
+            <MetricaTile to="/proveedor/procesos?vista=participando" icon={FileText} valor={ofertasPorEnviar.length} label="Ofertas por enviar" resaltar={ofertasPorEnviar.length > 0} />
             <MetricaTile to="/proveedor/contratos" icon={FileCheck2} valor={contratosActivos.length} label="Contratos activos" />
             <MetricaTile to="/proveedor/pagos" icon={Wallet} valor={pagosPendientes.length} label="Pagos pendientes" />
           </div>
@@ -140,7 +140,7 @@ function HomologacionCard({
       icon: CheckCircle2, tone: "text-success bg-success/10",
       titulo: "Estás homologado",
       desc: "Tu empresa aparece en la red y puedes unirte a los procesos abiertos de todas las empresas de Procurex.",
-      cta: { label: "Ver oportunidades de la red", to: "/proveedor/oportunidades" },
+      cta: { label: "Ver procesos abiertos", to: "/proveedor/procesos" },
     },
   }[estado];
 

@@ -15,6 +15,7 @@ import { apiErrorMessage } from "@/lib/api/http";
 import { fechaLocal } from "@/lib/fecha";
 import { fetchOportunidades, participar, type Oportunidad } from "@/lib/api/red";
 import { fetchRequerimientoInvitado, type RequerimientoInvitado } from "@/lib/api/invitaciones";
+import { useIncrustado } from "@/components/layout/Incrustado";
 
 type Datos = Awaited<ReturnType<typeof fetchOportunidades>>;
 
@@ -24,6 +25,7 @@ type Datos = Awaited<ReturnType<typeof fetchOportunidades>>;
  */
 export function OportunidadesRed() {
   const navigate = useNavigate();
+  const incrustado = useIncrustado();
   const [todas, setTodas] = useState(false);
   const [q, setQ] = useState("");
   const [busqueda, setBusqueda] = useState("");
@@ -89,12 +91,13 @@ export function OportunidadesRed() {
       </Button>
     );
 
-  const items = datos?.items ?? [];
+  // In Procesos, joined ones already show under "Participando".
+  const items = (datos?.items ?? []).filter((o) => !incrustado || !o.participa || o.participa.estado === "DECLINADA");
 
   return (
-    <div className="space-y-6 p-6">
+    <div className={incrustado ? "space-y-4" : "space-y-6 p-6"}>
       <div>
-        <h1 className="text-2xl font-bold">Oportunidades de la red</h1>
+        <h2 className={incrustado ? "font-semibold" : "text-2xl font-bold"}>Abiertos en la red</h2>
         <p className="text-sm text-muted-foreground">
           Procesos abiertos por las empresas de Procurex. Con tu homologación participas en cualquiera de ellos, sin esperar invitación.
         </p>

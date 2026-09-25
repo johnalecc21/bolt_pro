@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { EmptyState } from "@/components/shared/EmptyState";
@@ -13,6 +13,10 @@ import { fetchCategoriasContratos, fetchContratosPagina, fetchContratosVigentes 
 import type { EstadoContratoApi } from "@/lib/api/seguimiento";
 import { Calendar, ChevronRight, FileCheck, FileUp } from "lucide-react";
 import { formatMoney } from "@/lib/moneda";
+import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth/AuthContext";
+import { Incrustado } from "@/components/layout/Incrustado";
+import { Seguimiento } from "@/pages/cliente/Seguimiento";
 
 const ESTADOS: { valor: "" | EstadoContratoApi; label: string }[] = [
   { valor: "", label: "Todos los estados" },
@@ -22,7 +26,60 @@ const ESTADOS: { valor: "" | EstadoContratoApi; label: string }[] = [
   { valor: "TERMINADO", label: "Terminados" },
 ];
 
+/**
+ * Everything signed, and its deliveries. Delivery follow-up used to be its own
+ * menu entry; it is the "Entregas" view of the same contracts.
+ */
 export function Contratos() {
+  const [params, setParams] = useSearchParams();
+  const { currentUser } = useAuth();
+  const puedeEntregas = currentUser?.role === "comprador" || currentUser?.role === "admin_cliente";
+  const vista = puedeEntregas && params.get("vista") === "entregas" ? "entregas" : "contratos";
+
+  function cambiar(v: "contratos" | "entregas") {
+    setParams(v === "entregas" ? { vista: "entregas" } : {}, { replace: true });
+  }
+
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Contratos / Órdenes de Compra</h1>
+        <p className="text-sm text-muted-foreground">
+          {vista === "entregas"
+            ? "Entregas de cada contrato: los hitos se marcan solos en riesgo 3 días antes y atrasados al pasar su fecha. Recibir un hito con % libera su pago."
+            : "Todo lo firmado, con sus entregas, pagos, modificaciones y versiones del documento. Abre un contrato para ver su ficha."}
+        </p>
+      </div>
+      {puedeEntregas && (
+        <nav className="flex gap-1 border-b border-border" aria-label="Vista de contratos">
+          {([["contratos", "Contratos"], ["entregas", "Entregas"]] as const).map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              aria-current={vista === v ? "page" : undefined}
+              onClick={() => cambiar(v)}
+              className={cn(
+                "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+                vista === v ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+      )}
+      {vista === "entregas" ? (
+        <Incrustado>
+          <Seguimiento />
+        </Incrustado>
+      ) : (
+        <ListaContratos />
+      )}
+    </div>
+  );
+}
+
+function ListaContratos() {
   const navigate = useNavigate();
   const { data: vigentes } = useApiData(fetchContratosVigentes);
   const { data: categoriasApi } = useApiData(fetchCategoriasContratos);
@@ -50,11 +107,7 @@ export function Contratos() {
   }));
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Contratos / Órdenes de Compra</h1>
-        <p className="text-sm text-muted-foreground">Todo lo firmado, con sus entregas, pagos, modificaciones y versiones del documento. Abre un contrato para ver su ficha.</p>
-      </div>
+    <div className="space-y-6">
 
       <div className="flex flex-wrap gap-3">
         <SearchInput placeholder="Buscar por código, proveedor o categoría..." value={query} onChange={setQuery} />

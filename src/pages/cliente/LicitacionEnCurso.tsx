@@ -8,6 +8,7 @@ import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { Clock, Users, MessageSquare, Send, Calendar, Eye, FileQuestion } from "lucide-react";
 import { usePermissionMode } from "@/components/auth/RequireRole";
+import { useIncrustado } from "@/components/layout/Incrustado";
 import { useApiData } from "@/hooks/useApiData";
 import { TableroLicitacion } from "@/components/licitacion/TableroLicitacion";
 import { fetchRequerimiento, extenderPlazo as apiExtenderPlazo, cerrarLicitacion } from "@/lib/api/requerimientos";
@@ -39,6 +40,7 @@ export function LicitacionEnCurso() {
     [requerimientoId],
   );
   const mode = usePermissionMode();
+  const incrustado = useIncrustado();
   const [tiempo, setTiempo] = useState(() => calcularTiempoRestante(requerimiento?.cierre));
   const [borradores, setBorradores] = useState<Record<string, string>>({});
   const [respondiendoId, setRespondiendoId] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export function LicitacionEnCurso() {
     try {
       await cerrarLicitacion(requerimientoId);
       toast.success("Licitación cerrada", { description: "Ya no se reciben ofertas. Revisa el cuadro comparativo." });
-      navigate(`/cliente/licitaciones/${requerimientoId}/comparativo`);
+      navigate(`/cliente/procesos/${requerimientoId}/comparativo`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo cerrar la licitación."));
     }
@@ -110,16 +112,22 @@ export function LicitacionEnCurso() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">{requerimiento.codigo}</h1>
-          <Badge className={cerrada ? "bg-muted text-muted-foreground" : "bg-info/15 text-info border-info/30"}>
-            {cerrada ? "Licitación Cerrada" : "Licitación Abierta"}
-          </Badge>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      {incrustado ? (
+        <Badge className={cerrada ? "bg-muted text-muted-foreground" : "bg-info/15 text-info border-info/30"}>
+          {cerrada ? "Licitación cerrada" : "Licitación abierta"}
+        </Badge>
+      ) : (
+        <div>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold">{requerimiento.codigo}</h1>
+            <Badge className={cerrada ? "bg-muted text-muted-foreground" : "bg-info/15 text-info border-info/30"}>
+              {cerrada ? "Licitación Cerrada" : "Licitación Abierta"}
+            </Badge>
+          </div>
+          <p className="text-sm text-muted-foreground">{requerimiento.titulo} · {requerimiento.categoria}</p>
         </div>
-        <p className="text-sm text-muted-foreground">{requerimiento.titulo} · {requerimiento.categoria}</p>
-      </div>
+      )}
 
       {mode === "readonly" && (
         <div className="flex items-center gap-2 rounded-lg border border-info/30 bg-info/10 px-3 py-2 text-sm text-info">
@@ -237,7 +245,7 @@ export function LicitacionEnCurso() {
             />
           )}
           <Button asChild variant={cerrada ? "default" : "ghost"}>
-            <Link to={`/cliente/licitaciones/${requerimientoId}/comparativo`}>Ver cuadro comparativo</Link>
+            <Link to={`/cliente/procesos/${requerimientoId}/comparativo`}>Ver cuadro comparativo</Link>
           </Button>
         </div>
       )}

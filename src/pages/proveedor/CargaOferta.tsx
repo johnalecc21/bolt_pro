@@ -7,9 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { TableSkeleton } from "@/components/shared/TableSkeleton";
-import { FileText, Send, CheckCircle2, Inbox, Calendar } from "lucide-react";
+import { FileText, Send, CheckCircle2, Inbox, Calendar, Gavel } from "lucide-react";
 import { useApiData } from "@/hooks/useApiData";
 import { fetchInvitaciones, fetchRequerimientoInvitado } from "@/lib/api/invitaciones";
 import { RequerimientoInvitadoDetalle } from "@/components/proveedor/RequerimientoInvitadoDetalle";
@@ -24,42 +23,32 @@ export function CargaOferta() {
   return requerimientoId ? <OfertaDetalle requerimientoId={requerimientoId} /> : <MisOfertasList />;
 }
 
-function MisOfertasList() {
+/** Processes still being decided, where the supplier has an offer in progress or sent. */
+const EN_CURSO = ["EN_LICITACION", "EN_NEGOCIACION"];
+
+/** The "Participando" tab of Procesos: offers in progress and live auctions. */
+export function MisOfertasList() {
   const navigate = useNavigate();
-  const { data: ofertas, loading } = useApiData(fetchMisOfertas);
+  const { data: todas, loading } = useApiData(fetchMisOfertas);
+  const ofertas = (todas ?? []).filter((o) => !o.estadoProceso || EN_CURSO.includes(o.estadoProceso));
 
-  if (loading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div>
-          <h1 className="text-2xl font-bold">Mis Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta</p>
-        </div>
-        <TableSkeleton />
-      </div>
-    );
-  }
+  if (loading) return <TableSkeleton />;
 
-  if (!ofertas || ofertas.length === 0) {
+  if (ofertas.length === 0) {
     return (
-      <div className="p-6">
-        <EmptyState
-          icon={Inbox}
-          title="Aún no has aceptado ningún proceso"
-          description="Ve a Bandeja de Invitaciones y acepta un proceso para empezar a cargar tu oferta."
-          actionLabel="Ir a Bandeja de Invitaciones"
-          onAction={() => navigate("/proveedor/invitaciones")}
-        />
-      </div>
+      <EmptyState
+        icon={Inbox}
+        title="No estás participando en procesos abiertos"
+        description="Prepara una oferta desde Nuevos (invitaciones y procesos abiertos en la red). Los procesos ya decididos están en Terminados."
+        actionLabel="Ver procesos nuevos"
+        onAction={() => navigate("/proveedor/procesos")}
+      />
     );
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Mis Ofertas</h1>
-        <p className="text-sm text-muted-foreground">Procesos que aceptaste y en los que puedes cargar o revisar tu oferta. Los más recientes aparecen primero.</p>
-      </div>
+    <div className="space-y-3">
+      <p className="text-sm text-muted-foreground">Ofertas en preparación o enviadas en procesos que siguen abiertos. Los más recientes primero.</p>
       <div className="space-y-3">
         {ofertas.map((o) => (
           <Link key={o.requerimientoId} to={`/proveedor/ofertas/${o.requerimientoId}`}>
@@ -77,7 +66,19 @@ function MisOfertasList() {
                   </div>
                 </div>
                 {o.precioTotal != null && <p className="text-sm font-semibold">{formatMoney(o.precioTotal, o.moneda)}</p>}
-                <StatusBadge estado={o.enviada ? "Activo" : "pendiente_aprobacion"} className="capitalize" />
+                {o.estadoProceso === "EN_NEGOCIACION" ? (
+                  <Button
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={(e) => { e.preventDefault(); navigate(`/proveedor/subasta/${o.requerimientoId}`); }}
+                  >
+                    <Gavel className="h-4 w-4" aria-hidden="true" /> Subasta en vivo
+                  </Button>
+                ) : (
+                  <span className={o.enviada ? "rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success" : "rounded-full bg-warning/15 px-2.5 py-0.5 text-xs font-medium text-warning-foreground"}>
+                    {o.enviada ? "Oferta enviada" : "Borrador"}
+                  </span>
+                )}
               </div>
             </Card>
           </Link>

@@ -50,7 +50,7 @@ flowchart TD
     end
     subgraph PRO["Portal Proveedor"]
         P1["Homologación y perfil"]
-        P2["Oportunidades, invitaciones y ofertas"]
+        P2["Procesos: nuevos, participando, terminados"]
         P3["Contratos, facturas y cobros"]
     end
     subgraph INT["Panel Interno"]
@@ -198,7 +198,7 @@ flowchart TD
     G3 --> H["Dashboard: tarjeta con el estado de la homologación"]
     H --> I["Completar homologación → sección 4"]
     H --> J["Perfil de empresa: NIT, certificaciones, usuarios"]
-    H --> K["Mi vitrina: presentación, video, galería, catálogo"]
+    H --> K["Perfil y vitrina: presentación, video, galería, catálogo"]
 ```
 
 ---
@@ -333,6 +333,8 @@ Otro rol, o alguien que no es el siguiente de la cadena, recibe un error: "Esta 
 
 ## 7. Licitación: invitaciones, red, preguntas y ofertas
 
+Del lado del cliente, la licitación, el comparativo, la negociación y la adjudicación son pestañas de una misma ficha: `/cliente/procesos/:id`. Del lado del proveedor, todo está en `/proveedor/procesos`, con las pestañas Nuevos, Participando y Terminados.
+
 ### 7.1 Cómo llegan los proveedores
 
 ```mermaid
@@ -340,15 +342,16 @@ flowchart TD
     A["Requerimiento EN_LICITACION"] --> B["Invitados directos: invitación NUEVA + notificación"]
     A --> C{"¿Abierto a la red?"}
     C -->|"Sí"| D["Aviso a proveedores homologados de la categoría, elegibles y no invitados, máximo 500"]
-    D --> E["/proveedor/oportunidades"]
+    D --> E["/proveedor/procesos, pestaña Nuevos: abiertos en la red"]
     E --> F["Ve el requerimiento completo antes de unirse"]
     F --> G{"¿Homologado y con los documentos que exige la empresa?"}
     G -->|"No"| G1["No puede unirse: se le dice qué falta"]
     G -->|"Sí"| H["Participar: invitación con origen RED + aviso al comprador"]
-    B --> I["Bandeja de invitaciones: ver requerimiento, marca vistaAt"]
+    B --> I["/proveedor/procesos, pestaña Nuevos: ver requerimiento, marca vistaAt"]
     I --> J{"Decisión"}
-    J -->|"Declinar"| K["DECLINADA"]
-    J -->|"Aceptar"| L["RESPONDIDA → Mis ofertas"]
+    J -->|"No participaré"| K["DECLINADA: puede cambiar de idea mientras siga abierto"]
+    J -->|"Preparar oferta"| L["Guardar el primer borrador cuenta como aceptar → pestaña Participando"]
+    K -->|"Participar de todas formas"| L
     H --> L
 ```
 
@@ -381,9 +384,10 @@ sequenceDiagram
 stateDiagram-v2
     [*] --> SIN_ABRIR: invitado
     SIN_ABRIR --> VIO: abre el requerimiento
-    VIO --> ACEPTO: acepta participar
+    VIO --> PREPARANDO: guarda el primer borrador, cuenta como aceptar
     VIO --> DECLINO: declina
     ACEPTO --> PREPARANDO: guarda borrador
+    DECLINO --> PREPARANDO: cambia de idea
     PREPARANDO --> OFERTA_ENVIADA: envía
     SIN_ABRIR --> ACEPTO: se une desde la red
 ```
@@ -525,7 +529,7 @@ Hay avisos a compradores y administradores a 60, 30 y 15 días del fin.
 flowchart TD
     A["Contrato con hitos: % del valor y fecha"] --> B["Proveedor: reporta avance en su ficha"]
     B --> C["Notificación al comprador"]
-    C --> D["Seguimiento de entregas: En ejecución · Con atrasos · Todos"]
+    C --> D["Contratos, vista Entregas: En ejecución · Con atrasos · Todos"]
     D --> E{"Comprador: marcar como recibido, con confirmación"}
     E --> F["Hito COMPLETADO: no se reabre ni cambia su %"]
     F --> G["Se libera el pago del hito → sección 13"]
@@ -717,7 +721,7 @@ flowchart TD
     B --> D["Vitrina pública /vitrina/:id: presentación, video, galería, brochures, catálogo, métricas verificadas"]
     C --> E["Compradores lo encuentran e invitan"]
     F["Cada nueva empresa cliente abre procesos a la red"] --> G["Aviso a homologados de la categoría"]
-    G --> H["Oportunidades: se une sin invitación"]
+    G --> H["Procesos › Nuevos: se une sin invitación"]
     H --> I["Más ofertas por proceso para el cliente"]
     I --> F
     D --> J["Cuenta visitas, las ve el proveedor"]

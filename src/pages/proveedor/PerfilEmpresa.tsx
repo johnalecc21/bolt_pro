@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -11,12 +11,53 @@ import { useApiData } from "@/hooks/useApiData";
 import { fetchMiPerfil, actualizarMiPerfil } from "@/lib/api/proveedores";
 import { urlVitrina } from "@/lib/api/vitrina";
 import { apiErrorMessage } from "@/lib/api/http";
+import { cn } from "@/lib/utils";
+import { Incrustado } from "@/components/layout/Incrustado";
+import { MiVitrina } from "@/pages/proveedor/MiVitrina";
 
 function sameArray(a: string[], b: string[]) {
   return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
+/**
+ * The supplier's company in one place: its data and its public showcase
+ * (what buyers see). Mi vitrina used to be a separate menu entry.
+ */
 export function PerfilEmpresa() {
+  const [params, setParams] = useSearchParams();
+  const vista = params.get("vista") === "vitrina" ? "vitrina" : "datos";
+  return (
+    <div className="space-y-6 p-6">
+      <div>
+        <h1 className="text-2xl font-bold">Perfil de empresa</h1>
+        <p className="text-sm text-muted-foreground">
+          {vista === "vitrina"
+            ? "Lo que ven los compradores de tu empresa: presentación, fotos, brochures y catálogo."
+            : "Mantén actualizada la información que ven los clientes en el directorio."}
+        </p>
+      </div>
+      <nav className="flex gap-1 border-b border-border" aria-label="Secciones del perfil">
+        {([["datos", "Datos de la empresa"], ["vitrina", "Vitrina pública"]] as const).map(([v, label]) => (
+          <button
+            key={v}
+            type="button"
+            aria-current={vista === v ? "page" : undefined}
+            onClick={() => setParams(v === "vitrina" ? { vista: "vitrina" } : {}, { replace: true })}
+            className={cn(
+              "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+              vista === v ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </nav>
+      <Incrustado>{vista === "vitrina" ? <MiVitrina /> : <DatosEmpresa />}</Incrustado>
+    </div>
+  );
+}
+
+function DatosEmpresa() {
   const { data: perfil, loading, reload } = useApiData(fetchMiPerfil);
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -94,11 +135,7 @@ export function PerfilEmpresa() {
   }
 
   return (
-    <div className="max-w-3xl space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Perfil de Empresa</h1>
-        <p className="text-sm text-muted-foreground">Mantén actualizada la información que ven los clientes en el directorio</p>
-      </div>
+    <div className="max-w-3xl space-y-6">
 
       {perfil && (
         <Card className="p-5">
@@ -124,7 +161,7 @@ export function PerfilEmpresa() {
               <a href={urlVitrina(perfil.id)} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3.5 w-3.5" /> Abrir</a>
             </Button>
             <Button size="sm" className="gap-1.5" asChild>
-              <Link to="/proveedor/vitrina">Editar mi vitrina</Link>
+              <Link to="/proveedor/perfil?vista=vitrina">Editar mi vitrina</Link>
             </Button>
           </div>
         </Card>

@@ -65,7 +65,7 @@ export function construirInformeProveedor(datos: DatosProveedor, f: FiltrosProve
       nivel: "critico",
       titulo: `Evaluación bajo 60/100 con ${planMejora.join(", ")}`,
       detalle: "Tu cliente espera un plan de mejora; las evaluaciones bajas reducen tu score y tus invitaciones futuras.",
-      enlace: { to: "/proveedor/historial", texto: "Ver evaluaciones" },
+      enlace: { to: "/proveedor/procesos?vista=terminados", texto: "Ver evaluaciones" },
     });
   }
   if (k.entregaATiempo != null && k.entregaATiempo < 0.8) {
@@ -81,7 +81,7 @@ export function construirInformeProveedor(datos: DatosProveedor, f: FiltrosProve
       nivel: "atencion",
       titulo: `Respondiste el ${pct(k.tasaRespuesta)} de las invitaciones`,
       detalle: "Declinar o no responder reduce las invitaciones que recibes de ese cliente.",
-      enlace: { to: "/proveedor/invitaciones", texto: "Ver invitaciones" },
+      enlace: { to: "/proveedor/procesos", texto: "Ver invitaciones" },
     });
   }
   if (k.brechaPromedio != null && k.brechaPromedio > 0.05) {

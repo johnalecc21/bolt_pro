@@ -15,6 +15,7 @@ import { crearAdjudicacion } from "@/lib/api/adjudicacion";
 import { apiErrorMessage } from "@/lib/api/http";
 import { formatMoney, type Moneda } from "@/lib/moneda";
 import { cuentaRegresiva } from "@/lib/fecha";
+import { useIncrustado } from "@/components/layout/Incrustado";
 
 
 function Leaderboard({ ranking, moneda }: { ranking: Puja[]; moneda: Moneda }) {
@@ -55,6 +56,7 @@ function Leaderboard({ ranking, moneda }: { ranking: Puja[]; moneda: Moneda }) {
 
 export function Negociacion() {
   const navigate = useNavigate();
+  const incrustado = useIncrustado();
   const { id } = useParams();
   const requerimientoId = id ?? "";
   const { data: requerimiento, loading: cargandoRequerimiento } = useApiData(
@@ -91,7 +93,7 @@ export function Negociacion() {
         />
         <div className="mt-4 flex justify-center">
           <Button asChild variant="outline">
-            <Link to="/cliente/licitaciones">Ver licitaciones</Link>
+            <Link to="/cliente/procesos">Ver licitaciones</Link>
           </Button>
         </div>
       </div>
@@ -122,7 +124,7 @@ export function Negociacion() {
       // Also closes the round server-side if it is still running.
       await crearAdjudicacion({ requerimientoId, proveedorId: ganador.proveedorId });
       toast.success("Ronda cerrada", { description: `${ganador.proveedor} queda como adjudicatario con ${formatMoney(ganador.monto, requerimiento!.moneda)}.` });
-      navigate(`/cliente/adjudicacion/${requerimientoId}`);
+      navigate(`/cliente/procesos/${requerimientoId}/adjudicacion`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo adjudicar."));
     } finally {
@@ -136,17 +138,21 @@ export function Negociacion() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Ronda de Negociación</h1>
-        <p className="text-sm text-muted-foreground">{requerimiento.titulo} · Subasta inversa sobre las ofertas de la licitación</p>
-      </div>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      {incrustado ? (
+        <p className="text-sm text-muted-foreground">Subasta inversa en vivo sobre las ofertas de la licitación.</p>
+      ) : (
+        <div>
+          <h1 className="text-2xl font-bold">Ronda de Negociación</h1>
+          <p className="text-sm text-muted-foreground">{requerimiento.titulo} · Subasta inversa sobre las ofertas de la licitación</p>
+        </div>
+      )}
 
       {yaAdjudicado && (
         <Card className="flex flex-wrap items-center justify-between gap-3 p-5">
           <p className="text-sm">Este proceso ya fue adjudicado.</p>
           <Button asChild>
-            <Link to={`/cliente/adjudicacion/${requerimientoId}`}>Ver adjudicación</Link>
+            <Link to={`/cliente/procesos/${requerimientoId}/adjudicacion`}>Ver adjudicación</Link>
           </Button>
         </Card>
       )}

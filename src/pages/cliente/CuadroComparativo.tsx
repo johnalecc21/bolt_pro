@@ -7,6 +7,7 @@ import { Slider } from "@/components/ui/slider";
 import { Trophy, AlertTriangle, Download, Settings, ArrowRight, SlidersHorizontal, FileQuestion } from "lucide-react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { usePermissionMode } from "@/components/auth/RequireRole";
+import { useIncrustado } from "@/components/layout/Incrustado";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { cn } from "@/lib/utils";
 import { useApiData } from "@/hooks/useApiData";
@@ -68,6 +69,7 @@ export function CuadroComparativo() {
     [requerimientoId],
   );
   const mode = usePermissionMode();
+  const incrustado = useIncrustado();
   const [weights, setWeights] = useState(defaultWeights);
   const [appliedWeights, setAppliedWeights] = useState(defaultWeights);
   const [showWeights, setShowWeights] = useState(false);
@@ -138,7 +140,7 @@ export function CuadroComparativo() {
       if (!adjudicacion) {
         await crearAdjudicacion({ requerimientoId, proveedorId: winner.proveedorId });
       }
-      navigate(`/cliente/adjudicacion/${requerimientoId}`);
+      navigate(`/cliente/procesos/${requerimientoId}/adjudicacion`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo iniciar la adjudicación."));
     } finally {
@@ -149,7 +151,7 @@ export function CuadroComparativo() {
   async function adjudicarPorItems(asignaciones: { itemId: string; proveedorId: string }[]) {
     try {
       await crearAdjudicacion({ requerimientoId, asignaciones });
-      navigate(`/cliente/adjudicacion/${requerimientoId}`);
+      navigate(`/cliente/procesos/${requerimientoId}/adjudicacion`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudo adjudicar."));
     }
@@ -172,12 +174,16 @@ export function CuadroComparativo() {
   const brechaBenchmark = benchmarkEstimado > 0 ? Math.round(((benchmarkEstimado - winner.precio) / benchmarkEstimado) * 100) : 0;
 
   return (
-    <div className="space-y-6 p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Cuadro Comparativo de Ofertas</h1>
-          <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimiento.codigo} — {requerimiento.titulo}</p>
-        </div>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        {incrustado ? (
+          <p className="text-sm text-muted-foreground">Ranking de las ofertas recibidas según los pesos del requerimiento.</p>
+        ) : (
+          <div>
+            <h1 className="text-2xl font-bold">Cuadro Comparativo de Ofertas</h1>
+            <p className="text-sm text-muted-foreground">Comparativo generado automáticamente · {requerimiento.codigo} — {requerimiento.titulo}</p>
+          </div>
+        )}
         <div className="flex gap-2">
           {mode === "full" && (
             <Button variant="outline" className="gap-2" onClick={() => setShowWeights((v) => !v)}>
@@ -328,7 +334,7 @@ export function CuadroComparativo() {
       {mode === "full" && adjudicacion && (
         <div className="flex gap-3">
           <Button asChild className="gap-2">
-            <Link to={`/cliente/adjudicacion/${requerimientoId}`}>
+            <Link to={`/cliente/procesos/${requerimientoId}/adjudicacion`}>
               <ArrowRight className="h-4 w-4" /> Ver adjudicación
             </Link>
           </Button>
@@ -338,7 +344,7 @@ export function CuadroComparativo() {
         <div className="flex flex-wrap gap-3">
           {ofertas.length >= 2 && (
             <Button asChild variant="outline" className="gap-2">
-              <Link to={`/cliente/negociacion/${requerimientoId}`}>
+              <Link to={`/cliente/procesos/${requerimientoId}/negociacion`}>
                 <Settings className="h-4 w-4" /> Iniciar negociación
               </Link>
             </Button>

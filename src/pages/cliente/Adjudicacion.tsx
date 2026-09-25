@@ -19,11 +19,13 @@ import {
 import { apiErrorMessage } from "@/lib/api/http";
 import { generateCartaAdjudicacionPdf } from "@/lib/pdf/carta-adjudicacion";
 import { formatMoney, type Moneda } from "@/lib/moneda";
+import { useIncrustado } from "@/components/layout/Incrustado";
 
 const fmtCantidad = (n: number) => n.toLocaleString("es-CO", { maximumFractionDigits: 3 });
 
 export function Adjudicacion() {
   const { id } = useParams();
+  const incrustado = useIncrustado();
   const requerimientoId = id ?? "";
   const { data: requerimiento, loading: loadingReq } = useApiData(() => fetchRequerimiento(requerimientoId), [requerimientoId]);
   const { data: proceso, loading: loadingAdj, reload } = useApiData(() => fetchAdjudicacion(requerimientoId), [requerimientoId]);
@@ -44,7 +46,7 @@ export function Adjudicacion() {
         {requerimientoId && (
           <div className="mt-4 flex justify-center">
             <Button asChild variant="outline">
-              <Link to={`/cliente/licitaciones/${requerimientoId}/comparativo`}>Ir al cuadro comparativo</Link>
+              <Link to={`/cliente/procesos/${requerimientoId}/comparativo`}>Ir al cuadro comparativo</Link>
             </Button>
           </div>
         )}
@@ -72,11 +74,13 @@ export function Adjudicacion() {
   }
 
   return (
-    <div className="space-y-6 p-6">
-      <div>
-        <h1 className="text-2xl font-bold">Adjudicación y Cierre</h1>
-        <p className="text-sm text-muted-foreground">{requerimiento.codigo} · {requerimiento.titulo}</p>
-      </div>
+    <div className={incrustado ? "space-y-6" : "space-y-6 p-6"}>
+      {!incrustado && (
+        <div>
+          <h1 className="text-2xl font-bold">Adjudicación y Cierre</h1>
+          <p className="text-sm text-muted-foreground">{requerimiento.codigo} · {requerimiento.titulo}</p>
+        </div>
+      )}
 
       {/* Decision summary */}
       <Card className="overflow-hidden">

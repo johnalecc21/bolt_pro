@@ -54,7 +54,7 @@ export function ShortlistProveedores() {
       } else {
         toast.success("Invitaciones enviadas", { description: `${invitados} proveedores invitados a licitar.` });
       }
-      navigate(`/cliente/licitaciones/${id}`);
+      navigate(`/cliente/procesos/${id}/seguimiento`);
     } catch (err) {
       toast.error(apiErrorMessage(err, "No se pudieron enviar las invitaciones."));
     } finally {

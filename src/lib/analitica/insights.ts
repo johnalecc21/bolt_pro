@@ -37,7 +37,7 @@ export function generarInsights(
       nivel: "critico",
       titulo: `${expo.nPagosVencidos} pago(s) vencido(s) por ${formatMoney(expo.pagosVencidos, moneda)}`,
       detalle: "Pagos a proveedores con la fecha pactada ya cumplida. Afectan la relación y pueden generar intereses.",
-      enlace: { to: "/cliente/seguimiento", texto: "Ver seguimiento" },
+      enlace: { to: "/cliente/contratos?vista=entregas", texto: "Ver entregas" },
     });
   }
 
@@ -106,7 +106,7 @@ export function generarInsights(
       nivel: "atencion",
       titulo: `Solo el ${pct(k.entregaATiempo)} de los hitos se entregó a tiempo`,
       detalle: "Revisa los proveedores con hitos atrasados y registra su evaluación de desempeño.",
-      enlace: { to: "/cliente/seguimiento", texto: "Ver seguimiento" },
+      enlace: { to: "/cliente/contratos?vista=entregas", texto: "Ver entregas" },
     });
   }
 
