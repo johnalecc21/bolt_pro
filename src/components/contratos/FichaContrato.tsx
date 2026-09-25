@@ -26,6 +26,7 @@ import {
 } from "@/lib/api/contratos";
 import { actualizarEstadoHito, type EstadoHito, type Hito } from "@/lib/api/seguimiento";
 import { diasDeAtraso, ESTADO_GENERAL, estadoGeneral, penalidadEstimada } from "@/lib/contratos/hitos";
+import { LineaErp, useEstadoErp } from "@/components/integraciones/EstadoErp";
 
 const HITO: Record<EstadoHito, { label: string; icon: typeof Circle; clase: string }> = {
   completado: { label: "Completado", icon: CheckCircle2, clase: "bg-success/15 text-success" },
@@ -63,6 +64,8 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
   const esCliente = portal === "cliente";
   const base = esCliente ? "/cliente" : "/proveedor";
   const general = estadoGeneral(c.hitos);
+  // Only buyers see whether the order reached their ERP.
+  const erp = useEstadoErp(esCliente ? [c.id] : []);
   // A paid milestone is worth what it released, even if the value changed later.
   const pagoDe = new Map(c.pagos.map((p) => [p.id, p.monto]));
   const valorHito = (h: Hito) => (h.pagoGeneradoId ? pagoDe.get(h.pagoGeneradoId) : undefined);
@@ -137,6 +140,7 @@ export function FichaContrato({ ficha: c, portal, puedeGestionar = false, puedeD
                 </>
               )}
             </p>
+            <LineaErp estado={erp(c.id, "ORDEN_COMPRA")} />
           </div>
         </div>
         <div className="flex flex-wrap gap-2">

@@ -22,6 +22,7 @@ export function PerfilEmpresa() {
   const [categoria, setCategoria] = useState("");
   const [ubicacion, setUbicacion] = useState("");
   const [sitioWeb, setSitioWeb] = useState("");
+  const [nit, setNit] = useState("");
   const [certificaciones, setCertificaciones] = useState<string[]>([]);
   const [nuevaCert, setNuevaCert] = useState("");
   const [guardando, setGuardando] = useState(false);
@@ -33,6 +34,7 @@ export function PerfilEmpresa() {
       setCategoria(perfil.categorias[0] ?? "");
       setUbicacion(perfil.ubicacion);
       setSitioWeb(perfil.sitioWeb ?? "");
+      setNit(perfil.nit ?? "");
       setCertificaciones(perfil.certificaciones);
       cargadoRef.current = true;
     }
@@ -44,6 +46,7 @@ export function PerfilEmpresa() {
       categoria === (perfil.categorias[0] ?? "") &&
       ubicacion === perfil.ubicacion &&
       sitioWeb === (perfil.sitioWeb ?? "") &&
+      nit === (perfil.nit ?? "") &&
       sameArray(certificaciones, perfil.certificaciones));
 
   function agregarCert() {
@@ -74,6 +77,7 @@ export function PerfilEmpresa() {
         categorias: categoria.trim() ? [categoria.trim()] : [],
         ubicacion: ubicacion.trim(),
         sitioWeb: sitioWeb.trim(),
+        nit: nit.trim(),
         certificaciones,
       });
       toast.success("Perfil actualizado");
@@ -140,6 +144,11 @@ export function PerfilEmpresa() {
           <div className="space-y-1.5">
             <Label htmlFor="perfil-ubicacion">Ubicación</Label>
             <Input id="perfil-ubicacion" value={ubicacion} onChange={(e) => setUbicacion(e.target.value)} placeholder="Bogotá, Colombia" />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="perfil-nit">NIT / identificación tributaria</Label>
+            <Input id="perfil-nit" value={nit} maxLength={30} onChange={(e) => setNit(e.target.value)} placeholder="900123456-7" />
+            <p className="text-xs text-muted-foreground">Tus clientes lo usan para registrarte como tercero en su sistema contable y pagarte sin demoras.</p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="perfil-web">Sitio web</Label>

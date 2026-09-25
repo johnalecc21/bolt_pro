@@ -1,4 +1,5 @@
 import {
+  Cable,
   Receipt,
   LayoutDashboard, FileText, Gavel, Handshake, Award,
   FileCheck, Truck, Building2, BarChart3,
@@ -24,6 +25,7 @@ const navItems: PortalNavItem[] = [
   { to: "aprobaciones", label: "Aprobaciones", icon: ShieldCheck, roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
   { to: "usuarios", label: "Usuarios y Roles", icon: Users, roles: ["admin_cliente"] },
   { to: "matriz-aprobacion", label: "Matriz de Aprobación", icon: SlidersHorizontal, roles: ["admin_cliente"] },
+  { to: "integraciones", label: "Integración ERP", icon: Cable, roles: ["admin_cliente", "aprobador_cfo"] },
   { to: "estructura", label: "Estructura y presupuestos", icon: Landmark, roles: ["admin_cliente", "aprobador_cfo"] },
 ];
 

@@ -21,6 +21,7 @@ import {
   urlFacturaCliente, urlSoporteCliente, type EtapaPago, type PagoPO,
 } from "@/lib/api/pagos";
 import { abrirEnlace, EtapaBadge, fecha, HistorialFacturas, hoyISO } from "@/components/pagos/comun";
+import { LineaErp, useEstadoErp } from "@/components/integraciones/EstadoErp";
 
 type Filtro = "accion" | "por_pagar" | "pagados" | "todos";
 
@@ -165,6 +166,7 @@ export function CuentasPorPagar() {
 function GestionPago({ pago, puedePagar, onCambio }: { pago: PagoPO; puedePagar: boolean; onCambio: () => void }) {
   const factura = pago.facturaVigente;
   const pp = pago.prontoPago;
+  const erp = useEstadoErp([...(factura ? [factura.id] : []), pago.id]);
   const [motivo, setMotivo] = useState("");
   const [motivoPP, setMotivoPP] = useState("");
 
@@ -198,7 +200,11 @@ function GestionPago({ pago, puedePagar, onCambio }: { pago: PagoPO; puedePagar:
           </div>
         ))}
       </div>
-      <div className="flex items-center gap-2 text-sm"><span className="text-muted-foreground">Estado:</span> <EtapaBadge etapa={etapaPago(pago)} /></div>
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Estado:</span> <EtapaBadge etapa={etapaPago(pago)} />
+        {factura && <LineaErp estado={erp(factura.id, "FACTURA")} sistema="Factura en el ERP" />}
+        <LineaErp estado={erp(pago.id, "PAGO")} sistema="Pago en el ERP" />
+      </div>
 
       <section className="space-y-2">
         <h3 className="text-sm font-semibold">Facturas</h3>

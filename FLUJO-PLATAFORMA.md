@@ -111,6 +111,18 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 - **Admin Clientes** — "entrar como" un cliente (impersonación), queda registrado en auditoría.
 - **Benchmark de Mercado** — índice de precios que alimenta las alertas de anomalías del comparativo.
 
+## Integración ERP (`/cliente/integraciones`)
+
+Para Admin Cliente y CFO. Sirve con cualquier ERP (SAP, Siesa, World Office, Oracle, Odoo, Excel…) porque Procurex publica un formato propio y estable; el ERP (o su integrador) lo consume. Detalle técnico completo en `docs/INTEGRACION-ERP.md` del backend.
+
+- **Qué se sincroniza**: proveedores (con su NIT), órdenes de compra/contratos (con líneas, hitos, centro de costo y cuenta), recepciones (hito recibido), facturas aprobadas y pagos. Cada documento viaja como una foto completa con versión: si cambia (prórroga, cambio de monto, anulación), se reenvía la versión nueva y el ERP solo actualiza.
+- **Fase 1 · Archivo** — pestaña *Exportar*: descarga Excel (una hoja por tipo, columnas fijas) o CSV de un período, y la **cola de pendientes**: lo nuevo desde la última descarga, que se marca como exportado al bajarlo.
+- **Fase 2 · Webhook** — pestaña *Conexión*: URL HTTPS del ERP o middleware, secreto de firma (se muestra una sola vez), eventos a enviar y botón de prueba. Cada envío va firmado (HMAC-SHA256 con timestamp) y se reintenta solo (1 min → 24 h) antes de quedar *fallido*.
+- **Mapeos** — centro de costo → código del ERP y categoría → cuenta contable, para que el ERP reciba sus propios códigos.
+- **Sincronización** — panel con el estado de cada documento (pendiente, enviado, error, fallido, descartado), el error exacto, el contenido enviado y botones para reintentar o descartar. La ficha del contrato y el detalle de Cuentas por Pagar muestran si ese documento ya llegó al ERP.
+- **API de entrada** — con una API key (se genera en *Conexión*), el ERP informa los pagos que hizo (`POST /integraciones/erp/entrada/pagos`, por id de pago o número de factura + NIT) y Procurex los registra como pagados sin duplicarlos; también puede confirmar el número interno que le asignó a cada documento (`/acuse`).
+- **NIT del proveedor**: el proveedor lo completa en *Perfil de Empresa* (se precarga del NIT detectado en homologación); sin él el ERP no puede crear el tercero.
+
 ## Lo que conecta todo
 
 - **Log de auditoría** (visible en Contratos e Interno › Admin Clientes): cada aprobación, rechazo, cambio de score, impersonación o documento adjuntado queda ahí, sin importar desde qué portal se generó — todo backend-real.
@@ -128,6 +140,7 @@ Corre contra el mismo backend; no se tocó a fondo en la última ronda de trabaj
 - **"Recordatorios de vencimiento"** (Contratos) ya es real: un cron diario (`VencimientosService`, `@nestjs/schedule`) revisa todos los contratos/POs activos, los pasa a "Por vencer"/"Vencido" según su `vigenciaFin`, y notifica una sola vez por umbral (60/30/15 días) a compradores y admins de la empresa.
 - **Documentos adjuntos a un Requerimiento** ya usan almacenamiento real (bucket `requerimientos-documentos` en Supabase Storage), mismo patrón de URL firmada que Homologación y Contratos.
 - **Idioma**: la plataforma está solo en español.
-- **Pagos**: el registro del pago es manual (fecha, referencia y soporte); no hay integración bancaria ni validación de la factura electrónica ante la DIAN/SAT. La tasa de pronto pago es fija (1,5% mensual).
+- **Pagos**: el registro del pago es manual (fecha, referencia y soporte) o llega del ERP por la API de entrada; no hay integración bancaria ni validación de la factura electrónica ante la DIAN/SAT. La tasa de pronto pago es fija (1,5% mensual).
 - **Adjudicación por ítems**: los ítems desiertos no se relicitan solos; hay que crear un requerimiento nuevo para ellos.
 - **Penalidades**: la plataforma estima la penalidad contractual por atrasos, pero no la descuenta de los pagos; aplicarla es una decisión (y un trámite) de la empresa.
+- **ERP**: la integración es genérica (archivo, webhook firmado y API de pagos). No hay conectores nativos para un ERP específico; se conecta con un middleware o el integrador del ERP.

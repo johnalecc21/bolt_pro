@@ -19,10 +19,13 @@ interface ApiProveedor {
   evaluacionesCount: number;
   descripcion?: string | null;
   onboardingCompletado?: boolean;
+  nit?: string | null;
 }
 
 export interface MiPerfilProveedor extends Proveedor {
   onboardingCompletado: boolean;
+  /** Tax id — how buyers' ERPs identify the supplier. */
+  nit: string | null;
 }
 
 function toProveedor(p: ApiProveedor): Proveedor {
@@ -89,12 +92,12 @@ export async function createProveedorExterno(nombre: string): Promise<Proveedor>
 
 export async function fetchMiPerfil(): Promise<MiPerfilProveedor> {
   const { data } = await api.get<ApiProveedor>("/proveedores/mine");
-  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
+  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false, nit: data.nit ?? null };
 }
 
-export async function actualizarMiPerfil(payload: { nombre?: string; categorias?: string[]; ubicacion?: string; sitioWeb?: string; certificaciones?: string[] }): Promise<MiPerfilProveedor> {
+export async function actualizarMiPerfil(payload: { nombre?: string; categorias?: string[]; ubicacion?: string; sitioWeb?: string; nit?: string; certificaciones?: string[] }): Promise<MiPerfilProveedor> {
   const { data } = await api.patch<ApiProveedor>("/proveedores/mine", payload);
-  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false };
+  return { ...toProveedor(data), onboardingCompletado: data.onboardingCompletado ?? false, nit: data.nit ?? null };
 }
 
 export async function completarOnboardingProveedor(): Promise<void> {

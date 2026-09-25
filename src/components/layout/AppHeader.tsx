@@ -36,6 +36,7 @@ const destinationsByPortal: Record<Portal, { label: string; to: string; roles?: 
     { label: "Directorio de proveedores", to: "directorio", roles: ["comprador", "admin_cliente"] },
     { label: "Analítica CFO", to: "analitica", roles: ["aprobador_cfo", "admin_cliente"] },
     { label: "Aprobaciones", to: "aprobaciones", roles: ["comprador", "aprobador_cfo", "admin_cliente"] },
+    { label: "Integración ERP", to: "integraciones", roles: ["admin_cliente", "aprobador_cfo"] },
   ],
   proveedor: [
     { label: "Dashboard", to: "dashboard" },
