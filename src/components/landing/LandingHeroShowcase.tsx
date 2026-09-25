@@ -24,7 +24,7 @@ const kpis = [
 export function LandingHeroShowcase() {
   return (
     <div
-      className="relative mx-auto w-full max-w-xl text-card-foreground sm:mb-12 lg:mx-0"
+      className="relative mx-auto w-full max-w-xl text-card-foreground sm:mb-12"
       aria-hidden="true"
     >
       <div className="absolute -inset-x-10 -inset-y-12 -z-10 bg-primary/[0.08] blur-3xl" />

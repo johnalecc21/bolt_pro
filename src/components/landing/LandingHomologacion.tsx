@@ -51,21 +51,18 @@ export function LandingHomologacion() {
   return (
     <section
       id="homologacion"
-      className="relative overflow-hidden bg-brand-700 py-24 text-white"
+      className="relative overflow-hidden border-y border-border bg-primary/[0.04] py-24"
     >
-      <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-brand-accent/20 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-primary/25 blur-3xl" />
-
       <div className="relative mx-auto grid max-w-7xl gap-14 px-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
         <div>
           <Reveal>
-            <span className="text-sm font-semibold uppercase tracking-widest text-brand-accent">
+            <span className="text-sm font-semibold uppercase tracking-widest text-primary">
               Homologación y riesgo
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
               Nosotros verificamos a tus proveedores. Tú solo eliges.
             </h2>
-            <p className="mt-4 max-w-2xl text-white/75">
+            <p className="mt-4 max-w-2xl text-muted-foreground">
               Cada proveedor pasa por el equipo de compliance de Procurex antes
               de entrar a la red, y lo seguimos vigilando mientras trabaja
               contigo.
@@ -77,18 +74,20 @@ export function LandingHomologacion() {
               <m.div
                 key={p.titulo}
                 variants={staggerItem}
-                className="rounded-2xl border border-white/10 bg-white/[0.04] p-5"
+                className="rounded-2xl border border-border bg-card p-5 shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-accent/15 text-brand-accent">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
                     <p.icon className="h-4.5 w-4.5" aria-hidden="true" />
                   </span>
                   <h3 className="font-semibold">
-                    <span className="mr-1.5 text-white/40">{i + 1}.</span>
+                    <span className="mr-1.5 text-muted-foreground">
+                      {i + 1}.
+                    </span>
                     {p.titulo}
                   </h3>
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-white/70">
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
                   {p.texto}
                 </p>
               </m.div>
@@ -97,14 +96,14 @@ export function LandingHomologacion() {
 
           <Reveal
             delay={0.1}
-            className="mt-8 flex gap-3 rounded-2xl border border-brand-accent/30 bg-brand-accent/10 p-5"
+            className="mt-8 flex gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-5"
           >
             <Lock
-              className="mt-0.5 h-5 w-5 shrink-0 text-brand-accent"
+              className="mt-0.5 h-5 w-5 shrink-0 text-primary"
               aria-hidden="true"
             />
-            <p className="text-sm text-white/85">
-              <strong className="text-white">
+            <p className="text-sm text-foreground/80">
+              <strong className="text-foreground">
                 Procurex no participa en tus compras.
               </strong>{" "}
               Nuestro equipo solo homologa proveedores: tus procesos, precios y
@@ -116,7 +115,7 @@ export function LandingHomologacion() {
         <Reveal delay={0.15}>
           <div
             aria-hidden="true"
-            className="rounded-2xl bg-card p-6 text-card-foreground shadow-2xl shadow-black/30"
+            className="rounded-2xl bg-card p-6 text-card-foreground border border-border shadow-xl shadow-primary/[0.08]"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

@@ -30,15 +30,15 @@ export function LandingCta() {
   return (
     <section className="pb-24">
       <div className="mx-auto max-w-7xl px-6">
-        <Reveal className="relative overflow-hidden rounded-3xl bg-brand-700 px-6 py-14 text-center text-white sm:px-14">
-          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-brand-accent/25 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-primary/40 blur-3xl" />
+        <Reveal className="relative overflow-hidden rounded-3xl gradient-brand px-6 py-14 text-center text-white shadow-xl shadow-primary/20 sm:px-14">
+          <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/15 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 -right-16 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
           <div className="relative mx-auto max-w-2xl">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
               Tu próxima compra, con proveedores verificados y cada paso
               registrado
             </h2>
-            <p className="mt-4 text-white/75">
+            <p className="mt-4 text-white/85">
               Agenda una demo: te mostramos Procurex con un proceso real de tu
               empresa, de la solicitud al pago.
             </p>
