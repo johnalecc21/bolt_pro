@@ -1,6 +1,46 @@
 import { api } from "@/lib/api/http";
 
-export type ModoIntegracion = "ARCHIVO" | "WEBHOOK";
+export type ModoIntegracion = "ARCHIVO" | "WEBHOOK" | "SIIGO";
+
+/** What Siigo can receive: it has no purchase-order or receipt API. */
+export const TIPOS_SIIGO: TipoEventoErp[] = ["PROVEEDOR", "FACTURA", "PAGO"];
+
+export const MODO_LABEL: Record<ModoIntegracion, string> = {
+  ARCHIVO: "archivo",
+  WEBHOOK: "webhook",
+  SIIGO: "Siigo",
+};
+
+export interface ConfigSiigo {
+  usuario?: string;
+  documentoCompraId?: number | null;
+  formaPagoCompraId?: number | null;
+  cuentaDefecto?: string | null;
+  impuestoId?: number | null;
+  documentoEgresoId?: number | null;
+  formaPagoEgresoId?: number | null;
+  descuentoProntoPagoId?: number | null;
+  departamento?: string;
+  ciudad?: string;
+  responsabilidadFiscal?: string;
+  pagosDesde?: "PROCUREX" | "SIIGO";
+}
+
+export interface OpcionSiigo {
+  id: number;
+  nombre: string;
+  codigo?: string | null;
+}
+
+export interface CatalogosSiigo {
+  documentosCompra: OpcionSiigo[];
+  documentosEgreso: OpcionSiigo[];
+  descuentosEgreso: (OpcionSiigo & { documentoId: number })[];
+  formasPagoCompra: (OpcionSiigo & { tipo: string | null; conVencimiento: boolean })[];
+  formasPagoEgreso: (OpcionSiigo & { tipo: string | null })[];
+  centrosCosto: OpcionSiigo[];
+  impuestos: (OpcionSiigo & { porcentaje: number | null })[];
+}
 export type TipoEventoErp = "PROVEEDOR" | "ORDEN_COMPRA" | "RECEPCION" | "FACTURA" | "PAGO";
 export type EstadoEventoErp = "PENDIENTE" | "ENVIADO" | "ERROR" | "FALLIDO" | "DESCARTADO";
 
@@ -31,6 +71,9 @@ export interface IntegracionErp {
   ultimaPrueba: string | null;
   ultimaPruebaOk: boolean | null;
   ultimaPruebaMsg: string | null;
+  siigo: ConfigSiigo;
+  siigoTieneCredencial: boolean;
+  siigoFaltantes: string[];
   conteo: Partial<Record<EstadoEventoErp, number>>;
 }
 
@@ -45,6 +88,7 @@ export interface EventoErp {
   proximoIntento: string;
   ultimoError: string | null;
   idExterno: string | null;
+  referenciaExterna: string | null;
   enviadoAt: string | null;
   updatedAt: string;
 }
@@ -71,7 +115,12 @@ export async function fetchIntegracion(): Promise<IntegracionErp> {
   return data;
 }
 
-export async function actualizarIntegracion(cambios: Partial<Pick<IntegracionErp, "activa" | "modo" | "sistema" | "webhookUrl" | "eventos">>) {
+export type CambiosIntegracion = Partial<Pick<IntegracionErp, "activa" | "modo" | "sistema" | "webhookUrl" | "eventos" | "siigo">> & {
+  /** Write-only. */
+  siigoAccessKey?: string;
+};
+
+export async function actualizarIntegracion(cambios: CambiosIntegracion) {
   const { data } = await api.patch<IntegracionErp>("/integraciones/erp", cambios);
   return data;
 }
@@ -88,6 +137,16 @@ export async function generarApiKey(): Promise<string> {
 
 export async function probarConexion(): Promise<{ ok: boolean; mensaje: string }> {
   const { data } = await api.post<{ ok: boolean; mensaje: string }>("/integraciones/erp/probar");
+  return data;
+}
+
+export async function fetchCatalogosSiigo(): Promise<CatalogosSiigo> {
+  const { data } = await api.get<CatalogosSiigo>("/integraciones/erp/siigo/catalogos");
+  return data;
+}
+
+export async function sincronizarPagosSiigo(): Promise<{ revisadas: number; pagadas: number; errores: string[] }> {
+  const { data } = await api.post("/integraciones/erp/siigo/sincronizar-pagos");
   return data;
 }
 
@@ -140,6 +199,7 @@ export interface EstadoDocumentoErp {
   tipo: TipoEventoErp;
   estado: EstadoEventoErp;
   idExterno: string | null;
+  referenciaExterna: string | null;
   ultimoError: string | null;
   enviadoAt: string | null;
 }

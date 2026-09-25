@@ -44,7 +44,7 @@ export function LineaErp({ estado, sistema = "ERP" }: { estado: EstadoDocumentoE
   return (
     <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
       {sistema}: <EstadoErpBadge estado={estado.estado} />
-      {estado.idExterno && <code>{estado.idExterno}</code>}
+      {(estado.referenciaExterna || estado.idExterno) && <code>{estado.referenciaExterna ?? estado.idExterno}</code>}
       {estado.ultimoError && (estado.estado === "ERROR" || estado.estado === "FALLIDO") && <span className="text-destructive">{estado.ultimoError.slice(0, 120)}</span>}
     </span>
   );

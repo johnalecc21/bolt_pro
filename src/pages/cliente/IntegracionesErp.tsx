@@ -23,10 +23,11 @@ import { fechaLocal } from "@/lib/fecha";
 import { descargarSeccionCsv, generarExcel } from "@/lib/analitica/exportar";
 import { HOJAS, hojasASecciones, totalFilas } from "@/lib/integraciones/hojas";
 import { EstadoErpBadge } from "@/components/integraciones/EstadoErp";
+import { ConexionSiigo } from "@/components/integraciones/ConexionSiigo";
 import {
   actualizarIntegracion, descartarEvento, ESTADO_EVENTO_LABEL, fetchEvento, fetchEventos, fetchExportacion, fetchIntegracion,
-  fetchMapeos, fetchPendientes, generarApiKey, generarSecreto, guardarMapeos, marcarExportados, probarConexion, reintentarEvento,
-  TIPO_EVENTO_LABEL, type EstadoEventoErp, type EventoErp, type HojasErp, type IntegracionErp, type Mapeo, type TipoEventoErp,
+  fetchMapeos, fetchPendientes, generarApiKey, generarSecreto, guardarMapeos, marcarExportados, MODO_LABEL, probarConexion, reintentarEvento,
+  TIPO_EVENTO_LABEL, TIPOS_SIIGO, type CambiosIntegracion, type EstadoEventoErp, type ModoIntegracion, type EventoErp, type HojasErp, type IntegracionErp, type Mapeo, type TipoEventoErp,
 } from "@/lib/api/integraciones";
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? "http://localhost:3001").replace(/\/+$/, "");
@@ -65,7 +66,7 @@ export function IntegracionesErp() {
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <Badge variant="secondary" className={cn("gap-1", cfg.activa ? "bg-success/15 text-success" : "")}>
             {cfg.activa ? <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" /> : <XCircle className="h-3.5 w-3.5" aria-hidden="true" />}
-            {cfg.activa ? `Activa · ${cfg.modo === "WEBHOOK" ? "webhook" : "archivo"}` : "Inactiva"}
+            {cfg.activa ? `Activa · ${MODO_LABEL[cfg.modo]}` : "Inactiva"}
           </Badge>
           {cfg.sistema && <Badge variant="secondary">{cfg.sistema}</Badge>}
           {problemas > 0 && (
@@ -91,7 +92,7 @@ export function IntegracionesErp() {
           <Conexion cfg={cfg} onCambio={reload} />
         </TabsContent>
         <TabsContent value="mapeos" className="mt-4">
-          <Mapeos />
+          <Mapeos modo={cfg.modo} />
         </TabsContent>
         <TabsContent value="sync" className="mt-4">
           <Sincronizacion onCambio={reload} />
@@ -266,15 +267,19 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
   const [url, setUrl] = useState(cfg.webhookUrl ?? "");
   const [revelado, setRevelado] = useState<{ titulo: string; valor: string; nota: string } | null>(null);
   const [probando, setProbando] = useState(false);
-  const eventos = cfg.eventos.length ? cfg.eventos : TIPOS;
+  const siigo = cfg.modo === "SIIGO";
+  const tipos = siigo ? TIPOS_SIIGO : TIPOS;
+  const eventos = cfg.eventos.length ? cfg.eventos.filter((t) => tipos.includes(t)) : tipos;
 
-  async function guardar(cambios: Parameters<typeof actualizarIntegracion>[0], ok = "Guardado") {
+  async function guardar(cambios: CambiosIntegracion, ok = "Guardado") {
     try {
       await actualizarIntegracion(cambios);
       toast.success(ok);
       onCambio();
+      return true;
     } catch (err) {
       toast.error(apiErrorMessage(err));
+      return false;
     }
   }
 
@@ -291,16 +296,17 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
 
         <div className="space-y-2">
           <Label>Cómo llegan los documentos al ERP</Label>
-          <div className="grid gap-2 sm:grid-cols-2">
+          <div className="grid gap-2 sm:grid-cols-3">
             {([
               ["ARCHIVO", "Archivo", "Descargas un Excel/CSV y lo importas. Sin TI."],
               ["WEBHOOK", "Webhook", "Procurex envía cada documento firmado a tu ERP o integrador."],
-            ] as const).map(([modo, titulo, desc]) => (
+              ["SIIGO", "Siigo Nube", "Conector directo: terceros, facturas de compra y egresos."],
+            ] as const satisfies readonly (readonly [ModoIntegracion, string, string])[]).map(([modo, titulo, desc]) => (
               <button
                 key={modo}
                 type="button"
                 aria-pressed={cfg.modo === modo}
-                onClick={() => cfg.modo !== modo && guardar({ modo }, `Modo ${titulo.toLowerCase()}`)}
+                onClick={() => cfg.modo !== modo && guardar(modo === "SIIGO" ? { modo, sistema: "Siigo Nube" } : { modo }, `Modo ${titulo}`)}
                 className={cn("rounded-lg border p-3 text-left text-sm transition-colors", cfg.modo === modo ? "border-primary bg-primary/5" : "border-border hover:bg-muted/40")}
               >
                 <p className="font-medium">{titulo}</p>
@@ -310,6 +316,7 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
           </div>
         </div>
 
+        {!siigo && (
         <div className="flex items-end gap-2">
           <div className="flex-1 space-y-1.5">
             <Label htmlFor="erp-sistema">Tu ERP (referencia)</Label>
@@ -317,18 +324,20 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
           </div>
           <Button variant="outline" disabled={sistema === (cfg.sistema ?? "")} onClick={() => guardar({ sistema })}>Guardar</Button>
         </div>
+        )}
 
         <div className="space-y-2">
           <Label>Qué documentos enviar</Label>
+          {siigo && <p className="text-xs text-muted-foreground">Siigo no recibe órdenes de compra ni recepciones por API; siguen disponibles en la exportación a Excel.</p>}
           <div className="grid gap-2 sm:grid-cols-2">
-            {TIPOS.map((t) => (
+            {tipos.map((t) => (
               <label key={t} className="flex items-center gap-2 text-sm">
                 <Checkbox
                   checked={eventos.includes(t)}
                   onCheckedChange={(v) => {
                     const nuevos = v ? [...eventos, t] : eventos.filter((x) => x !== t);
                     if (nuevos.length === 0) return toast.error("Deja al menos un tipo de documento.");
-                    guardar({ eventos: nuevos.length === TIPOS.length ? [] : nuevos });
+                    guardar({ eventos: nuevos.length === tipos.length ? [] : nuevos });
                   }}
                 />
                 {TIPO_EVENTO_LABEL[t]}
@@ -338,100 +347,104 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
         </div>
       </Card>
 
-      <div className="space-y-6">
-        <Card className={cn("space-y-4 p-5", cfg.modo !== "WEBHOOK" && "opacity-60")}>
-          <div className="flex items-center gap-2">
-            <Send className="h-4 w-4 text-primary" />
-            <h2 className="font-semibold">Webhook (envío automático)</h2>
-          </div>
-          <div className="flex items-end gap-2">
-            <div className="flex-1 space-y-1.5">
-              <Label htmlFor="erp-url">URL de tu ERP o integrador (HTTPS)</Label>
-              <Input id="erp-url" value={url} placeholder="https://erp.tuempresa.com/procurex" onChange={(e) => setUrl(e.target.value)} />
+      {siigo ? (
+        <ConexionSiigo cfg={cfg} guardar={guardar} onCambio={onCambio} />
+      ) : (
+        <div className="space-y-6">
+          <Card className={cn("space-y-4 p-5", cfg.modo !== "WEBHOOK" && "opacity-60")}>
+            <div className="flex items-center gap-2">
+              <Send className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold">Webhook (envío automático)</h2>
             </div>
-            <Button variant="outline" disabled={url === (cfg.webhookUrl ?? "")} onClick={() => guardar({ webhookUrl: url })}>Guardar</Button>
-          </div>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 text-sm">
-            <span className="flex items-center gap-2">
-              <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-              Secreto de firma: {cfg.tieneSecreto ? "configurado" : "sin generar"}
-            </span>
-            <ConfirmDialog
-              trigger={<Button size="sm" variant="outline">{cfg.tieneSecreto ? "Regenerar" : "Generar"}</Button>}
-              title="Secreto de firma"
-              description={cfg.tieneSecreto ? "El secreto actual deja de funcionar: tu ERP deberá usar el nuevo para verificar las firmas." : "Tu ERP lo usa para comprobar que cada envío viene de Procurex."}
-              confirmLabel="Generar"
-              onConfirm={async () => {
-                try {
-                  const s = await generarSecreto();
-                  setRevelado({ titulo: "Secreto de firma", valor: s, nota: "Cópialo ahora: no se vuelve a mostrar. Tu receptor verifica la cabecera X-Procurex-Firma con él (HMAC-SHA256)." });
-                  onCambio();
-                } catch (err) {
-                  toast.error(apiErrorMessage(err));
-                }
-              }}
-            />
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant="outline"
-              className="gap-2"
-              disabled={!cfg.webhookUrl || !cfg.tieneSecreto || probando}
-              onClick={async () => {
-                setProbando(true);
-                try {
-                  const r = await probarConexion();
-                  (r.ok ? toast.success : toast.error)(r.ok ? "Conexión correcta" : "La prueba falló", { description: r.mensaje });
-                  onCambio();
-                } catch (err) {
-                  toast.error(apiErrorMessage(err));
-                } finally {
-                  setProbando(false);
-                }
-              }}
-            >
-              {probando ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />} Probar conexión
-            </Button>
-            {cfg.ultimaPrueba && (
-              <span className={cn("text-xs", cfg.ultimaPruebaOk ? "text-success" : "text-destructive")}>
-                {cfg.ultimaPruebaOk ? "✓" : "✗"} {new Date(cfg.ultimaPrueba).toLocaleString("es-CO")}: {cfg.ultimaPruebaMsg}
+            <div className="flex items-end gap-2">
+              <div className="flex-1 space-y-1.5">
+                <Label htmlFor="erp-url">URL de tu ERP o integrador (HTTPS)</Label>
+                <Input id="erp-url" value={url} placeholder="https://erp.tuempresa.com/procurex" onChange={(e) => setUrl(e.target.value)} />
+              </div>
+              <Button variant="outline" disabled={url === (cfg.webhookUrl ?? "")} onClick={() => guardar({ webhookUrl: url })}>Guardar</Button>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+              <span className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                Secreto de firma: {cfg.tieneSecreto ? "configurado" : "sin generar"}
               </span>
-            )}
-          </div>
-        </Card>
+              <ConfirmDialog
+                trigger={<Button size="sm" variant="outline">{cfg.tieneSecreto ? "Regenerar" : "Generar"}</Button>}
+                title="Secreto de firma"
+                description={cfg.tieneSecreto ? "El secreto actual deja de funcionar: tu ERP deberá usar el nuevo para verificar las firmas." : "Tu ERP lo usa para comprobar que cada envío viene de Procurex."}
+                confirmLabel="Generar"
+                onConfirm={async () => {
+                  try {
+                    const s = await generarSecreto();
+                    setRevelado({ titulo: "Secreto de firma", valor: s, nota: "Cópialo ahora: no se vuelve a mostrar. Tu receptor verifica la cabecera X-Procurex-Firma con él (HMAC-SHA256)." });
+                    onCambio();
+                  } catch (err) {
+                    toast.error(apiErrorMessage(err));
+                  }
+                }}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                className="gap-2"
+                disabled={!cfg.webhookUrl || !cfg.tieneSecreto || probando}
+                onClick={async () => {
+                  setProbando(true);
+                  try {
+                    const r = await probarConexion();
+                    (r.ok ? toast.success : toast.error)(r.ok ? "Conexión correcta" : "La prueba falló", { description: r.mensaje });
+                    onCambio();
+                  } catch (err) {
+                    toast.error(apiErrorMessage(err));
+                  } finally {
+                    setProbando(false);
+                  }
+                }}
+              >
+                {probando ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlugZap className="h-4 w-4" />} Probar conexión
+              </Button>
+              {cfg.ultimaPrueba && (
+                <span className={cn("text-xs", cfg.ultimaPruebaOk ? "text-success" : "text-destructive")}>
+                  {cfg.ultimaPruebaOk ? "✓" : "✗"} {new Date(cfg.ultimaPrueba).toLocaleString("es-CO")}: {cfg.ultimaPruebaMsg}
+                </span>
+              )}
+            </div>
+          </Card>
 
-        <Card className="space-y-3 p-5">
-          <div className="flex items-center gap-2">
-            <KeyRound className="h-4 w-4 text-primary" />
-            <h2 className="font-semibold">API para que el ERP informe los pagos</h2>
-          </div>
-          <p className="text-sm text-muted-foreground">Cuando tesorería paga en el ERP, este llama a Procurex y el pago queda registrado (y el proveedor notificado) sin digitarlo.</p>
-          <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 text-sm">
-            <span>API key: {cfg.apiKeyPrefijo ? <code>{cfg.apiKeyPrefijo}…</code> : "sin generar"}</span>
-            <ConfirmDialog
-              trigger={<Button size="sm" variant="outline">{cfg.apiKeyPrefijo ? "Regenerar" : "Generar"}</Button>}
-              title="API key"
-              description={cfg.apiKeyPrefijo ? "La key actual deja de funcionar de inmediato." : "El ERP la envía en la cabecera Authorization: Bearer …"}
-              confirmLabel="Generar"
-              onConfirm={async () => {
-                try {
-                  const k = await generarApiKey();
-                  setRevelado({ titulo: "API key", valor: k, nota: "Cópiala ahora: no se vuelve a mostrar. Envíala como Authorization: Bearer <key>." });
-                  onCambio();
-                } catch (err) {
-                  toast.error(apiErrorMessage(err));
-                }
-              }}
-            />
-          </div>
-          <div className="space-y-1 text-xs">
-            <p className="text-muted-foreground">Endpoints:</p>
-            <code className="block break-all rounded bg-muted px-2 py-1">POST {API_BASE}/integraciones/erp/entrada/pagos</code>
-            <code className="block break-all rounded bg-muted px-2 py-1">POST {API_BASE}/integraciones/erp/entrada/acuse</code>
-            <p className="text-muted-foreground">Formatos, firma y ejemplos: guía de integración ERP (docs/INTEGRACION-ERP.md).</p>
-          </div>
-        </Card>
-      </div>
+          <Card className="space-y-3 p-5">
+            <div className="flex items-center gap-2">
+              <KeyRound className="h-4 w-4 text-primary" />
+              <h2 className="font-semibold">API para que el ERP informe los pagos</h2>
+            </div>
+            <p className="text-sm text-muted-foreground">Cuando tesorería paga en el ERP, este llama a Procurex y el pago queda registrado (y el proveedor notificado) sin digitarlo.</p>
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/50 p-3 text-sm">
+              <span>API key: {cfg.apiKeyPrefijo ? <code>{cfg.apiKeyPrefijo}…</code> : "sin generar"}</span>
+              <ConfirmDialog
+                trigger={<Button size="sm" variant="outline">{cfg.apiKeyPrefijo ? "Regenerar" : "Generar"}</Button>}
+                title="API key"
+                description={cfg.apiKeyPrefijo ? "La key actual deja de funcionar de inmediato." : "El ERP la envía en la cabecera Authorization: Bearer …"}
+                confirmLabel="Generar"
+                onConfirm={async () => {
+                  try {
+                    const k = await generarApiKey();
+                    setRevelado({ titulo: "API key", valor: k, nota: "Cópiala ahora: no se vuelve a mostrar. Envíala como Authorization: Bearer <key>." });
+                    onCambio();
+                  } catch (err) {
+                    toast.error(apiErrorMessage(err));
+                  }
+                }}
+              />
+            </div>
+            <div className="space-y-1 text-xs">
+              <p className="text-muted-foreground">Endpoints:</p>
+              <code className="block break-all rounded bg-muted px-2 py-1">POST {API_BASE}/integraciones/erp/entrada/pagos</code>
+              <code className="block break-all rounded bg-muted px-2 py-1">POST {API_BASE}/integraciones/erp/entrada/acuse</code>
+              <p className="text-muted-foreground">Formatos, firma y ejemplos: guía de integración ERP (docs/INTEGRACION-ERP.md).</p>
+            </div>
+          </Card>
+        </div>
+      )}
 
       <Dialog open={!!revelado} onOpenChange={(o) => !o && setRevelado(null)}>
         {revelado && (
@@ -453,7 +466,8 @@ function Conexion({ cfg, onCambio }: { cfg: IntegracionErp; onCambio: () => void
 
 // ------------------------------------------------------------------- Mapeos
 
-function Mapeos() {
+function Mapeos({ modo }: { modo: ModoIntegracion }) {
+  const siigo = modo === "SIIGO";
   const { data, loading, reload } = useApiData(fetchMapeos);
   const [edit, setEdit] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState(false);
@@ -516,8 +530,8 @@ function Mapeos() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-2">
-        {tabla("Centros de costo", "El código que tiene cada centro en tu contabilidad.", "CENTRO_COSTO", data?.centros ?? [], "Código en el ERP")}
-        {tabla("Categorías → cuenta contable", "La cuenta de gasto o inventario donde se causa cada categoría de compra.", "CATEGORIA", data?.categorias ?? [], "Cuenta contable")}
+        {tabla("Centros de costo", siigo ? "El código del centro de costo en Siigo (debe existir allá)." : "El código que tiene cada centro en tu contabilidad.", "CENTRO_COSTO", data?.centros ?? [], siigo ? "Código en Siigo" : "Código en el ERP")}
+        {tabla("Categorías → cuenta contable", siigo ? "La cuenta (PUC, a nivel auxiliar) donde Siigo causa cada categoría de compra." : "La cuenta de gasto o inventario donde se causa cada categoría de compra.", "CATEGORIA", data?.categorias ?? [], "Cuenta contable")}
       </div>
       <div className="flex items-center gap-3">
         <Button onClick={guardar} disabled={cambios.length === 0 || guardando}>{guardando ? "Guardando..." : `Guardar ${cambios.length || ""} cambio(s)`}</Button>
@@ -584,7 +598,13 @@ function Sincronizacion({ onCambio }: { onCambio: () => void }) {
                     <p className="text-xs text-muted-foreground">{TIPO_EVENTO_LABEL[e.tipo]}{e.version > 1 ? ` · versión ${e.version}` : ""}</p>
                   </td>
                   <td className="p-3"><EstadoErpBadge estado={e.estado} /></td>
-                  <td className="p-3">{e.idExterno ? <code className="text-xs">{e.idExterno}</code> : <span className="text-muted-foreground">—</span>}</td>
+                  <td className="p-3">
+                    {e.referenciaExterna || e.idExterno ? (
+                      <code className="text-xs" title={e.idExterno ?? undefined}>{e.referenciaExterna ?? e.idExterno}</code>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="max-w-md p-3 text-xs">
                     {e.estado === "ENVIADO" && e.enviadoAt && <span className="text-muted-foreground">Sincronizado {new Date(e.enviadoAt).toLocaleString("es-CO")}</span>}
                     {e.estado === "PENDIENTE" && <span className="text-muted-foreground">En cola</span>}
